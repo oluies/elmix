@@ -1,8 +1,11 @@
-# SEonetofour – Elmix
+# elmix
 
 Hämtar elmarknadsdata för de fyra svenska elområdena (SE1–SE4) från
 ENTSO-E och bygger analysunderlag (Parquet-marts) med DuckDB, plus en
 webbvisualisering i Scala.js/Laminar med ECharts.
+
+Rapporterna publiceras via GitHub Pages: https://oluies.github.io/elmix/
+(interaktiv) och https://oluies.github.io/elmix/prerendered.html (statisk).
 
 ## Struktur
 
@@ -71,3 +74,12 @@ eller färre zoner kräver inga kodändringar.
 - Skarp hämtning mot ENTSO-E är **inte** integrationstestad ännu:
   EIC-koderna, A85-parsningen och Neighbours-kartan verifieras först vid
   riktig hämtning. Se "Kända osäkerheter" i `CLAUDE.md`.
+
+## Publicering
+
+`./viz/publish-pages.sh` bygger den optimerade appen (`fullLinkJS`),
+prerendrerar SVG-rapporten och paketerar allt i `docs/`, som GitHub
+Pages serverar från `main`.
+
+---
+© 2026 Örjan Lundberg

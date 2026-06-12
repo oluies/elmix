@@ -96,9 +96,14 @@ const html = `<!doctype html>
          max-width: 1100px; padding: 0 16px 40px; color: #222; }
   h1 { font-size: 20px; margin-top: 24px; }
   h2 { font-size: 15px; color: #555; margin: 28px 0 4px; }
+  footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd;
+           font-size: 13px; color: #666; }
+  footer a { color: #36c; }
 </style></head><body>
 <h1>Elmix – SE1–SE4 (syntetisk demo-data, prerenderad SVG)</h1>
 ${parts.join('\n')}
+<footer>© 2026 Örjan Lundberg ·
+  Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a></footer>
 </body></html>`
 
 writeFileSync('../prerendered.html', html)

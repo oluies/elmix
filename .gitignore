@@ -1,7 +1,7 @@
-# genererat av pipeline/bygge
-data/
-elmix.duckdb
-out/
+# genererat av pipeline/bygge (docs/ ar publicerad Pages-sajt och versioneras)
+/data/
+/elmix.duckdb
+/out/
 viz/out/
 viz/data/
 viz/prerendered.html
