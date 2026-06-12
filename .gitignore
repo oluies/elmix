@@ -1,0 +1,12 @@
+# genererat av pipeline/bygge
+data/
+elmix.duckdb
+out/
+viz/out/
+viz/data/
+viz/prerendered.html
+viz/ssr/node_modules/
+
+# lokalt
+.claude/
+.DS_Store
