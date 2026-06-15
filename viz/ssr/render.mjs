@@ -30,6 +30,11 @@ const col = i => i % COLS, row = i => Math.floor(i / COLS)
 const rows = Math.ceil(zones.length / COLS)
 const captureHeight = 64 + rows * ROW_H + 20
 
+// Dynamiska y-granser sa inget kraftslag klipps bort (vattenkraft >1).
+const crVals = caps.map(c => c.capture_rate).filter(v => v != null)
+const yMin = Math.floor((Math.min(...crVals, 1.0) - 0.1) * 10) / 10
+const yMax = Math.ceil((Math.max(...crVals, 1.0) + 0.1) * 10) / 10
+
 const captureOption = {
   animation: false,
   title: zones.map((z, i) => ({
@@ -40,7 +45,7 @@ const captureOption = {
   grid:  zones.map((_, i) => ({ left: `${8 + col(i) * 48}%`, width: '38%',
                                 top: 64 + row(i) * ROW_H, height: 180 })),
   xAxis: zones.map((_, i) => ({ type: 'category', gridIndex: i, data: years.map(String) })),
-  yAxis: zones.map((_, i) => ({ type: 'value', gridIndex: i, min: 0.4, max: 1.1,
+  yAxis: zones.map((_, i) => ({ type: 'value', gridIndex: i, min: yMin, max: yMax,
                                 name: i === 0 ? 'capture rate' : '' })),
   series: zones.flatMap((z, i) => slag.map(s => ({
     name: s, type: 'line', xAxisIndex: i, yAxisIndex: i,

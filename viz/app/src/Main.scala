@@ -42,6 +42,10 @@ object Main:
     val years = caps.map(_.yr).distinct.sorted
     val slag  = caps.map(_.kraftslag).distinct.sorted
     val grids = zones.zipWithIndex
+    // Dynamiska y-granser sa inget kraftslag klipps bort (vattenkraft >1).
+    val crVals = caps.map(_.rate)
+    val yMin = math.floor((crVals.minOption.getOrElse(0.4).min(1.0) - 0.1) * 10) / 10
+    val yMax = math.ceil((crVals.maxOption.getOrElse(1.1).max(1.0) + 0.1) * 10) / 10
     def col(i: Int) = i % GridCols
     def row(i: Int) = i / GridCols
 
@@ -58,7 +62,7 @@ object Main:
       obj(`type` = "category", gridIndex = i, data = js.Array(years.map(_.toString)*))
     }*)
     val yAxes = js.Array(grids.map { (_, i) =>
-      obj(`type` = "value", gridIndex = i, min = 0.4, max = 1.1,
+      obj(`type` = "value", gridIndex = i, min = yMin, max = yMax,
           name = if i == 0 then "capture rate" else "")
     }*)
     val series = js.Array((for
