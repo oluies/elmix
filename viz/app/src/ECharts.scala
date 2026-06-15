@@ -4,9 +4,10 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 
-/** Minimal handskriven facade mot ECharts (global fran script-tag).
-  * Byt mot ScalablyTyped om typade options behovs senare.
-  */
+/**
+ * Minimal handskriven facade mot ECharts (global fran script-tag). Byt mot ScalablyTyped om typade
+ * options behovs senare.
+ */
 @js.native
 @JSGlobal("echarts")
 object ECharts extends js.Object:

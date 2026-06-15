@@ -35,33 +35,50 @@ val Zones: Map[String, String] = Map(
 
 /** Grannar per elomrade for fysiska floden (A11). */
 val Neighbours: Map[String, Map[String, String]] = Map(
-  "SE_1" -> Map(
-    "NO_4" -> "10YNO-4--------9", "FI" -> "10YFI-1--------U",
-    "SE_2" -> Zones("SE_2")),
+  "SE_1" -> Map("NO_4" -> "10YNO-4--------9", "FI" -> "10YFI-1--------U", "SE_2" -> Zones("SE_2")),
   "SE_2" -> Map(
-    "NO_3" -> "10YNO-3--------J", "NO_4" -> "10YNO-4--------9",
-    "SE_1" -> Zones("SE_1"), "SE_3" -> Zones("SE_3")),
+    "NO_3" -> "10YNO-3--------J",
+    "NO_4" -> "10YNO-4--------9",
+    "SE_1" -> Zones("SE_1"),
+    "SE_3" -> Zones("SE_3")
+  ),
   "SE_3" -> Map(
-    "NO_1" -> "10YNO-1--------2", "DK_1" -> "10YDK-1--------W",
+    "NO_1" -> "10YNO-1--------2",
+    "DK_1" -> "10YDK-1--------W",
     "FI" -> "10YFI-1--------U",
-    "SE_2" -> Zones("SE_2"), "SE_4" -> Zones("SE_4")),
+    "SE_2" -> Zones("SE_2"),
+    "SE_4" -> Zones("SE_4")
+  ),
   "SE_4" -> Map(
-    "DK_2" -> "10YDK-2--------M", "DE_LU" -> "10Y1001A1001A82H",
-    "PL" -> "10YPL-AREA-----S", "LT" -> "10YLT-1001A0008Q",
-    "SE_3" -> Zones("SE_3"))
+    "DK_2" -> "10YDK-2--------M",
+    "DE_LU" -> "10Y1001A1001A82H",
+    "PL" -> "10YPL-AREA-----S",
+    "LT" -> "10YLT-1001A0008Q",
+    "SE_3" -> Zones("SE_3")
+  )
 )
 
 /** PSR-koder -> klartext, samma namn som dim_psr i transform.sql. */
 val PsrNames: Map[String, String] = Map(
-  "B01" -> "Biomass", "B02" -> "Fossil Brown coal/Lignite",
-  "B03" -> "Fossil Coal-derived gas", "B04" -> "Fossil Gas",
-  "B05" -> "Fossil Hard coal", "B06" -> "Fossil Oil",
-  "B07" -> "Fossil Oil shale", "B08" -> "Fossil Peat",
-  "B09" -> "Geothermal", "B10" -> "Hydro Pumped Storage",
+  "B01" -> "Biomass",
+  "B02" -> "Fossil Brown coal/Lignite",
+  "B03" -> "Fossil Coal-derived gas",
+  "B04" -> "Fossil Gas",
+  "B05" -> "Fossil Hard coal",
+  "B06" -> "Fossil Oil",
+  "B07" -> "Fossil Oil shale",
+  "B08" -> "Fossil Peat",
+  "B09" -> "Geothermal",
+  "B10" -> "Hydro Pumped Storage",
   "B11" -> "Hydro Run-of-river and poundage",
-  "B12" -> "Hydro Water Reservoir", "B13" -> "Marine",
-  "B14" -> "Nuclear", "B15" -> "Other renewable", "B16" -> "Solar",
-  "B17" -> "Waste", "B18" -> "Wind Offshore", "B19" -> "Wind Onshore",
+  "B12" -> "Hydro Water Reservoir",
+  "B13" -> "Marine",
+  "B14" -> "Nuclear",
+  "B15" -> "Other renewable",
+  "B16" -> "Solar",
+  "B17" -> "Waste",
+  "B18" -> "Wind Offshore",
+  "B19" -> "Wind Onshore",
   "B20" -> "Other"
 )
 
@@ -77,18 +94,23 @@ def token: String =
 def unzipXml(bytes: Array[Byte]): Seq[String] =
   val zis = new ZipInputStream(new ByteArrayInputStream(bytes))
   try
-    Iterator.continually(zis.getNextEntry).takeWhile(_ != null).map { _ =>
-      val out = new ByteArrayOutputStream()
-      val buf = new Array[Byte](8192)
-      var n = zis.read(buf)
-      while n != -1 do { out.write(buf, 0, n); n = zis.read(buf) }
-      new String(out.toByteArray, StandardCharsets.UTF_8)
-    }.toList
+    Iterator
+      .continually(zis.getNextEntry)
+      .takeWhile(_ != null)
+      .map { _ =>
+        val out = new ByteArrayOutputStream()
+        val buf = new Array[Byte](8192)
+        var n = zis.read(buf)
+        while n != -1 do { out.write(buf, 0, n); n = zis.read(buf) }
+        new String(out.toByteArray, StandardCharsets.UTF_8)
+      }
+      .toList
   finally zis.close()
 
-/** Hamtar ett API-svar. Stora svar (A85 m.fl.) levereras som zip med ett
-  * eller flera dokument - returnerar ett Elem per dokument, tomt vid
-  * Acknowledgement (ingen data) eller HTTP-fel. */
+/**
+ * Hamtar ett API-svar. Stora svar (A85 m.fl.) levereras som zip med ett eller flera dokument -
+ * returnerar ett Elem per dokument, tomt vid Acknowledgement (ingen data) eller HTTP-fel.
+ */
 def apiGet(params: Map[String, String]): Seq[scala.xml.Elem] =
   val resp = requests.get(
     Base,
@@ -113,18 +135,19 @@ def apiGet(params: Map[String, String]): Seq[scala.xml.Elem] =
 def fmtReq(t: OffsetDateTime): String =
   t.withOffsetSameInstant(ZoneOffset.UTC).format(ReqFmt)
 
-/** Expandera en Period till (ts, varde) med forward-fill for curveType A03
-  * dar positioner med oforandrat varde utelamnas.
-  */
+/**
+ * Expandera en Period till (ts, varde) med forward-fill for curveType A03 dar positioner med
+ * oforandrat varde utelamnas.
+ */
 def expandPeriod(p: Node, valueLabel: String): Seq[Row] =
   val start = OffsetDateTime.parse((p \ "timeInterval" \ "start").text.trim)
-  val end   = OffsetDateTime.parse((p \ "timeInterval" \ "end").text.trim)
+  val end = OffsetDateTime.parse((p \ "timeInterval" \ "end").text.trim)
   val resMin = (p \ "resolution").text.trim match
     case "PT15M" => 15
     case "PT30M" => 30
     case "PT60M" => 60
-    case "P1D"   => 1440
-    case other   => sys.error(s"Okand resolution: $other")
+    case "P1D" => 1440
+    case other => sys.error(s"Okand resolution: $other")
   val byPos: Map[Int, Double] = (p \ "Point").flatMap { pt =>
     val pos = (pt \ "position").text.trim.toInt
     (pt \ valueLabel).headOption.map(v => pos -> v.text.trim.toDouble)
@@ -139,17 +162,23 @@ def expandPeriod(p: Node, valueLabel: String): Seq[Row] =
 /** Vid blandade upplosningar i samma dokument (MTU-bytet): behall den finaste. */
 def finestPeriods(series: Seq[Node]): Seq[Node] =
   val periods = series.flatMap(_ \ "Period")
-  val finest = periods.map(p => (p \ "resolution").text.trim).distinct
+  val finest = periods
+    .map(p => (p \ "resolution").text.trim)
+    .distinct
     .minByOption { case "PT15M" => 15; case "PT30M" => 30; case _ => 60 }
   periods.filter(p => finest.forall(_ == (p \ "resolution").text.trim))
 
 /** A75: faktisk produktion per kraftslag. key = psr_type-namn. */
 def fetchGeneration(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[Row] =
-  apiGet(Map(
-    "documentType" -> "A75", "processType" -> "A16",
-    "in_Domain" -> eic,
-    "periodStart" -> fmtReq(from), "periodEnd" -> fmtReq(to)
-  )).flatMap { xml =>
+  apiGet(
+    Map(
+      "documentType" -> "A75",
+      "processType" -> "A16",
+      "in_Domain" -> eic,
+      "periodStart" -> fmtReq(from),
+      "periodEnd" -> fmtReq(to)
+    )
+  ).flatMap { xml =>
     (xml \ "TimeSeries")
       // produktion har inBiddingZone_Domain; konsumtion har outBiddingZone_Domain
       .filter(ts => (ts \ "inBiddingZone_Domain.mRID").nonEmpty)
@@ -161,37 +190,57 @@ def fetchGeneration(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[
 
 /** A44: day-ahead-priser i EUR/MWh. */
 def fetchPrices(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[Row] =
-  apiGet(Map(
-    "documentType" -> "A44",
-    "in_Domain" -> eic, "out_Domain" -> eic,
-    "periodStart" -> fmtReq(from), "periodEnd" -> fmtReq(to)
-  )).flatMap { xml =>
+  apiGet(
+    Map(
+      "documentType" -> "A44",
+      "in_Domain" -> eic,
+      "out_Domain" -> eic,
+      "periodStart" -> fmtReq(from),
+      "periodEnd" -> fmtReq(to)
+    )
+  ).flatMap { xml =>
     finestPeriods(xml \ "TimeSeries").flatMap(expandPeriod(_, "price.amount"))
   }
 
 /** A85: obalanspriser. key = priskategori. */
 def fetchImbalance(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[Row] =
-  apiGet(Map(
-    "documentType" -> "A85", "controlArea_Domain" -> eic,
-    "periodStart" -> fmtReq(from), "periodEnd" -> fmtReq(to)
-  )).flatMap { xml =>
+  apiGet(
+    Map(
+      "documentType" -> "A85",
+      "controlArea_Domain" -> eic,
+      "periodStart" -> fmtReq(from),
+      "periodEnd" -> fmtReq(to)
+    )
+  ).flatMap { xml =>
     (xml \ "TimeSeries").flatMap { ts =>
       val cat = (ts \\ "imbalance_Price.category").headOption
-        .map(_.text.trim).getOrElse("NA")
-      (ts \ "Period").flatMap(expandPeriod(_, "imbalance_Price.amount"))
+        .map(_.text.trim)
+        .getOrElse("NA")
+      (ts \ "Period")
+        .flatMap(expandPeriod(_, "imbalance_Price.amount"))
         .map(_.copy(key = cat))
     }
   }
 
 /** A11: fysiska floden for en riktning. key = gransnamn. */
-def fetchFlows(inEic: String, outEic: String, border: String,
-               from: OffsetDateTime, to: OffsetDateTime): Seq[Row] =
-  apiGet(Map(
-    "documentType" -> "A11",
-    "in_Domain" -> inEic, "out_Domain" -> outEic,
-    "periodStart" -> fmtReq(from), "periodEnd" -> fmtReq(to)
-  )).flatMap { xml =>
-    (xml \ "TimeSeries").flatMap(_ \ "Period")
+def fetchFlows(
+    inEic: String,
+    outEic: String,
+    border: String,
+    from: OffsetDateTime,
+    to: OffsetDateTime
+): Seq[Row] =
+  apiGet(
+    Map(
+      "documentType" -> "A11",
+      "in_Domain" -> inEic,
+      "out_Domain" -> outEic,
+      "periodStart" -> fmtReq(from),
+      "periodEnd" -> fmtReq(to)
+    )
+  ).flatMap { xml =>
+    (xml \ "TimeSeries")
+      .flatMap(_ \ "Period")
       .flatMap(expandPeriod(_, "quantity"))
       .map(_.copy(key = border))
   }
@@ -200,13 +249,13 @@ def fetchFlows(inEic: String, outEic: String, border: String,
 
 def withConn[A](db: String)(f: Connection => A): A =
   val conn = DriverManager.getConnection(s"jdbc:duckdb:$db")
-  try f(conn) finally conn.close()
+  try f(conn)
+  finally conn.close()
 
 val Iso = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
 /** Skriver rader till en Parquet-fil via en temporar DuckDB-tabell. */
-def writeParquet(path: Path, zone: String, keyCol: String, valCol: String,
-                 rows: Seq[Row]): Unit =
+def writeParquet(path: Path, zone: String, keyCol: String, valCol: String, rows: Seq[Row]): Unit =
   if rows.isEmpty then
     println(s"  ingen data -> hoppar $path")
     return
@@ -223,16 +272,22 @@ def writeParquet(path: Path, zone: String, keyCol: String, valCol: String,
       if i % 5000 == 0 then ps.executeBatch()
     }
     ps.executeBatch()
-    st.execute(s"COPY t TO '${path.toString.replace("'", "''")}' (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22)")
+    st.execute(
+      s"COPY t TO '${path.toString.replace("'", "''")}' (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22)"
+    )
     println(s"  -> $path  (${rows.size} rader)")
   }
 
 /** Kor ett SQL-skript sats for sats. Inga semikolon i SQL-kommentarer! */
 def runScript(db: String, scriptPath: Path): Unit =
-  val stripped = Files.readString(scriptPath).linesIterator
-    .map(l => l.indexOf("--") match
-      case -1 => l
-      case ix => l.substring(0, ix))
+  val stripped = Files
+    .readString(scriptPath)
+    .linesIterator
+    .map(l =>
+      l.indexOf("--") match
+        case -1 => l
+        case ix => l.substring(0, ix)
+    )
     .mkString("\n")
   withConn(db) { conn =>
     val st = conn.createStatement()
@@ -251,8 +306,12 @@ def runScript(db: String, scriptPath: Path): Unit =
 
 type Mat = Vector[Vector[Double]]
 
-final case class Pca(mean: Vector[Double], eigenvalues: Vector[Double],
-                     loadings: Mat, explained: Vector[Double])
+final case class Pca(
+    mean: Vector[Double],
+    eigenvalues: Vector[Double],
+    loadings: Mat,
+    explained: Vector[Double]
+)
 
 object LinAlg:
   def identity(n: Int): Mat =
@@ -288,8 +347,10 @@ object LinAlg:
       else 0.0
     }
 
-  /** Egenvärden/-vektorer för symmetrisk matris via Jacobi-rotationer.
-    * Returnerar (egenvärden, V) där kolumn i i V hör till egenvärde i. */
+  /**
+   * Egenvärden/-vektorer för symmetrisk matris via Jacobi-rotationer. Returnerar (egenvärden, V)
+   * där kolumn i i V hör till egenvärde i.
+   */
   def jacobi(a0: Mat, tol: Double = 1e-12, maxIter: Int = 1000): (Vector[Double], Mat) =
     val n = a0.size
     def largestOffDiag(a: Mat): (Int, Int, Double) =
@@ -315,7 +376,7 @@ def pca(rows: Mat): Pca =
   val sortedEig = order.map(eig)
   val total = sortedEig.map(math.max(_, 0.0)).sum
   val explained = sortedEig.map(e => if total > 0 then math.max(e, 0.0) / total else 0.0)
-  val loadings = order.map(idx => vecs.map(_(idx)))   // kolumn idx = egenvektor
+  val loadings = order.map(idx => vecs.map(_(idx))) // kolumn idx = egenvektor
   Pca(means, sortedEig, loadings, explained)
 
 /** Projektion av observationer på de k första komponenterna (PC-scores). */
@@ -337,12 +398,13 @@ def yearSpan(year: Int): (OffsetDateTime, OffsetDateTime) =
   (s, if s.plusYears(1).isAfter(now) then now else s.plusYears(1))
 
 def skipIfExists(p: Path): Boolean =
-  if Files.exists(p) then { println(s"  finns: $p"); true } else false
+  if Files.exists(p) then { println(s"  finns: $p"); true }
+  else false
 
 def doFetch(start: Int, end: Int, data: String): Unit =
   val kinds = data match
     case "all" => List("generation", "prices", "imbalance", "flows")
-    case k     => List(k)
+    case k => List(k)
   for
     year <- start to end
     (zone, eic) <- Zones
@@ -367,30 +429,32 @@ def doFetch(start: Int, end: Int, data: String): Unit =
             val imp = fetchFlows(eic, nbEic, s"$nb>$zone", from, to)
             Thread.sleep(SleepMs)
             val exp = fetchFlows(nbEic, eic, s"$zone>$nb", from, to)
-              .map(r => r.copy(value = -r.value))   // export negativt
+              .map(r => r.copy(value = -r.value)) // export negativt
             Thread.sleep(SleepMs)
             imp ++ exp
           }
           writeParquet(p, zone, "border", "mw", rows)
-        case _ => ()   // fanns redan
+        case _ => () // fanns redan
 
 def doTransform(): Unit =
   Files.createDirectories(Path.of("data", "marts"))
   runScript("elmix.duckdb", Path.of("transform.sql"))
   println("Klart. Marts i data/marts/.")
 
-/** PCA på timvis produktionsmix (kraftslagsandelar) per zon. Läser fct_gen
-  * ur elmix.duckdb (kräver att transform körts) och skriver tre marts:
-  * pca_explained (förklarad varians per komponent), pca_loadings
-  * (kraftslagens vikt per komponent) och pca_scores (varje timmes
-  * projektion på PC1/PC2 för biplot). */
+/**
+ * PCA på timvis produktionsmix (kraftslagsandelar) per zon. Läser fct_gen ur elmix.duckdb (kräver
+ * att transform körts) och skriver tre marts: pca_explained (förklarad varians per komponent),
+ * pca_loadings (kraftslagens vikt per komponent) och pca_scores (varje timmes projektion på PC1/PC2
+ * för biplot).
+ */
 def doPca(): Unit =
   Files.createDirectories(Path.of("data", "marts"))
   val filters = Kraftslag.zipWithIndex
     .map((k, i) => s"sum(mwh) FILTER (WHERE kraftslag='${k.replace("'", "''")}') AS f$i")
     .mkString(",\n        ")
   val shares = Kraftslag.indices
-    .map(i => s"COALESCE(f$i, 0) / tot").mkString(", ")
+    .map(i => s"COALESCE(f$i, 0) / tot")
+    .mkString(", ")
   val q =
     s"""
       WITH h AS (
@@ -421,7 +485,7 @@ def doPca(): Unit =
   // Ren kärna: PCA + projektion per zon.
   val results = byZone.toSeq.map { (z, obs) =>
     val mat = obs.map(_._2).toVector
-    val p   = pca(mat)
+    val p = pca(mat)
     (z, p, obs.map(_._1).toVector, project(mat, p, 2))
   }
   val explainedRows = results.flatMap { (z, p, _, _) =>
@@ -437,12 +501,21 @@ def doPca(): Unit =
   val scoreRows = results.flatMap { (z, _, ts, sc) =>
     ts.lazyZip(sc).map((t, s) => Seq[Any](z, t, s(0), s(1)))
   }
-  writeTable(Path.of("data", "marts", "pca_explained.parquet"),
-    "zone VARCHAR, pc INTEGER, eigenvalue DOUBLE, explained DOUBLE", explainedRows)
-  writeTable(Path.of("data", "marts", "pca_loadings.parquet"),
-    "zone VARCHAR, pc INTEGER, kraftslag VARCHAR, loading DOUBLE", loadingRows)
-  writeTable(Path.of("data", "marts", "pca_scores.parquet"),
-    "zone VARCHAR, t BIGINT, pc1 DOUBLE, pc2 DOUBLE", scoreRows)
+  writeTable(
+    Path.of("data", "marts", "pca_explained.parquet"),
+    "zone VARCHAR, pc INTEGER, eigenvalue DOUBLE, explained DOUBLE",
+    explainedRows
+  )
+  writeTable(
+    Path.of("data", "marts", "pca_loadings.parquet"),
+    "zone VARCHAR, pc INTEGER, kraftslag VARCHAR, loading DOUBLE",
+    loadingRows
+  )
+  writeTable(
+    Path.of("data", "marts", "pca_scores.parquet"),
+    "zone VARCHAR, t BIGINT, pc1 DOUBLE, pc2 DOUBLE",
+    scoreRows
+  )
   // Loggar förklarad varians (sanity: summerar till ~1 per zon).
   results.foreach { (z, p, _, _) =>
     val pcts = p.explained.take(3).map(r => f"${r * 100}%.0f%%").mkString(", ")
@@ -465,14 +538,18 @@ def writeTable(path: Path, ddl: String, rows: Seq[Seq[Any]]): Unit =
       if i % 5000 == 0 then ps.executeBatch()
     }
     ps.executeBatch()
-    st.execute(s"COPY t TO '${path.toString.replace("'", "''")}' (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22)")
+    st.execute(
+      s"COPY t TO '${path.toString.replace("'", "''")}' (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22)"
+    )
     println(s"  -> $path  (${rows.size} rader)")
   }
 
 // ----------------------------------------------------------------- Test
-/** Självtest av PCA-kärnan mot analytiskt kända egenvärden. Helt fristående
-  * (ingen DuckDB). Kör: mill Elmix.scala test. Fångar bl.a. tecken-/vinkelfel
-  * i Jacobi-rotationen (test 2 har skild diagonal). */
+/**
+ * Självtest av PCA-kärnan mot analytiskt kända egenvärden. Helt fristående (ingen DuckDB). Kör:
+ * mill Elmix.scala test. Fångar bl.a. tecken-/vinkelfel i Jacobi-rotationen (test 2 har skild
+ * diagonal).
+ */
 def runTests(): Unit =
   var fails = 0
   def check(name: String, cond: Boolean, detail: => String = ""): Unit =
@@ -489,8 +566,11 @@ def runTests(): Unit =
   //    Med fel rotationsvinkel (a_pp-a_qq i st.f. a_qq-a_pp) blir det här fel.
   val m2 = Vector(Vector(2.0, 1.0), Vector(1.0, 3.0))
   val exp2 = Vector((5 + math.sqrt(5)) / 2, (5 - math.sqrt(5)) / 2)
-  check("2x2 distinkt diagonal", sortedEig(m2).lazyZip(exp2).forall(approx(_, _)),
-        s"fick ${sortedEig(m2)}, väntade $exp2")
+  check(
+    "2x2 distinkt diagonal",
+    sortedEig(m2).lazyZip(exp2).forall(approx(_, _)),
+    s"fick ${sortedEig(m2)}, väntade $exp2"
+  )
 
   // 3. Rekonstruktion A ≈ V·diag(λ)·Vᵀ för en symmetrisk 3x3.
   val a3 = Vector(Vector(4.0, 1, 2), Vector(1.0, 5, 3), Vector(2.0, 3, 6))
@@ -503,7 +583,7 @@ def runTests(): Unit =
   // 4. Egenvektorer ortonormala: VᵀV = I.
   val vtv = LinAlg.matmul(LinAlg.transpose(v), v)
   val orthoErr = (for i <- 0 until 3; j <- 0 until 3
-                  yield math.abs(vtv(i)(j) - (if i == j then 1.0 else 0.0))).max
+  yield math.abs(vtv(i)(j) - (if i == j then 1.0 else 0.0))).max
   check("ortonormala egenvektorer", orthoErr < 1e-8, s"max fel $orthoErr")
 
   // 5. Trace bevaras: Σλ = trace(A).
@@ -514,23 +594,24 @@ def runTests(): Unit =
   val xs = Vector(0.1, 0.4, 0.7, 0.2, 0.9, 0.5)
   val p = pca(xs.map(x => Vector(x, 1.0 - x)))
   check("singulär: nollegenvärde", approx(p.eigenvalues.min, 0.0), s"min ${p.eigenvalues.min}")
-  check("singulär: inga NaN",
-        (p.eigenvalues ++ p.loadings.flatten).forall(x => !x.isNaN))
+  check("singulär: inga NaN", (p.eigenvalues ++ p.loadings.flatten).forall(x => !x.isNaN))
   check("förklarad summerar till 1", approx(p.explained.sum, 1.0))
 
   if fails == 0 then println("\nAlla PCA-tester gröna.")
   else { System.err.println(s"\n$fails test misslyckades."); sys.exit(1) }
 
 @main
-def main(@mainargs.arg(positional = true) command: String,
-         start: Int = 2016,
-         end: Int = 2026,
-         data: String = "all"): Unit =
+def main(
+    @mainargs.arg(positional = true) command: String,
+    start: Int = 2016,
+    end: Int = 2026,
+    data: String = "all"
+): Unit =
   command match
-    case "fetch"     => doFetch(start, end, data)
+    case "fetch" => doFetch(start, end, data)
     case "transform" => doTransform()
-    case "pca"       => doPca()
-    case "test"      => runTests()
+    case "pca" => doPca()
+    case "test" => runTests()
     case other =>
       System.err.println(s"Okant kommando: $other (fetch | transform | pca | test)")
       sys.exit(1)
