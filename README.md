@@ -43,7 +43,12 @@ DuckDB saknar egenvärdesberäkning ligger detta som ett medvetet undantag
 i Elmix.scala – en ren, funktionell Jacobi-rotation utan externt
 linjäralgebra-beroende (kovariansmatrisen är liten och symmetrisk).
 Resultat: `data/marts/pca_explained.parquet` (förklarad varians per
-komponent) och `pca_loadings.parquet` (kraftslagens vikt per komponent).
+komponent), `pca_loadings.parquet` (kraftslagens vikt per komponent) och
+`pca_scores.parquet` (varje timmes projektion på PC1/PC2, för biplot).
+
+`./mill Elmix.scala test` kör ett fristående självtest av PCA-kärnan
+(egenvärden mot analytiskt kända värden, rekonstruktion VΛVᵀ, ortonormala
+egenvektorer, singulära fall). Kräver ingen data.
 
 ### Röktest utan API-nyckel
 

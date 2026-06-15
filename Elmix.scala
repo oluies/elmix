@@ -251,8 +251,8 @@ def runScript(db: String, scriptPath: Path): Unit =
 
 type Mat = Vector[Vector[Double]]
 
-final case class Pca(eigenvalues: Vector[Double], loadings: Mat,
-                     explained: Vector[Double])
+final case class Pca(mean: Vector[Double], eigenvalues: Vector[Double],
+                     loadings: Mat, explained: Vector[Double])
 
 object LinAlg:
   def identity(n: Int): Mat =
@@ -300,7 +300,7 @@ object LinAlg:
       val (p, q, mx) = largestOffDiag(a)
       if mx < tol || iter >= maxIter then (a, v)
       else
-        val phi = 0.5 * math.atan2(2 * a(p)(q), a(p)(p) - a(q)(q))
+        val phi = 0.5 * math.atan2(2 * a(p)(q), a(q)(q) - a(p)(p))
         val g = givens(n, p, q, math.cos(phi), math.sin(phi))
         loop(matmul(matmul(transpose(g), a), g), matmul(v, g), iter + 1)
     val (a, v) = loop(a0, identity(n), 0)
@@ -308,14 +308,22 @@ object LinAlg:
 
 /** PCA: centrera -> kovarians -> egendekomposition -> sortera fallande. */
 def pca(rows: Mat): Pca =
-  val cov = LinAlg.covariance(LinAlg.center(rows))
-  val (eig, vecs) = LinAlg.jacobi(cov)
+  val means = rows.transpose.map(c => c.sum / c.size)
+  val centered = rows.map(_.lazyZip(means).map(_ - _))
+  val (eig, vecs) = LinAlg.jacobi(LinAlg.covariance(centered))
   val order = eig.indices.sortBy(i => -eig(i)).toVector
   val sortedEig = order.map(eig)
   val total = sortedEig.map(math.max(_, 0.0)).sum
   val explained = sortedEig.map(e => if total > 0 then math.max(e, 0.0) / total else 0.0)
   val loadings = order.map(idx => vecs.map(_(idx)))   // kolumn idx = egenvektor
-  Pca(sortedEig, loadings, explained)
+  Pca(means, sortedEig, loadings, explained)
+
+/** Projektion av observationer på de k första komponenterna (PC-scores). */
+def project(rows: Mat, p: Pca, k: Int): Mat =
+  rows.map { r =>
+    val c = r.lazyZip(p.mean).map(_ - _)
+    Vector.tabulate(k)(j => c.lazyZip(p.loadings(j)).map(_ * _).sum)
+  }
 
 // ----------------------------------------------------------- Orkestrering
 
@@ -372,9 +380,10 @@ def doTransform(): Unit =
   println("Klart. Marts i data/marts/.")
 
 /** PCA på timvis produktionsmix (kraftslagsandelar) per zon. Läser fct_gen
-  * ur elmix.duckdb (kräver att transform körts) och skriver två marts:
-  * pca_explained (förklarad varians per komponent) och pca_loadings
-  * (kraftslagens vikt i varje komponent). */
+  * ur elmix.duckdb (kräver att transform körts) och skriver tre marts:
+  * pca_explained (förklarad varians per komponent), pca_loadings
+  * (kraftslagens vikt per komponent) och pca_scores (varje timmes
+  * projektion på PC1/PC2 för biplot). */
 def doPca(): Unit =
   Files.createDirectories(Path.of("data", "marts"))
   val filters = Kraftslag.zipWithIndex
@@ -394,38 +403,48 @@ def doPca(): Unit =
         sum(mwh) AS tot
         FROM h GROUP BY 1, 2
       )
-      SELECT zone, $shares
+      SELECT zone, epoch_ms(hr) AS t, $shares
       FROM p WHERE tot > 0
-      ORDER BY zone
+      ORDER BY zone, hr
     """
-  // Effektiv kant: läs andelsmatrisen per zon ur DuckDB.
+  // Effektiv kant: läs (timestamp, andelsvektor) per zon ur DuckDB.
   val byZone = scala.collection.mutable.LinkedHashMap
-    .empty[String, scala.collection.mutable.ArrayBuffer[Vector[Double]]]
+    .empty[String, scala.collection.mutable.ArrayBuffer[(Long, Vector[Double])]]
   withConn("elmix.duckdb") { conn =>
     val rs = conn.createStatement().executeQuery(q)
     while rs.next() do
       val z = rs.getString(1)
-      val row = Kraftslag.indices.map(i => rs.getDouble(i + 2)).toVector
-      byZone.getOrElseUpdate(z, scala.collection.mutable.ArrayBuffer.empty) += row
+      val t = rs.getLong(2)
+      val row = Kraftslag.indices.map(i => rs.getDouble(i + 3)).toVector
+      byZone.getOrElseUpdate(z, scala.collection.mutable.ArrayBuffer.empty) += (t -> row)
   }
-  // Ren kärna: PCA per zon.
-  val results = byZone.toSeq.map((z, rows) => z -> pca(rows.toVector))
-  val explainedRows = results.flatMap { (z, p) =>
+  // Ren kärna: PCA + projektion per zon.
+  val results = byZone.toSeq.map { (z, obs) =>
+    val mat = obs.map(_._2).toVector
+    val p   = pca(mat)
+    (z, p, obs.map(_._1).toVector, project(mat, p, 2))
+  }
+  val explainedRows = results.flatMap { (z, p, _, _) =>
     p.explained.zip(p.eigenvalues).zipWithIndex.map { case ((ratio, ev), k) =>
       Seq[Any](z, k + 1, ev, ratio)
     }
   }
-  val loadingRows = results.flatMap { (z, p) =>
+  val loadingRows = results.flatMap { (z, p, _, _) =>
     p.loadings.zipWithIndex.flatMap { (vec, k) =>
       Kraftslag.zip(vec).map((slag, w) => Seq[Any](z, k + 1, slag, w))
     }
+  }
+  val scoreRows = results.flatMap { (z, _, ts, sc) =>
+    ts.lazyZip(sc).map((t, s) => Seq[Any](z, t, s(0), s(1)))
   }
   writeTable(Path.of("data", "marts", "pca_explained.parquet"),
     "zone VARCHAR, pc INTEGER, eigenvalue DOUBLE, explained DOUBLE", explainedRows)
   writeTable(Path.of("data", "marts", "pca_loadings.parquet"),
     "zone VARCHAR, pc INTEGER, kraftslag VARCHAR, loading DOUBLE", loadingRows)
+  writeTable(Path.of("data", "marts", "pca_scores.parquet"),
+    "zone VARCHAR, t BIGINT, pc1 DOUBLE, pc2 DOUBLE", scoreRows)
   // Loggar förklarad varians (sanity: summerar till ~1 per zon).
-  results.foreach { (z, p) =>
+  results.foreach { (z, p, _, _) =>
     val pcts = p.explained.take(3).map(r => f"${r * 100}%.0f%%").mkString(", ")
     println(s"  ${z.replace("_", "")}: PC1-3 = $pcts  (n_komponenter=${p.eigenvalues.size})")
   }
@@ -439,14 +458,68 @@ def writeTable(path: Path, ddl: String, rows: Seq[Seq[Any]]): Unit =
     val cols = ddl.split(",").length
     val ph = Vector.fill(cols)("?").mkString(", ")
     val ps = conn.prepareStatement(s"INSERT INTO t VALUES ($ph)")
+    var i = 0
     rows.foreach { r =>
-      r.zipWithIndex.foreach((v, i) => ps.setObject(i + 1, v))
-      ps.addBatch()
+      r.zipWithIndex.foreach((v, j) => ps.setObject(j + 1, v))
+      ps.addBatch(); i += 1
+      if i % 5000 == 0 then ps.executeBatch()
     }
     ps.executeBatch()
     st.execute(s"COPY t TO '${path.toString.replace("'", "''")}' (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22)")
     println(s"  -> $path  (${rows.size} rader)")
   }
+
+// ----------------------------------------------------------------- Test
+/** Självtest av PCA-kärnan mot analytiskt kända egenvärden. Helt fristående
+  * (ingen DuckDB). Kör: mill Elmix.scala test. Fångar bl.a. tecken-/vinkelfel
+  * i Jacobi-rotationen (test 2 har skild diagonal). */
+def runTests(): Unit =
+  var fails = 0
+  def check(name: String, cond: Boolean, detail: => String = ""): Unit =
+    if cond then println(s"  PASS  $name")
+    else { fails += 1; println(s"  FAIL  $name  $detail") }
+  def approx(a: Double, b: Double, tol: Double = 1e-8): Boolean = math.abs(a - b) <= tol
+  def sortedEig(m: Mat): Vector[Double] = LinAlg.jacobi(m)._1.sortBy(-_)
+
+  // 1. Diagonalmatris -> egenvärden = diagonalen.
+  val d = Vector(Vector(5.0, 0, 0), Vector(0.0, 3, 0), Vector(0.0, 0, 8))
+  check("diagonal 3x3", sortedEig(d).lazyZip(Vector(8.0, 5, 3)).forall(approx(_, _)))
+
+  // 2. 2x2 med skild diagonal: [[2,1],[1,3]] -> egenvärden (5 ± √5)/2.
+  //    Med fel rotationsvinkel (a_pp-a_qq i st.f. a_qq-a_pp) blir det här fel.
+  val m2 = Vector(Vector(2.0, 1.0), Vector(1.0, 3.0))
+  val exp2 = Vector((5 + math.sqrt(5)) / 2, (5 - math.sqrt(5)) / 2)
+  check("2x2 distinkt diagonal", sortedEig(m2).lazyZip(exp2).forall(approx(_, _)),
+        s"fick ${sortedEig(m2)}, väntade $exp2")
+
+  // 3. Rekonstruktion A ≈ V·diag(λ)·Vᵀ för en symmetrisk 3x3.
+  val a3 = Vector(Vector(4.0, 1, 2), Vector(1.0, 5, 3), Vector(2.0, 3, 6))
+  val (ev, v) = LinAlg.jacobi(a3)
+  val lam = Vector.tabulate(3, 3)((i, j) => if i == j then ev(i) else 0.0)
+  val recon = LinAlg.matmul(LinAlg.matmul(v, lam), LinAlg.transpose(v))
+  val reconErr = (for i <- 0 until 3; j <- 0 until 3 yield math.abs(recon(i)(j) - a3(i)(j))).max
+  check("rekonstruktion VΛVᵀ", reconErr < 1e-8, s"max fel $reconErr")
+
+  // 4. Egenvektorer ortonormala: VᵀV = I.
+  val vtv = LinAlg.matmul(LinAlg.transpose(v), v)
+  val orthoErr = (for i <- 0 until 3; j <- 0 until 3
+                  yield math.abs(vtv(i)(j) - (if i == j then 1.0 else 0.0))).max
+  check("ortonormala egenvektorer", orthoErr < 1e-8, s"max fel $orthoErr")
+
+  // 5. Trace bevaras: Σλ = trace(A).
+  check("trace bevaras", approx(ev.sum, a3.indices.map(i => a3(i)(i)).sum))
+
+  // 6. Singulär matris (andelar summerar till 1 -> rangbrist): kovariansen av
+  //    [s, 1-s] är [[v,-v],[-v,v]] med egenvärden 2v och 0.
+  val xs = Vector(0.1, 0.4, 0.7, 0.2, 0.9, 0.5)
+  val p = pca(xs.map(x => Vector(x, 1.0 - x)))
+  check("singulär: nollegenvärde", approx(p.eigenvalues.min, 0.0), s"min ${p.eigenvalues.min}")
+  check("singulär: inga NaN",
+        (p.eigenvalues ++ p.loadings.flatten).forall(x => !x.isNaN))
+  check("förklarad summerar till 1", approx(p.explained.sum, 1.0))
+
+  if fails == 0 then println("\nAlla PCA-tester gröna.")
+  else { System.err.println(s"\n$fails test misslyckades."); sys.exit(1) }
 
 @main
 def main(@mainargs.arg(positional = true) command: String,
@@ -457,6 +530,7 @@ def main(@mainargs.arg(positional = true) command: String,
     case "fetch"     => doFetch(start, end, data)
     case "transform" => doTransform()
     case "pca"       => doPca()
+    case "test"      => runTests()
     case other =>
-      System.err.println(s"Okant kommando: $other (fetch | transform | pca)")
+      System.err.println(s"Okant kommando: $other (fetch | transform | pca | test)")
       sys.exit(1)
