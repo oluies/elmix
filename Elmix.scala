@@ -15,10 +15,13 @@
 // fetch ar inkrementell (befintliga Parquet hoppas over) och pausar 2 s
 // mellan anrop. requests och mainargs ar bundlade i Mill-scripts.
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.sql.{Connection, DriverManager}
 import java.time.{Duration as JDuration, OffsetDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
+import java.util.zip.ZipInputStream
 import scala.xml.{Node, XML}
 
 // ----------------------------------------------------------------- ENTSO-E
@@ -70,7 +73,23 @@ val ReqFmt = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
 def token: String =
   sys.env.getOrElse("ENTSOE_API_KEY", sys.error("Satt ENTSOE_API_KEY forst."))
 
-def apiGet(params: Map[String, String]): Option[scala.xml.Elem] =
+/** Packar upp ENTSO-E:s zip-svar (t.ex. A85) till XML-strangar; en post per fil. */
+def unzipXml(bytes: Array[Byte]): Seq[String] =
+  val zis = new ZipInputStream(new ByteArrayInputStream(bytes))
+  try
+    Iterator.continually(zis.getNextEntry).takeWhile(_ != null).map { _ =>
+      val out = new ByteArrayOutputStream()
+      val buf = new Array[Byte](8192)
+      var n = zis.read(buf)
+      while n != -1 do { out.write(buf, 0, n); n = zis.read(buf) }
+      new String(out.toByteArray, StandardCharsets.UTF_8)
+    }.toList
+  finally zis.close()
+
+/** Hamtar ett API-svar. Stora svar (A85 m.fl.) levereras som zip med ett
+  * eller flera dokument - returnerar ett Elem per dokument, tomt vid
+  * Acknowledgement (ingen data) eller HTTP-fel. */
+def apiGet(params: Map[String, String]): Seq[scala.xml.Elem] =
   val resp = requests.get(
     Base,
     params = (params + ("securityToken" -> token)).toSeq,
@@ -80,11 +99,16 @@ def apiGet(params: Map[String, String]): Option[scala.xml.Elem] =
   )
   if resp.statusCode != 200 then
     System.err.println(s"  HTTP ${resp.statusCode}: ${resp.text().take(200)}")
-    None
+    Nil
   else
-    val xml = XML.loadString(resp.text())
-    // "Ingen data" kommer som Acknowledgement_MarketDocument
-    if xml.label.startsWith("Acknowledgement") then None else Some(xml)
+    val bytes = resp.bytes
+    val isZip = bytes.length >= 2 && bytes(0) == 'P'.toByte && bytes(1) == 'K'.toByte
+    val docs = if isZip then unzipXml(bytes) else Seq(new String(bytes, StandardCharsets.UTF_8))
+    docs.flatMap { s =>
+      val xml = XML.loadString(s)
+      // "Ingen data" kommer som Acknowledgement_MarketDocument
+      if xml.label.startsWith("Acknowledgement") then None else Some(xml)
+    }
 
 def fmtReq(t: OffsetDateTime): String =
   t.withOffsetSameInstant(ZoneOffset.UTC).format(ReqFmt)
@@ -125,7 +149,7 @@ def fetchGeneration(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[
     "documentType" -> "A75", "processType" -> "A16",
     "in_Domain" -> eic,
     "periodStart" -> fmtReq(from), "periodEnd" -> fmtReq(to)
-  )).toSeq.flatMap { xml =>
+  )).flatMap { xml =>
     (xml \ "TimeSeries")
       // produktion har inBiddingZone_Domain; konsumtion har outBiddingZone_Domain
       .filter(ts => (ts \ "inBiddingZone_Domain.mRID").nonEmpty)
@@ -141,7 +165,7 @@ def fetchPrices(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[Row]
     "documentType" -> "A44",
     "in_Domain" -> eic, "out_Domain" -> eic,
     "periodStart" -> fmtReq(from), "periodEnd" -> fmtReq(to)
-  )).toSeq.flatMap { xml =>
+  )).flatMap { xml =>
     finestPeriods(xml \ "TimeSeries").flatMap(expandPeriod(_, "price.amount"))
   }
 
@@ -150,7 +174,7 @@ def fetchImbalance(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[R
   apiGet(Map(
     "documentType" -> "A85", "controlArea_Domain" -> eic,
     "periodStart" -> fmtReq(from), "periodEnd" -> fmtReq(to)
-  )).toSeq.flatMap { xml =>
+  )).flatMap { xml =>
     (xml \ "TimeSeries").flatMap { ts =>
       val cat = (ts \\ "imbalance_Price.category").headOption
         .map(_.text.trim).getOrElse("NA")
@@ -166,7 +190,7 @@ def fetchFlows(inEic: String, outEic: String, border: String,
     "documentType" -> "A11",
     "in_Domain" -> inEic, "out_Domain" -> outEic,
     "periodStart" -> fmtReq(from), "periodEnd" -> fmtReq(to)
-  )).toSeq.flatMap { xml =>
+  )).flatMap { xml =>
     (xml \ "TimeSeries").flatMap(_ \ "Period")
       .flatMap(expandPeriod(_, "quantity"))
       .map(_.copy(key = border))

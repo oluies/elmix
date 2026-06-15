@@ -50,10 +50,14 @@ syntetisk rådata, ren DuckDB.
 
 ## Kända osäkerheter (skrivna ur minnet, ej integrationstestade)
 
-1. EIC-koderna i Zones/Neighbours - stäm av mot arealistan på
-   transparency.entsoe.eu vid oväntat tomma svar.
-2. A85-elementnamn (`imbalance_Price.amount`/`.category`) kan skilja -
-   påverkar inte marts, obalansdata används inte där ännu.
+1. EIC-koderna i Zones/Neighbours - verifierade mot riktig hämtning
+   2023-2026 (nord/syd-prisgradienten stämmer); stäm ändå av mot
+   arealistan på transparency.entsoe.eu vid oväntat tomma svar.
+2. A85-obalans: verifierad mot riktig data. Elementnamnen
+   (`imbalance_Price.amount`/`.category`) stämmer. OBS: ENTSO-E levererar
+   A85 som zip-arkiv - `apiGet` upptäcker PK-magic och packar upp till ett
+   dokument per fil. Sverige kör enprismodell (kategori A04/A05 identiska).
+   Obalansdata hämtas och lagras men används ännu inte i någon mart.
 3. Exakt syntax för mainargs-dispatch i Mill-scripts: kommandot är
    positionellt (`fetch`/`transform`), flaggorna kebab-case. Justera
    @main-signaturen om Mill klagar.
