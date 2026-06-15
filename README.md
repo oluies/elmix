@@ -30,11 +30,20 @@ Kräver Mill 1.1+ och DuckDB CLI.
 export ENTSOE_API_KEY=...                                # nyckel från transparency.entsoe.eu
 ./mill Elmix.scala fetch --start 2016 --end 2026 --data all
 ./mill Elmix.scala transform                             # bygger data/marts/*.parquet
+./mill Elmix.scala pca                                   # PCA på produktionsmixen
 ```
 
 `fetch` är inkrementell (befintliga Parquet hoppas över) och pausar 2 s
 mellan API-anrop. Alla fyra zonerna hämtas alltid; varje zon/år blir en
 egen Parquet-fil.
+
+`pca` läser `fct_gen` ur `elmix.duckdb` (kör `transform` först) och gör en
+PCA på den timvisa produktionsmixen (kraftslagsandelar) per zon. Eftersom
+DuckDB saknar egenvärdesberäkning ligger detta som ett medvetet undantag
+i Elmix.scala – en ren, funktionell Jacobi-rotation utan externt
+linjäralgebra-beroende (kovariansmatrisen är liten och symmetrisk).
+Resultat: `data/marts/pca_explained.parquet` (förklarad varians per
+komponent) och `pca_loadings.parquet` (kraftslagens vikt per komponent).
 
 ### Röktest utan API-nyckel
 

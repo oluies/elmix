@@ -243,10 +243,85 @@ def runScript(db: String, scriptPath: Path): Unit =
     }
   }
 
+// ------------------------------------------------------------------ PCA
+// Funktionell PCA på produktionsmixen. Rena transformationer (center ->
+// kovarians -> Jacobi -> sortering); effekter (DuckDB) bara i kanterna.
+// Kovariansmatrisen är liten och symmetrisk (kraftslag × kraftslag), så
+// Jacobi-rotation ger exakta egenvärden utan externt linjäralgebra-beroende.
+
+type Mat = Vector[Vector[Double]]
+
+final case class Pca(eigenvalues: Vector[Double], loadings: Mat,
+                     explained: Vector[Double])
+
+object LinAlg:
+  def identity(n: Int): Mat =
+    Vector.tabulate(n, n)((i, j) => if i == j then 1.0 else 0.0)
+
+  def transpose(m: Mat): Mat = m.transpose
+
+  def matmul(x: Mat, y: Mat): Mat =
+    val yt = y.transpose
+    x.map(row => yt.map(col => row.lazyZip(col).map(_ * _).sum))
+
+  /** Centrera varje kolumn (dra bort kolumnmedelvärdet). */
+  def center(rows: Mat): Mat =
+    val means = rows.transpose.map(c => c.sum / c.size)
+    rows.map(_.lazyZip(means).map(_ - _))
+
+  /** Stickprovskovarians (kolumn × kolumn) för redan centrerad data. */
+  def covariance(centered: Mat): Mat =
+    val n = centered.size
+    val cols = centered.transpose
+    Vector.tabulate(cols.size, cols.size) { (i, j) =>
+      cols(i).lazyZip(cols(j)).map(_ * _).sum / (n - 1)
+    }
+
+  /** Givens-rotation som identitet utom 2×2-blocket (p,q). */
+  private def givens(n: Int, p: Int, q: Int, c: Double, s: Double): Mat =
+    Vector.tabulate(n, n) { (i, j) =>
+      if i == p && j == p then c
+      else if i == q && j == q then c
+      else if i == p && j == q then s
+      else if i == q && j == p then -s
+      else if i == j then 1.0
+      else 0.0
+    }
+
+  /** Egenvärden/-vektorer för symmetrisk matris via Jacobi-rotationer.
+    * Returnerar (egenvärden, V) där kolumn i i V hör till egenvärde i. */
+  def jacobi(a0: Mat, tol: Double = 1e-12, maxIter: Int = 1000): (Vector[Double], Mat) =
+    val n = a0.size
+    def largestOffDiag(a: Mat): (Int, Int, Double) =
+      val pairs = for i <- 0 until n; j <- i + 1 until n yield (i, j, math.abs(a(i)(j)))
+      pairs.maxByOption(_._3).getOrElse((0, 0, 0.0))
+    @annotation.tailrec
+    def loop(a: Mat, v: Mat, iter: Int): (Mat, Mat) =
+      val (p, q, mx) = largestOffDiag(a)
+      if mx < tol || iter >= maxIter then (a, v)
+      else
+        val phi = 0.5 * math.atan2(2 * a(p)(q), a(p)(p) - a(q)(q))
+        val g = givens(n, p, q, math.cos(phi), math.sin(phi))
+        loop(matmul(matmul(transpose(g), a), g), matmul(v, g), iter + 1)
+    val (a, v) = loop(a0, identity(n), 0)
+    (Vector.tabulate(n)(i => a(i)(i)), v)
+
+/** PCA: centrera -> kovarians -> egendekomposition -> sortera fallande. */
+def pca(rows: Mat): Pca =
+  val cov = LinAlg.covariance(LinAlg.center(rows))
+  val (eig, vecs) = LinAlg.jacobi(cov)
+  val order = eig.indices.sortBy(i => -eig(i)).toVector
+  val sortedEig = order.map(eig)
+  val total = sortedEig.map(math.max(_, 0.0)).sum
+  val explained = sortedEig.map(e => if total > 0 then math.max(e, 0.0) / total else 0.0)
+  val loadings = order.map(idx => vecs.map(_(idx)))   // kolumn idx = egenvektor
+  Pca(sortedEig, loadings, explained)
+
 // ----------------------------------------------------------- Orkestrering
 
 val Raw = Path.of("data", "raw")
 val SleepMs = 2000L
+val Kraftslag = Vector("Vind", "Sol", "Vattenkraft", "Kärnkraft", "Kraftvärme/övr")
 
 def yearSpan(year: Int): (OffsetDateTime, OffsetDateTime) =
   val s = OffsetDateTime.of(year, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)
@@ -296,6 +371,83 @@ def doTransform(): Unit =
   runScript("elmix.duckdb", Path.of("transform.sql"))
   println("Klart. Marts i data/marts/.")
 
+/** PCA på timvis produktionsmix (kraftslagsandelar) per zon. Läser fct_gen
+  * ur elmix.duckdb (kräver att transform körts) och skriver två marts:
+  * pca_explained (förklarad varians per komponent) och pca_loadings
+  * (kraftslagens vikt i varje komponent). */
+def doPca(): Unit =
+  Files.createDirectories(Path.of("data", "marts"))
+  val filters = Kraftslag.zipWithIndex
+    .map((k, i) => s"sum(mwh) FILTER (WHERE kraftslag='${k.replace("'", "''")}') AS f$i")
+    .mkString(",\n        ")
+  val shares = Kraftslag.indices
+    .map(i => s"COALESCE(f$i, 0) / tot").mkString(", ")
+  val q =
+    s"""
+      WITH h AS (
+        SELECT zone, date_trunc('hour', ts) AS hr, kraftslag, sum(mwh) AS mwh
+        FROM fct_gen GROUP BY 1, 2, 3
+      ),
+      p AS (
+        SELECT zone, hr,
+        $filters,
+        sum(mwh) AS tot
+        FROM h GROUP BY 1, 2
+      )
+      SELECT zone, $shares
+      FROM p WHERE tot > 0
+      ORDER BY zone
+    """
+  // Effektiv kant: läs andelsmatrisen per zon ur DuckDB.
+  val byZone = scala.collection.mutable.LinkedHashMap
+    .empty[String, scala.collection.mutable.ArrayBuffer[Vector[Double]]]
+  withConn("elmix.duckdb") { conn =>
+    val rs = conn.createStatement().executeQuery(q)
+    while rs.next() do
+      val z = rs.getString(1)
+      val row = Kraftslag.indices.map(i => rs.getDouble(i + 2)).toVector
+      byZone.getOrElseUpdate(z, scala.collection.mutable.ArrayBuffer.empty) += row
+  }
+  // Ren kärna: PCA per zon.
+  val results = byZone.toSeq.map((z, rows) => z -> pca(rows.toVector))
+  val explainedRows = results.flatMap { (z, p) =>
+    p.explained.zip(p.eigenvalues).zipWithIndex.map { case ((ratio, ev), k) =>
+      Seq[Any](z, k + 1, ev, ratio)
+    }
+  }
+  val loadingRows = results.flatMap { (z, p) =>
+    p.loadings.zipWithIndex.flatMap { (vec, k) =>
+      Kraftslag.zip(vec).map((slag, w) => Seq[Any](z, k + 1, slag, w))
+    }
+  }
+  writeTable(Path.of("data", "marts", "pca_explained.parquet"),
+    "zone VARCHAR, pc INTEGER, eigenvalue DOUBLE, explained DOUBLE", explainedRows)
+  writeTable(Path.of("data", "marts", "pca_loadings.parquet"),
+    "zone VARCHAR, pc INTEGER, kraftslag VARCHAR, loading DOUBLE", loadingRows)
+  // Loggar förklarad varians (sanity: summerar till ~1 per zon).
+  results.foreach { (z, p) =>
+    val pcts = p.explained.take(3).map(r => f"${r * 100}%.0f%%").mkString(", ")
+    println(s"  ${z.replace("_", "")}: PC1-3 = $pcts  (n_komponenter=${p.eigenvalues.size})")
+  }
+  println("Klart. PCA-marts i data/marts/.")
+
+/** Skriver godtyckliga rader till en Parquet-fil via en temporär DuckDB-tabell. */
+def writeTable(path: Path, ddl: String, rows: Seq[Seq[Any]]): Unit =
+  withConn(":memory:") { conn =>
+    val st = conn.createStatement()
+    st.execute(s"CREATE TABLE t ($ddl)")
+    val cols = ddl.split(",").length
+    val ph = Vector.fill(cols)("?").mkString(", ")
+    val ps = conn.prepareStatement(s"INSERT INTO t VALUES ($ph)")
+    rows.foreach { r =>
+      r.zipWithIndex.foreach((v, i) => ps.setObject(i + 1, v))
+      ps.addBatch()
+    }
+    ps.executeBatch()
+    st.execute(s"COPY t TO '${path.toString.replace("'", "''")}' (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22)")
+    println(s"  -> $path  (${rows.size} rader)")
+  }
+
 @main
 def main(@mainargs.arg(positional = true) command: String,
          start: Int = 2016,
@@ -304,6 +456,7 @@ def main(@mainargs.arg(positional = true) command: String,
   command match
     case "fetch"     => doFetch(start, end, data)
     case "transform" => doTransform()
+    case "pca"       => doPca()
     case other =>
-      System.err.println(s"Okant kommando: $other (fetch | transform)")
+      System.err.println(s"Okant kommando: $other (fetch | transform | pca)")
       sys.exit(1)

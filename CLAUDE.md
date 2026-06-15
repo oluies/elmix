@@ -2,9 +2,11 @@
 
 Mill single-file Scala-script (Mill 1.1+, YAML-huvud med `//| mvnDeps`) som
 hämtar elmarknadsdata för SE1-SE4 från ENTSO-E och bygger analysunderlag
-(Parquet-marts) med DuckDB. All analys ligger i transform.sql; Elmix.scala
-gör endast hämtning, parsning och orkestrering. Ändra inte den
-ansvarsfördelningen.
+(Parquet-marts) med DuckDB. All SQL-analys ligger i transform.sql;
+Elmix.scala gör hämtning, parsning och orkestrering. Ändra inte den
+ansvarsfördelningen. Enda undantaget är `pca`-kommandot: PCA kräver
+egenvärdesberäkning som DuckDB saknar, så den ligger som ren funktionell
+Scala (Jacobi-rotation, inget externt beroende) i Elmix.scala.
 
 ## Kommandon
 
