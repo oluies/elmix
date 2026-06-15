@@ -23,3 +23,6 @@ trait EChartsInstance extends js.Object:
 object Globals extends js.Object:
   val elmixCapture: js.Array[js.Dynamic] = js.native
   val elmixPriceWind: js.Array[js.Dynamic] = js.native
+  val elmixPcaExplained: js.Array[js.Dynamic] = js.native
+  val elmixPcaLoadings: js.Array[js.Dynamic] = js.native
+  val elmixPcaScores: js.Array[js.Dynamic] = js.native
