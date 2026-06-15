@@ -70,10 +70,14 @@ eller färre zoner kräver inga kodändringar.
 
 ## Status
 
-- Kompilerar och är röktestat med syntetisk data (SE1–SE4).
-- Skarp hämtning mot ENTSO-E är **inte** integrationstestad ännu:
-  EIC-koderna, A85-parsningen och Neighbours-kartan verifieras först vid
-  riktig hämtning. Se "Kända osäkerheter" i `CLAUDE.md`.
+- Kompilerar, röktestat med syntetisk data och **skarpkört mot ENTSO-E**
+  för 2023–2026 (generation, prices, flows för SE1–SE4). EIC-koderna,
+  MTU-bytet okt 2025 (tim → kvart) och Neighbours-kartan är därmed
+  verifierade mot riktig data – nord/syd-prisgradienten, vindens
+  capture rate < 1 och kärnkraftens ~1 (endast SE3) stämmer.
+- Obalans (A85) hämtas **inte**: ENTSO-E-svaret är inte giltig XML med
+  nuvarande parametrar, och obalansdata används ändå inte i någon mart.
+  Se "Kända osäkerheter" i `CLAUDE.md`.
 
 ## Publicering
 

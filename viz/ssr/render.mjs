@@ -100,7 +100,7 @@ const html = `<!doctype html>
            font-size: 13px; color: #666; }
   footer a { color: #36c; }
 </style></head><body>
-<h1>Elmix – SE1–SE4 (syntetisk demo-data, prerenderad SVG)</h1>
+<h1>Elmix – SE1–SE4 (ENTSO-E 2023–2026, prerenderad SVG)</h1>
 ${parts.join('\n')}
 <footer>© 2026 Örjan Lundberg ·
   Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a></footer>

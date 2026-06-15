@@ -185,9 +185,9 @@ HAVING COUNT(*) >= 4;
 ------------------------------------------------------------------
 -- Exportera marts som Parquet för widgeten
 ------------------------------------------------------------------
-COPY mart_mix_monthly   TO 'data/marts/mix_monthly.parquet'   (FORMAT parquet);
-COPY mart_pris_vs_vind  TO 'data/marts/pris_vs_vind.parquet'  (FORMAT parquet);
-COPY mart_capture       TO 'data/marts/capture.parquet'       (FORMAT parquet);
-COPY mart_balans_h      TO 'data/marts/balans_h.parquet'      (FORMAT parquet);
-COPY mart_changepoints  TO 'data/marts/changepoints.parquet'  (FORMAT parquet);
-COPY mart_kvartsvol     TO 'data/marts/kvartsvol.parquet'     (FORMAT parquet);
+COPY mart_mix_monthly   TO 'data/marts/mix_monthly.parquet'   (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22);
+COPY mart_pris_vs_vind  TO 'data/marts/pris_vs_vind.parquet'  (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22);
+COPY mart_capture       TO 'data/marts/capture.parquet'       (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22);
+COPY mart_balans_h      TO 'data/marts/balans_h.parquet'      (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22);
+COPY mart_changepoints  TO 'data/marts/changepoints.parquet'  (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22);
+COPY mart_kvartsvol     TO 'data/marts/kvartsvol.parquet'     (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22);

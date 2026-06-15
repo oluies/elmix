@@ -136,7 +136,7 @@ object Main:
   def appElement(): HtmlElement =
     val zoneVar = Var(zones.lastOption.getOrElse("SE_4"))
     div(
-      h1("Elmix – SE1–SE4 (syntetisk demo-data)"),
+      h1("Elmix – SE1–SE4 (ENTSO-E 2023–2026)"),
       h2("Capture rate per kraftslag"),
       chartDiv(captureHeight) { (chart, _) => chart.setOption(captureOption()) },
       h2("Pris vs vind, timupplöst"),

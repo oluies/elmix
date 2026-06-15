@@ -199,7 +199,7 @@ def writeParquet(path: Path, zone: String, keyCol: String, valCol: String,
       if i % 5000 == 0 then ps.executeBatch()
     }
     ps.executeBatch()
-    st.execute(s"COPY t TO '${path.toString.replace("'", "''")}' (FORMAT parquet)")
+    st.execute(s"COPY t TO '${path.toString.replace("'", "''")}' (FORMAT parquet, COMPRESSION zstd, COMPRESSION_LEVEL 22)")
     println(s"  -> $path  (${rows.size} rader)")
   }
 
