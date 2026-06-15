@@ -8,6 +8,10 @@
   footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd;
            font-size: 13px; color: #666; }
   footer a { color: #36c; }
+  .forklaring { margin-top: 32px; background: #f7f9fc; border: 1px solid #e3e8ef;
+                border-radius: 8px; padding: 4px 20px 12px; font-size: 14px;
+                line-height: 1.5; }
+  .forklaring li { margin: 5px 0; }
 </style></head><body>
 <h1>Elmix – SE1–SE4 (ENTSO-E 2023–2026, prerenderad SVG)</h1>
 <h2>Capture rate per kraftslag</h2>
@@ -7130,6 +7134,28 @@ fill:rgba(0,0,0,0);
 
 </style>
 </svg>
+<section class="forklaring">
+  <h2>Så läser du PCA-diagrammen</h2>
+  <p>PCA (principalkomponentanalys) sammanfattar hur produktionsmixen
+  varierar över tid. Varje timme beskrivs av fem andelar – Vind, Sol,
+  Vattenkraft, Kärnkraft och Kraftvärme/övr – och PCA hittar de riktningar
+  i det rummet där mixen varierar mest.</p>
+  <ul>
+    <li><strong>PC1</strong> är den kombination av kraftslag som fångar
+    <em>mest</em> av variationen; PC2 fångar näst mest och är oberoende av PC1.</li>
+    <li><strong>Loadings</strong> (heatmappen) är vikterna – vilka kraftslag
+    som bygger upp varje komponent. Kraftslag med motsatt tecken byter mot
+    varandra: i SE3 betyder PC1 <em>vind upp ⇔ kärnkraft/vatten ner</em>.</li>
+    <li><strong>Förklarad varians</strong> (scree) visar hur stor andel av
+    all variation varje komponent fångar. I SE1/SE2 räcker en enda axel
+    (~100 %) – mixen svänger nästan bara mellan vatten och vind.</li>
+    <li><strong>Tecknet är godtyckligt</strong>; det är kontrasten mellan
+    kraftslagen som betyder något, inte om vikten är plus eller minus.</li>
+    <li><strong>Biplotten</strong> visar varje dygns PC1/PC2-värde (hur mixen
+    låg den dagen), färgat per år, med loading-vektorer som pekar åt
+    respektive kraftslags håll.</li>
+  </ul>
+</section>
 <footer>© 2026 Örjan Lundberg ·
   Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
   Byggd med <a href="https://laminar.dev">Scala.js + Laminar</a></footer>
