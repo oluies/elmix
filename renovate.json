@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "schedule": ["before 6am on monday"],
+  "packageRules": [
+    {
+      "description": "Gruppera Scala/Scala.js-uppdateringar",
+      "matchManagers": ["custom.regex"],
+      "groupName": "scala-beroenden"
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Mill mvnDeps i Elmix.scala (Java-coords med enkelt kolon)",
+      "customType": "regex",
+      "fileMatch": ["^Elmix\\.scala$"],
+      "matchStrings": [
+        "org\\.duckdb:duckdb_jdbc:(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "org.duckdb:duckdb_jdbc",
+      "datasourceTemplate": "maven"
+    },
+    {
+      "description": "scala-xml i Elmix.scala (:: -> Scala 3-suffix _3)",
+      "customType": "regex",
+      "fileMatch": ["^Elmix\\.scala$"],
+      "matchStrings": [
+        "org\\.scala-lang\\.modules::scala-xml:(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "org.scala-lang.modules:scala-xml_3",
+      "datasourceTemplate": "maven"
+    },
+    {
+      "description": "Laminar i viz/build.mill (Scala.js-suffix _sjs1_3)",
+      "customType": "regex",
+      "fileMatch": ["(^|/)build\\.mill$"],
+      "matchStrings": [
+        "com\\.raquo::laminar::(?<currentValue>[0-9][0-9.]+)"
+      ],
+      "depNameTemplate": "com.raquo:laminar_sjs1_3",
+      "datasourceTemplate": "maven"
+    }
+  ]
+}

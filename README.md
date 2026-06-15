@@ -1,5 +1,7 @@
 # elmix
 
+[![CI](https://github.com/oluies/elmix/actions/workflows/ci.yml/badge.svg)](https://github.com/oluies/elmix/actions/workflows/ci.yml)
+
 Hämtar elmarknadsdata för de fyra svenska elområdena (SE1–SE4) från
 ENTSO-E och bygger analysunderlag (Parquet-marts) med DuckDB, plus en
 webbvisualisering i Scala.js/Laminar med ECharts.
@@ -99,6 +101,22 @@ eller färre zoner kräver inga kodändringar.
 `./viz/publish-pages.sh` bygger den optimerade appen (`fullLinkJS`),
 prerendrerar SVG-rapporten och paketerar allt i `docs/`, som GitHub
 Pages serverar från `main`.
+
+## Utveckling och CI
+
+`./mill` är ett bootstrap-skript (pinnar Mill via `.mill-version`), så
+varken lokal installation eller CI behöver ha Mill förinstallerat.
+
+GitHub Actions (`.github/workflows/ci.yml`) kör vid varje push/PR:
+- **Bygg + test** – kompilerar rotscriptet och viz, kör PCA-självtestet.
+- **Scalafmt** – formatkontroll (`.scalafmt.conf`).
+- **Länkkontroll** – lychee mot README och rapporterna.
+
+Beroenden hålls uppdaterade av **Renovate** (`renovate.json`): npm i
+`viz/ssr` (echarts) och GitHub Actions stöds direkt; Mill-beroendena
+(duckdb_jdbc, scala-xml, laminar) täcks via custom regex-managers
+eftersom Renovate saknar inbyggt Mill-stöd. Aktivera genom att installera
+Renovate-appen på repot.
 
 ---
 © 2026 Örjan Lundberg

@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Mill-versionen pinnas via env så att både rotscriptet och viz/ använder samma.
+env:
+  MILL_VERSION: "1.1.6"
+  FORCE_COLOR: "1"
+
+jobs:
+  build-test:
+    name: Bygg + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+            out
+            viz/out
+          key: mill-${{ runner.os }}-${{ hashFiles('Elmix.scala', 'viz/build.mill', '.mill-version') }}
+          restore-keys: mill-${{ runner.os }}-
+      - name: Kompilera rotscriptet
+        run: ./mill Elmix.scala:compile
+      - name: PCA-självtest
+        run: ./mill Elmix.scala test
+      - name: Kompilera viz (Scala.js)
+        run: cd viz && ../mill app.compile
+
+  lint:
+    name: Scalafmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: coursier/setup-action@v1
+        with:
+          apps: scalafmt
+      - name: Kontrollera formatering
+        run: scalafmt --check Elmix.scala viz/app/src
+
+  links:
+    name: Länkkontroll
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kontrollera länkar
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress --max-retries 2 --accept 200,429
+            README.md docs/index.html docs/prerendered.html
+          fail: true
