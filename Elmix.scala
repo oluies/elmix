@@ -494,23 +494,29 @@ def doPca(): Unit =
       val row = Kraftslag.indices.map(i => rs.getDouble(i + 3)).toVector
       byZone.getOrElseUpdate(z, scala.collection.mutable.ArrayBuffer.empty) += (t -> row)
   }
-  // Ren kärna: PCA + projektion per zon.
+  // Ren kärna: PCA + projektion per zon. Kraftslag som saknas i zonen (t.ex.
+  // kärnkraft/sol i SE1, identiskt noll -> noll varians) utesluts; annars
+  // skulle de bli triviala spök-egenvektorer med loading 1.0 på en komponent
+  // som förklarar 0 % varians.
   val results = byZone.toSeq.map { (z, obs) =>
-    val mat = obs.map(_._2).toVector
+    val full = obs.map(_._2).toVector
+    val present = Kraftslag.indices.filter(i => full.map(_(i)).distinct.size > 1).toVector
+    val fuels = present.map(Kraftslag)
+    val mat = full.map(r => present.map(r))
     val p = pca(mat)
-    (z, p, obs.map(_._1).toVector, project(mat, p, 2))
+    (z, fuels, p, obs.map(_._1).toVector, project(mat, p, 2))
   }
-  val explainedRows = results.flatMap { (z, p, _, _) =>
+  val explainedRows = results.flatMap { (z, _, p, _, _) =>
     p.explained.zip(p.eigenvalues).zipWithIndex.map { case ((ratio, ev), k) =>
       Seq[Any](z, k + 1, ev, ratio)
     }
   }
-  val loadingRows = results.flatMap { (z, p, _, _) =>
+  val loadingRows = results.flatMap { (z, fuels, p, _, _) =>
     p.loadings.zipWithIndex.flatMap { (vec, k) =>
-      Kraftslag.zip(vec).map((slag, w) => Seq[Any](z, k + 1, slag, w))
+      fuels.zip(vec).map((slag, w) => Seq[Any](z, k + 1, slag, w))
     }
   }
-  val scoreRows = results.flatMap { (z, _, ts, sc) =>
+  val scoreRows = results.flatMap { (z, _, _, ts, sc) =>
     ts.lazyZip(sc).map((t, s) => Seq[Any](z, t, s(0), s(1)))
   }
   writeTable(
@@ -529,9 +535,9 @@ def doPca(): Unit =
     scoreRows
   )
   // Loggar förklarad varians (sanity: summerar till ~1 per zon).
-  results.foreach { (z, p, _, _) =>
+  results.foreach { (z, fuels, p, _, _) =>
     val pcts = p.explained.take(3).map(r => f"${r * 100}%.0f%%").mkString(", ")
-    println(s"  ${z.replace("_", "")}: PC1-3 = $pcts  (n_komponenter=${p.eigenvalues.size})")
+    println(s"  ${z.replace("_", "")}: PC1-3 = $pcts  (kraftslag=${fuels.size})")
   }
   println("Klart. PCA-marts i data/marts/.")
 
