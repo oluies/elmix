@@ -40,6 +40,35 @@ COPY (
            year(make_timestamp(t * 1000))
   ORDER BY zone, date_trunc('day', make_timestamp(t * 1000))
 ) TO 'viz/data/pca_scores.json' (FORMAT json, ARRAY true);
+-- 15-min-grunddata för klientsidig PCA: mixandelar + day-ahead-pris per
+-- zon/kvart (från 2 dec 2025). Webbläsaren räknar PCA på vald delperiod.
+COPY (
+  WITH gen AS (
+    SELECT zone, ts,
+      sum(mwh) FILTER (WHERE kraftslag='Vind')           AS vind,
+      sum(mwh) FILTER (WHERE kraftslag='Sol')            AS sol,
+      sum(mwh) FILTER (WHERE kraftslag='Vattenkraft')    AS vatten,
+      sum(mwh) FILTER (WHERE kraftslag='Kärnkraft')      AS karn,
+      sum(mwh) FILTER (WHERE kraftslag='Kraftvärme/övr') AS kraftv,
+      sum(mwh) AS tot
+    FROM fct_gen WHERE ts >= TIMESTAMPTZ '2025-12-02 00:00:00+01'
+    GROUP BY zone, ts
+  ),
+  pr AS (
+    SELECT zone, ts, avg(eur_mwh) AS eur
+    FROM read_parquet('data/raw/prices/SE_*.parquet')
+    WHERE ts >= TIMESTAMPTZ '2025-12-02 00:00:00+01' GROUP BY zone, ts
+  )
+  SELECT gen.zone AS z, epoch_ms(gen.ts) AS t,
+         round(COALESCE(vind, 0) / tot, 4)   AS v,
+         round(COALESCE(sol, 0) / tot, 4)    AS s,
+         round(COALESCE(vatten, 0) / tot, 4) AS va,
+         round(COALESCE(karn, 0) / tot, 4)   AS k,
+         round(COALESCE(kraftv, 0) / tot, 4) AS kv,
+         round(pr.eur, 1) AS p
+  FROM gen LEFT JOIN pr USING (zone, ts)
+  WHERE tot > 0 ORDER BY gen.zone, gen.ts
+) TO 'viz/data/elmix15.json' (FORMAT json, ARRAY true);
 SQL
 
 {
@@ -53,6 +82,8 @@ SQL
   cat viz/data/pca_loadings.json
   printf ';\nwindow.elmixPcaScores = '
   cat viz/data/pca_scores.json
+  printf ';\nwindow.elmix15 = '
+  cat viz/data/elmix15.json
   printf ';\n'
 } > viz/data/elmix-data.js
 

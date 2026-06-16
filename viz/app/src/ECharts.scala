@@ -16,7 +16,10 @@ object ECharts extends js.Object:
 @js.native
 trait EChartsInstance extends js.Object:
   def setOption(option: js.Any): Unit = js.native
+  def setOption(option: js.Any, notMerge: Boolean): Unit = js.native
   def resize(): Unit = js.native
+  def on(event: String, handler: js.Function1[js.Dynamic, Unit]): Unit = js.native
+  def getOption(): js.Dynamic = js.native
 
 /** Data injicerad av data/elmix-data.js (window.elmixCapture / elmixPriceWind). */
 @js.native
@@ -27,3 +30,4 @@ object Globals extends js.Object:
   val elmixPcaExplained: js.Array[js.Dynamic] = js.native
   val elmixPcaLoadings: js.Array[js.Dynamic] = js.native
   val elmixPcaScores: js.Array[js.Dynamic] = js.native
+  val elmix15: js.Array[js.Dynamic] = js.native

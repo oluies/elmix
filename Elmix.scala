@@ -403,6 +403,9 @@ def project(rows: Mat, p: Pca, k: Int): Mat =
 val Raw = Path.of("data", "raw")
 val SleepMs = 2000L
 val Kraftslag = Vector("Vind", "Sol", "Vattenkraft", "Kärnkraft", "Kraftvärme/övr")
+// 15-min-eran: generationen rapporteras i kvart från 2 dec 2025 (priser från
+// 1 okt, men generationen binder). Hela 15-min-rapporten utgår härifrån.
+val FifteenMinStart = "2025-12-02 00:00:00+01"
 
 def yearSpan(year: Int): (OffsetDateTime, OffsetDateTime) =
   val s = OffsetDateTime.of(year, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)
@@ -470,8 +473,8 @@ def doPca(): Unit =
   val q =
     s"""
       WITH h AS (
-        SELECT zone, date_trunc('hour', ts) AS hr, kraftslag, sum(mwh) AS mwh
-        FROM fct_gen GROUP BY 1, 2, 3
+        SELECT zone, ts AS hr, kraftslag, sum(mwh) AS mwh
+        FROM fct_gen WHERE ts >= TIMESTAMPTZ '$FifteenMinStart' GROUP BY 1, 2, 3
       ),
       p AS (
         SELECT zone, hr,
