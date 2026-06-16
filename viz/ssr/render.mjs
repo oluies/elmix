@@ -3,8 +3,7 @@
 import * as echarts from 'echarts'
 import { readFileSync, writeFileSync } from 'node:fs'
 
-const caps = JSON.parse(readFileSync('../data/capture.json', 'utf8'))
-const pws  = JSON.parse(readFileSync('../data/pricewind.json', 'utf8'))
+const e15 = JSON.parse(readFileSync('../data/elmix15.json', 'utf8'))
 const pcaExp   = JSON.parse(readFileSync('../data/pca_explained.json', 'utf8'))
 const pcaLoad  = JSON.parse(readFileSync('../data/pca_loadings.json', 'utf8'))
 const pcaScore = JSON.parse(readFileSync('../data/pca_scores.json', 'utf8'))
@@ -22,68 +21,32 @@ function svg(option, width, height) {
   return out
 }
 
-// ---- capture: small multiples ---------------------------------------------
-const zones = [...new Set(caps.map(c => c.zone))].sort()
-const years = [...new Set(caps.map(c => c.yr))].sort()
-const slag  = [...new Set(caps.map(c => c.kraftslag))].sort()
-
-// 2 kolumner, sa manga rader som behovs (SE1-SE4 -> 2x2)
+// Layout för PCA-small-multiples.
+const zones = [...new Set(pcaExp.map(e => e.zone))].sort()
 const COLS = 2, ROW_H = 256
 const col = i => i % COLS, row = i => Math.floor(i / COLS)
 const rows = Math.ceil(zones.length / COLS)
-const captureHeight = 64 + rows * ROW_H + 20
 
-// Dynamiska y-granser sa inget kraftslag klipps bort (vattenkraft >1).
-const crVals = caps.map(c => c.capture_rate).filter(v => v != null)
-const yMin = Math.floor((Math.min(...crVals, 1.0) - 0.1) * 10) / 10
-const yMax = Math.ceil((Math.max(...crVals, 1.0) + 0.1) * 10) / 10
-
-const captureOption = {
-  animation: false,
-  title: zones.map((z, i) => ({
-    text: z.replace('_', ''), left: `${8 + col(i) * 48 + 19}%`, top: 38 + row(i) * ROW_H,
-    textAlign: 'center', textStyle: { fontSize: 13 }
-  })),
-  legend: { top: 0, data: slag },
-  grid:  zones.map((_, i) => ({ left: `${8 + col(i) * 48}%`, width: '38%',
-                                top: 64 + row(i) * ROW_H, height: 180 })),
-  xAxis: zones.map((_, i) => ({ type: 'category', gridIndex: i, data: years.map(String) })),
-  yAxis: zones.map((_, i) => ({ type: 'value', gridIndex: i, min: yMin, max: yMax,
-                                name: i === 0 ? 'capture rate' : '' })),
-  series: zones.flatMap((z, i) => slag.map(s => ({
-    name: s, type: 'line', xAxisIndex: i, yAxisIndex: i,
-    itemStyle: { color: FARG[s] ?? '#999' },
-    data: years.map(y => caps.find(c => c.zone === z && c.kraftslag === s && c.yr === y)?.capture_rate ?? null),
-    markLine: { silent: true, symbol: 'none',
-                lineStyle: { type: 'dashed', color: '#aaa' },
-                label: { show: i === zones.length - 1, formatter: '1.0' },
-                data: [{ yAxis: 1.0 }] }
-  })))
-}
-
-// ---- pris vs vind: statiskt forzoomad till senaste 14 dygnen ---------------
+// ---- pris & vindandel (15-min, hela perioden) -----------------------------
 function priceWindOption(zone) {
-  const rows = pws.filter(r => r.zone === zone)
-  const maxT = Math.max(...rows.map(r => r.t))
-  const from = maxT - 14 * 24 * 3600 * 1000
-  const win  = rows.filter(r => r.t >= from)
+  const rs = e15.filter(r => r.z === zone)
   return {
     animation: false,
-    title: { text: `Day-ahead-pris vs vindproduktion – ${zone.replace('_', '')} (senaste 14 dygnen)`, left: 'center' },
-    legend: { top: 34 },
-    grid: { top: 80, bottom: 48, left: 64, right: 64 },
+    title: { text: `Pris & vindandel – ${zone.replace('_', '')} (15-min)`, left: 'center', textStyle: { fontSize: 13 } },
+    legend: { top: 26 },
+    grid: { top: 64, bottom: 40, left: 60, right: 60 },
     xAxis: { type: 'time' },
     yAxis: [
       { type: 'value', name: 'EUR/MWh' },
-      { type: 'value', name: 'MWh/h', splitLine: { show: false } }
+      { type: 'value', name: 'vind %', min: 0, max: 100, splitLine: { show: false } }
     ],
     series: [
-      { name: 'Pris (EUR/MWh)', type: 'line', yAxisIndex: 0, showSymbol: false,
-        itemStyle: { color: '#c0392b' }, lineStyle: { width: 1.2 },
-        data: win.map(r => [r.t, r.eur_mwh]) },
-      { name: 'Vind (MWh/h)', type: 'line', yAxisIndex: 1, showSymbol: false,
-        itemStyle: { color: '#5470c6' }, areaStyle: { opacity: 0.22 },
-        lineStyle: { width: 1 }, data: win.map(r => [r.t, r.wind_mwh]) }
+      { name: 'Pris (EUR/MWh)', type: 'line', yAxisIndex: 0, showSymbol: false, sampling: 'lttb',
+        itemStyle: { color: '#c0392b' }, lineStyle: { width: 0.8 },
+        data: rs.map(r => [r.t, r.p]) },
+      { name: 'Vindandel (%)', type: 'line', yAxisIndex: 1, showSymbol: false, sampling: 'lttb',
+        itemStyle: { color: '#5470c6' }, areaStyle: { opacity: 0.18 },
+        lineStyle: { width: 0.8 }, data: rs.map(r => [r.t, Math.round(r.v * 1000) / 10]) }
     ]
   }
 }
@@ -171,11 +134,9 @@ function biplotOption(zone) {
 }
 
 const parts = [
-  '<h2>Capture rate per kraftslag</h2>',
-  svg(captureOption, 1060, captureHeight),
   ...zones.flatMap(z => [
-    `<h2>Pris vs vind – ${z.replace('_', '')}</h2>`,
-    svg(priceWindOption(z), 1060, 420)
+    `<h2>Pris &amp; vindandel – ${z.replace('_', '')}</h2>`,
+    svg(priceWindOption(z), 1060, 360)
   ]),
   '<h2>PCA på produktionsmixen – förklarad varians (scree)</h2>',
   svg(screeOption, 1060, pcaHeight),
@@ -202,14 +163,16 @@ const html = `<!doctype html>
                 line-height: 1.5; }
   .forklaring li { margin: 5px 0; }
 </style></head><body>
-<h1>Elmix – SE1–SE4 (ENTSO-E 2023–2026, prerenderad SVG)</h1>
+<h1>Elmix – SE1–SE4 (ENTSO-E, 15-min, från 2 dec 2025, prerenderad SVG)</h1>
+<p>Statisk variant. Den <a href="index.html">interaktiva rapporten</a> låter
+dig välja zon och tidsperiod och räknar om PCA:n live i webbläsaren.</p>
 ${parts.join('\n')}
 <section class="forklaring">
   <h2>Så läser du PCA-diagrammen</h2>
-  <p>PCA (principalkomponentanalys) sammanfattar hur produktionsmixen
-  varierar över tid. Varje timme beskrivs av fem andelar – Vind, Sol,
-  Vattenkraft, Kärnkraft och Kraftvärme/övr – och PCA hittar de riktningar
-  i det rummet där mixen varierar mest.</p>
+  <p>PCA (principalkomponentanalys) sammanfattar hur den kvartsvisa
+  produktionsmixen varierar över tid. Varje kvart beskrivs av kraftslagens
+  andelar – Vind, Sol, Vattenkraft, Kärnkraft, Kraftvärme/övr – och PCA
+  hittar de riktningar där mixen varierar mest.</p>
   <ul>
     <li><strong>PC1</strong> är den kombination av kraftslag som fångar
     <em>mest</em> av variationen; PC2 fångar näst mest och är oberoende av PC1.</li>
@@ -221,9 +184,8 @@ ${parts.join('\n')}
     (~100 %) – mixen svänger nästan bara mellan vatten och vind.</li>
     <li><strong>Tecknet är godtyckligt</strong>; det är kontrasten mellan
     kraftslagen som betyder något, inte om vikten är plus eller minus.</li>
-    <li><strong>Biplotten</strong> visar varje dygns PC1/PC2-värde (hur mixen
-    låg den dagen), färgat per år, med loading-vektorer som pekar åt
-    respektive kraftslags håll.</li>
+    <li><strong>Biplotten</strong> visar PC1/PC2 per dygn. I den interaktiva
+    vyn är punkterna färgade efter pris, så man ser vilka mix-lägen som är dyra.</li>
   </ul>
 </section>
 <footer>© 2026 Örjan Lundberg ·

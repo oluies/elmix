@@ -24,10 +24,11 @@
   <div id="app"></div>
   <section class="forklaring">
     <h2>Så läser du PCA-diagrammen</h2>
-    <p>PCA (principalkomponentanalys) sammanfattar hur produktionsmixen
-    varierar över tid. Varje timme beskrivs av fem andelar – Vind, Sol,
-    Vattenkraft, Kärnkraft och Kraftvärme/övr – och PCA hittar de riktningar
-    i det rummet där mixen varierar mest.</p>
+    <p>PCA (principalkomponentanalys) sammanfattar hur den kvartsvisa
+    produktionsmixen varierar över vald period. Varje kvart beskrivs av
+    kraftslagens andelar – Vind, Sol, Vattenkraft, Kärnkraft, Kraftvärme/övr –
+    och PCA hittar de riktningar där mixen varierar mest. Allt räknas om i
+    webbläsaren när du drar i tidsreglaget.</p>
     <ul>
       <li><strong>PC1</strong> är den kombination av kraftslag som fångar
       <em>mest</em> av variationen; PC2 fångar näst mest och är oberoende av
@@ -38,11 +39,11 @@
       <li><strong>Förklarad varians</strong> (scree) visar hur stor andel av
       all variation varje komponent fångar. I SE1/SE2 räcker en enda axel
       (~100 %) – mixen svänger nästan bara mellan vatten och vind.</li>
+      <li><strong>Prisdrivande</strong>: eftersom PC-scorerna är ortogonala
+      blir varje komponents R² mot priset oberoende. Biplotten färgar varje
+      kvart efter pris, så man ser vilka mix-lägen som är dyra.</li>
       <li><strong>Tecknet är godtyckligt</strong>; det är kontrasten mellan
       kraftslagen som betyder något, inte om vikten är plus eller minus.</li>
-      <li><strong>Biplotten</strong> visar varje dygns PC1/PC2-värde (hur
-      mixen låg den dagen), färgat per år, med loading-vektorer som pekar åt
-      respektive kraftslags håll.</li>
     </ul>
   </section>
   <footer>© 2026 Örjan Lundberg ·
