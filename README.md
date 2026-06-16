@@ -40,10 +40,11 @@ mellan API-anrop. Alla fyra zonerna hämtas alltid; varje zon/år blir en
 egen Parquet-fil.
 
 `pca` läser `fct_gen` ur `elmix.duckdb` (kör `transform` först) och gör en
-PCA på den timvisa produktionsmixen (kraftslagsandelar) per zon. Eftersom
-DuckDB saknar egenvärdesberäkning ligger detta som ett medvetet undantag
-i Elmix.scala – en ren, funktionell Jacobi-rotation utan externt
-linjäralgebra-beroende (kovariansmatrisen är liten och symmetrisk).
+PCA på den **kvartsvisa** produktionsmixen (kraftslagsandelar) per zon från
+15-min-eran (2 dec 2025→). Eftersom DuckDB saknar egenvärdesberäkning ligger
+detta som ett medvetet undantag i Elmix.scala – en ren, funktionell
+Jacobi-rotation utan externt linjäralgebra-beroende (samma kärna återanvänds
+klientsidan via Scala.js, se nedan).
 Resultat: `data/marts/pca_explained.parquet` (förklarad varians per
 komponent), `pca_loadings.parquet` (kraftslagens vikt per komponent) och
 `pca_scores.parquet` (varje timmes projektion på PC1/PC2, för biplot).
@@ -65,14 +66,15 @@ Förväntat: sex marts i `data/marts/`, `capture_rate < 1` för Vind och
 
 ## Visualisering
 
-Två varianter över samma marts, alla fyra zonerna separat:
+15-min-rapporten (från 2 dec 2025), två varianter:
 
-- **Capture rate per kraftslag** – small multiples (2×2, en panel per zon)
-  med referenslinje på 1,0.
-- **Pris vs vind, timupplöst** – dubbla y-axlar med zoom (`dataZoom`),
-  förinställd på senaste 14 dygnen; zonväljare (SE1–SE4) via Laminar.
-- **PCA på produktionsmixen** – scree (förklarad varians), loadings-heatmap
-  (kraftslag × komponent) och biplot (PC1/PC2 per dygn, loading-vektorer).
+- **Interaktiv** (`index.html`): zonväljare + tidslinje (pris & vindandel)
+  med tidsreglage (`dataZoom`). PCA på den kvartsvisa produktionsmixen
+  räknas om **i webbläsaren** för vald period – scree (förklarad varians),
+  loadings-heatmap (kraftslag × komponent), biplot (PC1/PC2 färgad efter
+  pris) och prisdrivande komponenter (varje PC:s R² mot priset).
+- **Prerenderad** (`prerendered.html`): samma vyer som statisk SVG över hela
+  perioden, noll JS vid visning.
 
 ```bash
 ./viz/export-data.sh              # elmix.duckdb -> viz/data/elmix-data.js
@@ -81,18 +83,14 @@ mill app.fastLinkJS               # bygg appen -> öppna viz/index.html
 cd ssr && npm install && node render.mjs   # prerendera -> viz/prerendered.html
 ```
 
-Diagramdatan ligger som JS-global i `viz/data/elmix-data.js`, så
-`index.html` fungerar utan webbserver. Kör om `export-data.sh` efter
-varje ny `transform`. Zonerna i diagrammen styrs helt av datan – fler
-eller färre zoner kräver inga kodändringar.
-
-**Ingen DuckDB i webbläsaren.** Den interaktiva appen kör *inte* SQL i
-realtid – `export-data.sh` förberäknar allt vid publicering och bakar in
-det som en statisk ögonblicksbild (JSON-globaler). Webbläsaren läser bara
-den och ritar med ECharts (helt klientsidan), vilket är vad GitHub Pages
-statiska hosting tillåter. Vill man ha riktiga frågor mot marterna i
-webbläsaren är nästa steg DuckDB-Wasm (parquet-marterna är förberedda för
-det), i utbyte mot att ladda DuckDB-Wasm + parquet-filerna.
+**Klientsidig PCA, ingen DuckDB i webbläsaren.** `export-data.sh`
+förberäknar 15-min-mixen + priset som en statisk ögonblicksbild
+(`elmix15`, JS-global i `viz/data/elmix-data.js`), så `index.html` fungerar
+utan webbserver. Själva PCA:n körs sedan *i webbläsaren*: den rena
+funktionella Jacobi-kärnan (`PcaCore.scala`, samma algoritm som i
+Elmix.scala) kompileras till Scala.js och räknas om för vald tidsperiod.
+Ingen SQL/DuckDB i klienten. Den prerenderade vyn läser i stället de
+färdiga `pca_*.json` direkt (ECharts Node-SSR).
 
 ## Status
 
