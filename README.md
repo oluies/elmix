@@ -71,6 +71,8 @@ Två varianter över samma marts, alla fyra zonerna separat:
   med referenslinje på 1,0.
 - **Pris vs vind, timupplöst** – dubbla y-axlar med zoom (`dataZoom`),
   förinställd på senaste 14 dygnen; zonväljare (SE1–SE4) via Laminar.
+- **PCA på produktionsmixen** – scree (förklarad varians), loadings-heatmap
+  (kraftslag × komponent) och biplot (PC1/PC2 per dygn, loading-vektorer).
 
 ```bash
 ./viz/export-data.sh              # elmix.duckdb -> viz/data/elmix-data.js
@@ -83,6 +85,14 @@ Diagramdatan ligger som JS-global i `viz/data/elmix-data.js`, så
 `index.html` fungerar utan webbserver. Kör om `export-data.sh` efter
 varje ny `transform`. Zonerna i diagrammen styrs helt av datan – fler
 eller färre zoner kräver inga kodändringar.
+
+**Ingen DuckDB i webbläsaren.** Den interaktiva appen kör *inte* SQL i
+realtid – `export-data.sh` förberäknar allt vid publicering och bakar in
+det som en statisk ögonblicksbild (JSON-globaler). Webbläsaren läser bara
+den och ritar med ECharts (helt klientsidan), vilket är vad GitHub Pages
+statiska hosting tillåter. Vill man ha riktiga frågor mot marterna i
+webbläsaren är nästa steg DuckDB-Wasm (parquet-marterna är förberedda för
+det), i utbyte mot att ladda DuckDB-Wasm + parquet-filerna.
 
 ## Status
 
