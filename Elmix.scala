@@ -159,14 +159,26 @@ def expandPeriod(p: Node, valueLabel: String): Seq[Row] =
     last.map(v => Row(start.plusMinutes((i - 1).toLong * resMin), "", v))
   }
 
-/** Vid blandade upplosningar i samma dokument (MTU-bytet): behall den finaste. */
+/**
+ * Vid blandade upplosningar (MTU-bytet okt 2025): behall den finaste PER tidsintervall. Globalt
+ * finaste-filter skulle slanga bort hela timupplosta manader (jan-sep) bara for att nagra
+ * kvartsperioder finns (okt-dec).
+ */
 def finestPeriods(series: Seq[Node]): Seq[Node] =
-  val periods = series.flatMap(_ \ "Period")
-  val finest = periods
-    .map(p => (p \ "resolution").text.trim)
-    .distinct
-    .minByOption { case "PT15M" => 15; case "PT30M" => 30; case _ => 60 }
-  periods.filter(p => finest.forall(_ == (p \ "resolution").text.trim))
+  def resRank(p: Node): Int = (p \ "resolution").text.trim match
+    case "PT15M" => 15
+    case "PT30M" => 30
+    case "PT60M" => 60
+    case _ => 999
+  series
+    .flatMap(_ \ "Period")
+    .groupBy(p => (p \ "timeInterval" \ "start").text.trim)
+    .values
+    .flatMap { grp =>
+      val finest = grp.map(resRank).min
+      grp.filter(p => resRank(p) == finest)
+    }
+    .toSeq
 
 /** A75: faktisk produktion per kraftslag. key = psr_type-namn. */
 def fetchGeneration(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[Row] =
