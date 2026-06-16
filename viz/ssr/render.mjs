@@ -99,6 +99,10 @@ const titleAt = (z, i, dx) => ({
 })
 const loadOf = (z, p, f) =>
   pcaLoad.find(l => l.zone === z && l.pc === p && l.kraftslag === f)?.loading ?? 0
+// Per zon: bara kraftslag/komponenter som faktiskt finns (SE1 saknar t.ex.
+// kärnkraft -> ska inte visas som rad i heatmappen).
+const fuelsOf = z => FUELS.filter(f => pcaLoad.some(l => l.zone === z && l.kraftslag === f))
+const pcsOf = z => [...new Set(pcaLoad.filter(l => l.zone === z).map(l => l.pc))].sort((a, b) => a - b)
 
 // Scree: förklarad varians per komponent (small multiples).
 const screeOption = {
@@ -106,12 +110,12 @@ const screeOption = {
   title: zones.map((z, i) => titleAt(z, i, 19)),
   grid: zones.map((_, i) => ({ left: `${8 + col(i) * 48}%`, width: '38%',
                                top: 64 + row(i) * ROW_H, height: 180 })),
-  xAxis: zones.map((_, i) => ({ type: 'category', gridIndex: i, data: PCS.map(p => 'PC' + p) })),
+  xAxis: zones.map((z, i) => ({ type: 'category', gridIndex: i, data: pcsOf(z).map(p => 'PC' + p) })),
   yAxis: zones.map((_, i) => ({ type: 'value', gridIndex: i, min: 0, max: 1,
                                 name: i === 0 ? 'förklarad andel' : '' })),
   series: zones.map((z, i) => ({
     type: 'bar', xAxisIndex: i, yAxisIndex: i, itemStyle: { color: '#5470c6' },
-    data: PCS.map(p => pcaExp.find(e => e.zone === z && e.pc === p)?.explained ?? 0),
+    data: pcsOf(z).map(p => pcaExp.find(e => e.zone === z && e.pc === p)?.explained ?? 0),
     label: { show: true, position: 'top', fontSize: 9,
              formatter: o => (o.value * 100).toFixed(0) + '%' }
   }))
@@ -123,14 +127,14 @@ const loadingsOption = {
   title: zones.map((z, i) => titleAt(z, i, 17)),
   grid: zones.map((_, i) => ({ left: `${10 + col(i) * 48}%`, width: '32%',
                                top: 64 + row(i) * ROW_H, height: 180 })),
-  xAxis: zones.map((_, i) => ({ type: 'category', gridIndex: i, data: PCS.map(p => 'PC' + p) })),
-  yAxis: zones.map((_, i) => ({ type: 'category', gridIndex: i, data: FUELS.map(FUELABB) })),
+  xAxis: zones.map((z, i) => ({ type: 'category', gridIndex: i, data: pcsOf(z).map(p => 'PC' + p) })),
+  yAxis: zones.map((z, i) => ({ type: 'category', gridIndex: i, data: fuelsOf(z).map(FUELABB) })),
   visualMap: { min: -1, max: 1, dimension: 2, calculable: false,
                orient: 'horizontal', left: 'center', bottom: 0,
                inRange: { color: ['#c0392b', '#f7f7f7', '#2c7fb8'] } },
   series: zones.map((z, i) => ({
     type: 'heatmap', xAxisIndex: i, yAxisIndex: i,
-    data: FUELS.flatMap((f, fi) => PCS.map((p, pi) => [pi, fi, loadOf(z, p, f)])),
+    data: fuelsOf(z).flatMap((f, fi) => pcsOf(z).map((p, pi) => [pi, fi, loadOf(z, p, f)])),
     label: { show: true, fontSize: 8, formatter: o => o.value[2].toFixed(2) }
   }))
 }

@@ -68,6 +68,12 @@ object Main:
   def loadOf(z: String, p: Int, f: String): Double =
     pcaLoad.find(l => l.zone == z && l.pc == p && l.kraftslag == f).map(_.loading).getOrElse(0.0)
   def jsfn[A](f: js.Dynamic => A): js.Function1[js.Dynamic, A] = (d: js.Dynamic) => f(d)
+  // Per zon: bara kraftslag/komponenter som faktiskt finns (SE1 saknar t.ex.
+  // kärnkraft och ska inte få en rad i heatmappen).
+  def fuelsOf(z: String): List[String] =
+    Fuels.filter(f => pcaLoad.exists(l => l.zone == z && l.kraftslag == f))
+  def pcsOf(z: String): List[Int] =
+    pcaLoad.filter(_.zone == z).map(_.pc).distinct.sorted
 
   // ------------------------------------------------ capture: small multiples
 
@@ -219,8 +225,8 @@ object Main:
       grid = js.Array(grids.map { (_, i) =>
         obj(left = s"${8 + col(i) * 48}%", width = "38%", top = 64 + row(i) * RowH, height = 180)
       }*),
-      xAxis = js.Array(grids.map { (_, i) =>
-        obj(`type` = "category", gridIndex = i, data = js.Array(Pcs.map(p => s"PC$p")*))
+      xAxis = js.Array(grids.map { (z, i) =>
+        obj(`type` = "category", gridIndex = i, data = js.Array(pcsOf(z).map(p => s"PC$p")*))
       }*),
       yAxis = js.Array(grids.map { (_, i) =>
         obj(
@@ -238,7 +244,7 @@ object Main:
           yAxisIndex = i,
           itemStyle = obj(color = "#5470c6"),
           data = js.Array(
-            Pcs.map(p =>
+            pcsOf(z).map(p =>
               pcaExp.find(e => e.zone == z && e.pc == p).map(_.explained).getOrElse(0.0)
             )*
           ),
@@ -268,11 +274,11 @@ object Main:
       grid = js.Array(grids.map { (_, i) =>
         obj(left = s"${10 + col(i) * 48}%", width = "32%", top = 64 + row(i) * RowH, height = 180)
       }*),
-      xAxis = js.Array(grids.map { (_, i) =>
-        obj(`type` = "category", gridIndex = i, data = js.Array(Pcs.map(p => s"PC$p")*))
+      xAxis = js.Array(grids.map { (z, i) =>
+        obj(`type` = "category", gridIndex = i, data = js.Array(pcsOf(z).map(p => s"PC$p")*))
       }*),
-      yAxis = js.Array(grids.map { (_, i) =>
-        obj(`type` = "category", gridIndex = i, data = js.Array(Fuels.map(fuelAbb)*))
+      yAxis = js.Array(grids.map { (z, i) =>
+        obj(`type` = "category", gridIndex = i, data = js.Array(fuelsOf(z).map(fuelAbb)*))
       }*),
       visualMap = obj(
         min = -1,
@@ -289,8 +295,8 @@ object Main:
           `type` = "heatmap",
           xAxisIndex = i,
           yAxisIndex = i,
-          data = js.Array(Fuels.zipWithIndex.flatMap { (f, fi) =>
-            Pcs.zipWithIndex.map { (p, pi) =>
+          data = js.Array(fuelsOf(z).zipWithIndex.flatMap { (f, fi) =>
+            pcsOf(z).zipWithIndex.map { (p, pi) =>
               js.Array[js.Any](pi, fi, loadOf(z, p, f))
             }
           }*),
