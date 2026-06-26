@@ -21,9 +21,11 @@ trait EChartsInstance extends js.Object:
   def on(event: String, handler: js.Function1[js.Dynamic, Unit]): Unit = js.native
   def getOption(): js.Dynamic = js.native
 
-/** Data injicerad av data/elmix-data.js. elmix15 finns alltid; capture- och
- *  pris-vs-vind-marterna kan saknas om datan inte exporterats än (då hoppas
- *  kannibaliseringsdiagrammen över) – därför js.UndefOr. */
+/**
+ * Data injicerad av data/elmix-data.js. elmix15 finns alltid; capture- och pris-vs-vind-marterna
+ * kan saknas om datan inte exporterats än (då hoppas kannibaliseringsdiagrammen över) – därför
+ * js.UndefOr.
+ */
 @js.native
 @JSGlobalScope
 object Globals extends js.Object:
