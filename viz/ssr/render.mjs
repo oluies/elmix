@@ -1,12 +1,16 @@
 // Prerendering: samma diagram som Laminar-appen, ECharts SSR -> statisk SVG.
 // Kor:  node render.mjs   (skriver ../prerendered.html)
 import * as echarts from 'echarts'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 
 const e15 = JSON.parse(readFileSync('../data/elmix15.json', 'utf8'))
 const pcaExp   = JSON.parse(readFileSync('../data/pca_explained.json', 'utf8'))
 const pcaLoad  = JSON.parse(readFileSync('../data/pca_loadings.json', 'utf8'))
 const pcaScore = JSON.parse(readFileSync('../data/pca_scores.json', 'utf8'))
+// Kannibaliseringsmarter – kan saknas (då hoppas diagrammen över).
+const readJson = p => existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : []
+const capture  = readJson('../data/capture.json')
+const prisVind = readJson('../data/pris_vs_vind.json')
 
 const FARG = {
   'Vind': '#5470c6', 'Sol': '#fac858', 'Vattenkraft': '#91cc75',
@@ -133,11 +137,80 @@ function biplotOption(zone) {
   }
 }
 
+// ---- Kannibalisering: capture rate-trend + pris-vs-vind -------------------
+const FUEL_ORDER = ['Vind', 'Sol', 'Vattenkraft', 'Kärnkraft', 'Kraftvärme/övr']
+const YRAMP = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#9a60b4', '#fc8452']
+
+function captureOption(zone) {
+  const rows = capture.filter(r => r.zone === zone)
+  const years = [...new Set(rows.map(r => r.yr))].sort((a, b) => a - b)
+  const fuels = FUEL_ORDER.filter(f => rows.some(r => r.kraftslag === f))
+  const series = fuels.map(f => {
+    const byYr = new Map(rows.filter(r => r.kraftslag === f).map(r => [r.yr, r.capture_rate]))
+    return {
+      name: FUELABB(f), type: 'line', connectNulls: true, showSymbol: true, symbolSize: 5,
+      itemStyle: { color: FARG[f] ?? '#888' }, lineStyle: { width: 2 },
+      data: years.map(y => byYr.has(y) ? byYr.get(y) : null)
+    }
+  })
+  series.push({
+    name: 'baspris', type: 'line', data: [],
+    markLine: { silent: true, symbol: 'none', lineStyle: { color: '#999', type: 'dashed' },
+      data: [{ yAxis: 1 }], label: { formatter: '1.0 = baspris', position: 'insideEndTop', fontSize: 9 } }
+  })
+  return {
+    animation: false,
+    title: { text: `Capture rate per kraftslag – ${zone.replace('_', '')}`,
+      subtext: 'värdeviktat snittpris / baspris · < 1 = kannibalisering',
+      left: 'center', textStyle: { fontSize: 13 }, subtextStyle: { fontSize: 11 } },
+    legend: { top: 46, data: fuels.map(FUELABB) },
+    grid: { top: 84, bottom: 36, left: 52, right: 28 },
+    xAxis: { type: 'category', data: years.map(String) },
+    yAxis: { type: 'value', name: 'capture rate', min: 0 },
+    series
+  }
+}
+
+function prisVindOption(zone) {
+  const rows = prisVind.filter(r => r.zone === zone)
+  const years = [...new Set(rows.map(r => r.yr))].sort((a, b) => a - b)
+  const series = years.map((y, i) => ({
+    name: String(y), type: 'line', showSymbol: false, smooth: true,
+    itemStyle: { color: YRAMP[i % YRAMP.length] }, lineStyle: { width: 1.6 },
+    data: rows.filter(r => r.yr === y).sort((a, b) => a.vind_bin - b.vind_bin)
+      .map(r => [r.vind_bin, r.pris_median])
+  }))
+  return {
+    animation: false,
+    title: { text: `Pris vs vindnivå – ${zone.replace('_', '')}`,
+      subtext: 'medianpris per vind-percentil (1 = låg vind … 20 = hög) · nedåtlutning = kannibalisering',
+      left: 'center', textStyle: { fontSize: 13 }, subtextStyle: { fontSize: 11 } },
+    legend: { top: 46, type: 'scroll' },
+    grid: { top: 84, bottom: 40, left: 58, right: 28 },
+    xAxis: { type: 'category', name: 'vind-bin', data: Array.from({ length: 20 }, (_, i) => String(i + 1)) },
+    yAxis: { type: 'value', name: 'EUR/MWh' },
+    series
+  }
+}
+
+const capZones = [...new Set(capture.map(r => r.zone))].sort()
+const pvZones  = [...new Set(prisVind.map(r => r.zone))].sort()
+const kannibalParts = []
+if (capZones.length || pvZones.length) {
+  kannibalParts.push('<h2>Kannibalisering – förnybar energis värdefall</h2>')
+  kannibalParts.push('<p>Väderberoende kraft med noll marginalkostnad pressar själv ner ' +
+    'priset i de timmar den producerar mest. <em>Capture rate</em> (fångat pris / baspris) ' +
+    'faller då under 1 – kannibalisering i siffror.</p>')
+  for (const z of capZones) kannibalParts.push(svg(captureOption(z), 1060, 320))
+  for (const z of pvZones)  kannibalParts.push(svg(prisVindOption(z), 1060, 340))
+}
+
 const parts = [
   ...zones.flatMap(z => [
     `<h2>Pris &amp; vindandel – ${z.replace('_', '')}</h2>`,
     svg(priceWindOption(z), 1060, 360)
   ]),
+  ...kannibalParts,
   '<h2>PCA på produktionsmixen – förklarad varians (scree)</h2>',
   svg(screeOption, 1060, pcaHeight),
   '<h2>PCA – loadings (kraftslagens vikt per komponent)</h2>',
@@ -188,7 +261,42 @@ ${parts.join('\n')}
     vyn är punkterna färgade efter pris, så man ser vilka mix-lägen som är dyra.</li>
   </ul>
 </section>
+<section class="forklaring">
+  <h2>Om kannibalisering</h2>
+  <p>Förnybar kannibalisering är fenomenet där en ökande marknadspenetration av
+  förnybar energi med noll marginalkostnad – vind och sol – sänker deras eget
+  marknadsvärde, eftersom de pressar ner spotpriset i just de timmar de
+  producerar mest. I förlängningen hotar det investeringsincitamenten.</p>
+  <ul>
+    <li><strong>Capture rate</strong> = det värdeviktade snittpris ett kraftslag
+    faktiskt fångar dividerat med baspriset (tidsviktat snitt). Vind faller under
+    1 och sjunker när utbyggnaden ökar; jämn kraft som kärnkraft ligger nära 1.</li>
+    <li><strong>Pris vs vindnivå</strong> visar mekaniken bakom: medianpriset per
+    vind-percentil. En nedåtlutande kurva – och brantare för senare år – är
+    kannibaliseringen direkt avläst.</li>
+    <li>Batterilagring kan i teorin lyfta capture rate genom att flytta energi
+    till dyrare timmar, men arbitrage-spreaden krymper när mycket lagring
+    konkurrerar (batterikannibalisering).</li>
+  </ul>
+  <h2>Källor &amp; vidare läsning</h2>
+  <ul>
+    <li>Lannhard, Fredrik (2023). <em>Cannibalization of Renewable Energy in
+    Spain: Market Implications and Mitigation Strategies through Carbon Pricing
+    and Guarantees of Origin.</em> KTH.
+    <a href="https://www.diva-portal.org/smash/record.jsf?pid=diva2%3A1768389">DiVA</a> ·
+    <a href="http://www.diva-portal.org/smash/get/diva2:1768389/FULLTEXT01.pdf">PDF</a></li>
+    <li>McKinsey &amp; Company. <em>How US battery operators can navigate a
+    transitioning energy market.</em>
+    <a href="https://www.mckinsey.com/industries/energy-and-materials/our-insights/blog/how-us-battery-operators-can-navigate-a-transitioning-energy-market">mckinsey.com</a></li>
+    <li>Montel News (2024). <em>Spain’s battery market may face cannibalisation
+    risk.</em>
+    <a href="https://montelnews.com/news/5ae4b928-cd1d-4358-af5a-77f90d1ac6e3/spains-battery-market-may-face-cannibalisation-risk-expert">montelnews.com</a>
+    (kräver inloggning)</li>
+  </ul>
+</section>
 <footer>© 2026 Örjan Lundberg ·
+  <a href="https://github.com/oluies">GitHub</a> ·
+  <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
   Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
   Byggd med <a href="https://laminar.dev">Scala.js + Laminar</a></footer>
 </body></html>`

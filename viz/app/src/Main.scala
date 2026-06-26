@@ -13,6 +13,11 @@ object Main:
   val Fuels = Vector("Vind", "Sol", "Vattenkraft", "Kärnkraft", "Kraftvärme/övr")
   def fuelAbb(f: String): String = if f == "Kraftvärme/övr" then "Kraftv." else f
 
+  val FuelColor: Map[String, String] = Map(
+    "Vind" -> "#5470c6", "Sol" -> "#fac858", "Vattenkraft" -> "#91cc75",
+    "Kärnkraft" -> "#ee6666", "Kraftvärme/övr" -> "#73c0de"
+  )
+
   // elmix15: {z,t,v,s,va,k,kv,p} -> per zon, sorterade observationer.
   lazy val byZone: Map[String, Vector[Obs15]] =
     Globals.elmix15.toList
@@ -259,6 +264,109 @@ object Main:
 
   def jsfn[A](f: js.Dynamic => A): js.Function1[js.Dynamic, A] = (d: js.Dynamic) => f(d)
 
+  // ------------------------------------ Kannibalisering: capture & pris-vs-vind
+  // Statiska per-zon-marter (mart_capture, mart_pris_vs_vind), förberäknade i
+  // export-data.sh. Saknas globalerna (ej exporterade än) blir kartorna tomma
+  // och diagrammen hoppas över i appElement.
+  final case class Cap(yr: Int, fuel: String, captureRate: Double, baspris: Double, twh: Double)
+  lazy val capByZone: Map[String, Vector[Cap]] =
+    Globals.elmixCapture.toOption.map(_.toList).getOrElse(Nil).map { d =>
+      (d.zone.toString, Cap(d.yr.asInstanceOf[Double].toInt, d.kraftslag.toString,
+        d.capture_rate.asInstanceOf[Double], d.baspris.asInstanceOf[Double],
+        d.twh.asInstanceOf[Double]))
+    }.groupBy(_._1).map((z, xs) => z -> xs.map(_._2).toVector)
+
+  final case class PV(yr: Int, bin: Int, prisMedian: Double)
+  lazy val pvByZone: Map[String, Vector[PV]] =
+    Globals.elmixPrisVind.toOption.map(_.toList).getOrElse(Nil).map { d =>
+      (d.zone.toString, PV(d.yr.asInstanceOf[Double].toInt,
+        d.vind_bin.asInstanceOf[Double].toInt, d.pris_median.asInstanceOf[Double]))
+    }.groupBy(_._1).map((z, xs) => z -> xs.map(_._2).toVector)
+
+  /** Stabil färgramp per förekommande år. */
+  def yearColors(years: Seq[Int]): Map[Int, String] =
+    val ramp = Vector("#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#9a60b4", "#fc8452")
+    years.sorted.zipWithIndex.map((y, i) => y -> ramp(i % ramp.size)).toMap
+
+  /** Capture rate per kraftslag över åren; streckad referenslinje vid 1 = baspris. */
+  def captureOption(zone: String): js.Any =
+    val rows = capByZone.getOrElse(zone, Vector.empty)
+    val years = rows.map(_.yr).distinct.sorted
+    val fuels = Fuels.filter(f => rows.exists(_.fuel == f))
+    val series = fuels.map { f =>
+      val byYr = rows.filter(_.fuel == f).map(r => r.yr -> r.captureRate).toMap
+      obj(
+        name = fuelAbb(f),
+        `type` = "line",
+        connectNulls = true,
+        showSymbol = true,
+        symbolSize = 5,
+        itemStyle = obj(color = FuelColor.getOrElse(f, "#888")),
+        lineStyle = obj(width = 2),
+        data = js.Array(years.map(y => byYr.get(y).map(_.asInstanceOf[js.Any]).getOrElse(null))*)
+      )
+    }
+    val refLine = obj(
+      name = "baspris",
+      `type` = "line",
+      data = js.Array[js.Any](),
+      markLine = obj(
+        silent = true,
+        symbol = "none",
+        lineStyle = obj(color = "#999", `type` = "dashed"),
+        data = js.Array(obj(yAxis = 1)),
+        label = obj(formatter = "1.0 = baspris", position = "insideEndTop", fontSize = 9)
+      )
+    )
+    obj(
+      title = obj(
+        text = s"Capture rate per kraftslag – ${zone.replace("_", "")}",
+        subtext = "värdeviktat snittpris / baspris · < 1 = kannibalisering",
+        left = "center",
+        textStyle = obj(fontSize = 13),
+        subtextStyle = obj(fontSize = 11)
+      ),
+      legend = obj(top = 46, data = js.Array(fuels.map(fuelAbb)*)),
+      tooltip = obj(trigger = "axis"),
+      grid = obj(top = 84, bottom = 36, left = 52, right = 28),
+      xAxis = obj(`type` = "category", data = js.Array(years.map(_.toString)*)),
+      yAxis = obj(`type` = "value", name = "capture rate", min = 0),
+      series = js.Array((series :+ refLine)*)
+    )
+
+  /** Pris mot vindnivå: medianpris per vind-percentil, en linje per år. */
+  def prisVindOption(zone: String): js.Any =
+    val rows = pvByZone.getOrElse(zone, Vector.empty)
+    val years = rows.map(_.yr).distinct.sorted
+    val yc = yearColors(years)
+    val series = years.map { y =>
+      val pts = rows.filter(_.yr == y).sortBy(_.bin)
+      obj(
+        name = y.toString,
+        `type` = "line",
+        showSymbol = false,
+        smooth = true,
+        itemStyle = obj(color = yc(y)),
+        lineStyle = obj(width = 1.6),
+        data = js.Array(pts.map(p => js.Array[js.Any](p.bin, p.prisMedian))*)
+      )
+    }
+    obj(
+      title = obj(
+        text = s"Pris vs vindnivå – ${zone.replace("_", "")}",
+        subtext = "medianpris per vind-percentil (1 = låg vind … 20 = hög) · nedåtlutning = kannibalisering",
+        left = "center",
+        textStyle = obj(fontSize = 13),
+        subtextStyle = obj(fontSize = 11)
+      ),
+      legend = obj(top = 46, `type` = "scroll"),
+      tooltip = obj(trigger = "axis"),
+      grid = obj(top = 84, bottom = 40, left = 58, right = 28),
+      xAxis = obj(`type` = "category", name = "vind-bin", data = js.Array((1 to 20).map(_.toString)*)),
+      yAxis = obj(`type` = "value", name = "EUR/MWh"),
+      series = js.Array(series*)
+    )
+
   // -------------------------------------------------------------- Laminar-UI
   def chartDiv(height: Int)(init: (EChartsInstance, Owner) => Unit): HtmlElement =
     div(
@@ -282,6 +390,28 @@ object Main:
       chartDiv(height) { (chart, owner) =>
         resultSig.foreach(r => chart.setOption(opt(r), true))(using owner)
       }
+
+    // Statiska per-zon-diagram (kannibalisering): ritas om vid zonbyte, ej period.
+    def zoneChart(height: Int)(opt: String => js.Any): HtmlElement =
+      chartDiv(height) { (chart, owner) =>
+        def applyZone(z: String): Unit = chart.setOption(opt(z), true)
+        applyZone(zoneVar.now())
+        zoneVar.signal.changes.foreach(applyZone)(using owner)
+      }
+
+    val kannibal: List[HtmlElement] =
+      val cap = if capByZone.nonEmpty then List(zoneChart(300)(captureOption)) else Nil
+      val pv = if pvByZone.nonEmpty then List(zoneChart(320)(prisVindOption)) else Nil
+      if cap.isEmpty && pv.isEmpty then Nil
+      else
+        h2("Kannibalisering – förnybar energis värdefall") ::
+          p(
+            cls := "intro",
+            "Väderberoende kraft med noll marginalkostnad pressar själv ner priset i ",
+            "just de timmar den producerar mest. ",
+            em("Capture rate"),
+            " (fångat pris / baspris) faller då under 1 – kannibalisering i siffror."
+          ) :: (cap ++ pv)
 
     div(
       h1("Elmix – SE1–SE4 (ENTSO-E, 15-min, från 2 dec 2025)"),
@@ -327,7 +457,8 @@ object Main:
       bindPca(240)(screeOption),
       bindPca(280)(loadingsOption),
       bindPca(460)(biplotOption),
-      bindPca(240)(driverOption)
+      bindPca(240)(driverOption),
+      kannibal
     )
 
   def main(args: Array[String]): Unit =

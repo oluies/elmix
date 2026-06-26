@@ -76,6 +76,18 @@ Förväntat: sex marts i `data/marts/`, `capture_rate < 1` för Vind och
 - **Prerenderad** (`prerendered.html`): samma vyer som statisk SVG över hela
   perioden, noll JS vid visning.
 
+Båda varianterna visar dessutom **kannibaliseringen** av förnybar energi som
+två förberäknade per-zon-diagram (statiska marter, ej periodberoende):
+
+- **Capture rate per kraftslag** (`mart_capture`): värdeviktat snittpris /
+  baspris över åren, med referenslinje vid 1.0. Vindens capture rate faller
+  under 1 och sjunker med ökande utbyggnad; jämn kraft (kärnkraft) ligger
+  nära 1 – kannibaliseringen direkt i siffror.
+- **Pris vs vindnivå** (`mart_pris_vs_vind`): medianpris per vind-percentil,
+  en linje per år. Nedåtlutande kurva (brantare för senare år) är mekaniken
+  bakom kannibaliseringen. En förklaringssektion med källor (bl.a. Lannhard,
+  KTH 2023) följer med rapporten.
+
 ```bash
 ./viz/export-data.sh              # elmix.duckdb -> viz/data/elmix-data.js
 cd viz
@@ -85,7 +97,8 @@ cd ssr && npm install && node render.mjs   # prerendera -> viz/prerendered.html
 
 **Klientsidig PCA, ingen DuckDB i webbläsaren.** `export-data.sh`
 förberäknar 15-min-mixen + priset som en statisk ögonblicksbild
-(`elmix15`, JS-global i `viz/data/elmix-data.js`), så `index.html` fungerar
+(`elmix15`) samt kannibaliseringsmarterna (`elmixCapture`, `elmixPrisVind`)
+som JS-globaler i `viz/data/elmix-data.js`, så `index.html` fungerar
 utan webbserver. Själva PCA:n körs sedan *i webbläsaren*: den rena
 funktionella Jacobi-kärnan (`PcaCore.scala`, samma algoritm som i
 Elmix.scala) kompileras till Scala.js och räknas om för vald tidsperiod.

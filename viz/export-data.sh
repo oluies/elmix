@@ -54,13 +54,40 @@ COPY (
   FROM gen LEFT JOIN pr USING (zone, ts)
   WHERE tot > 0 ORDER BY gen.zone, gen.ts
 ) TO 'viz/data/elmix15.json' (FORMAT json, ARRAY true);
+-- Kannibalisering: capture rate per kraftslag/år/zon (mart_capture). Vindens
+-- capture_rate faller mot baspriset när penetrationen ökar; kärnkraft ~1.
+COPY (
+  SELECT zone, yr, kraftslag,
+         round(capture_rate, 3) AS capture_rate,
+         round(fångat_pris, 1)  AS fangat_pris,
+         round(baspris, 1)      AS baspris,
+         round(twh, 2)          AS twh
+  FROM read_parquet('data/marts/capture.parquet')
+  WHERE capture_rate IS NOT NULL
+  ORDER BY zone, kraftslag, yr
+) TO 'viz/data/capture.json' (FORMAT json, ARRAY true);
+-- Pris vs vind, binnat per år/zon (mart_pris_vs_vind): nedåtlutande kurva =
+-- kannibaliseringsmekaniken (priset faller i timmar med mycket vind).
+COPY (
+  SELECT zone, yr, vind_bin,
+         round(vind_mwh_avg, 0) AS vind_mwh_avg,
+         round(pris_median, 1)  AS pris_median,
+         round(pris_avg, 1)     AS pris_avg
+  FROM read_parquet('data/marts/pris_vs_vind.parquet')
+  ORDER BY zone, yr, vind_bin
+) TO 'viz/data/pris_vs_vind.json' (FORMAT json, ARRAY true);
 SQL
 
-# Interaktiva appen läser bara elmix15 (räknar PCA klientsidan). De
-# prerenderade pca_*.json läses som filer av render.mjs, inte som globaler.
+# Interaktiva appen läser elmix15 (räknar PCA klientsidan) samt de
+# förberäknade kannibaliseringsmarterna (capture/pris-vs-vind, statiska per
+# zon). De prerenderade pca_*.json läses som filer av render.mjs, inte globaler.
 {
   printf 'window.elmix15 = '
   cat viz/data/elmix15.json
+  printf ';\nwindow.elmixCapture = '
+  cat viz/data/capture.json
+  printf ';\nwindow.elmixPrisVind = '
+  cat viz/data/pris_vs_vind.json
   printf ';\n'
 } > viz/data/elmix-data.js
 
