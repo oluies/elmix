@@ -14,8 +14,11 @@ object Main:
   def fuelAbb(f: String): String = if f == "Kraftvärme/övr" then "Kraftv." else f
 
   val FuelColor: Map[String, String] = Map(
-    "Vind" -> "#5470c6", "Sol" -> "#fac858", "Vattenkraft" -> "#91cc75",
-    "Kärnkraft" -> "#ee6666", "Kraftvärme/övr" -> "#73c0de"
+    "Vind" -> "#5470c6",
+    "Sol" -> "#fac858",
+    "Vattenkraft" -> "#91cc75",
+    "Kärnkraft" -> "#ee6666",
+    "Kraftvärme/övr" -> "#73c0de"
   )
 
   // elmix15: {z,t,v,s,va,k,kv,p} -> per zon, sorterade observationer.
@@ -270,18 +273,41 @@ object Main:
   // och diagrammen hoppas över i appElement.
   final case class Cap(yr: Int, fuel: String, captureRate: Double, baspris: Double, twh: Double)
   lazy val capByZone: Map[String, Vector[Cap]] =
-    Globals.elmixCapture.toOption.map(_.toList).getOrElse(Nil).map { d =>
-      (d.zone.toString, Cap(d.yr.asInstanceOf[Double].toInt, d.kraftslag.toString,
-        d.capture_rate.asInstanceOf[Double], d.baspris.asInstanceOf[Double],
-        d.twh.asInstanceOf[Double]))
-    }.groupBy(_._1).map((z, xs) => z -> xs.map(_._2).toVector)
+    Globals.elmixCapture.toOption
+      .map(_.toList)
+      .getOrElse(Nil)
+      .map { d =>
+        (
+          d.zone.toString,
+          Cap(
+            d.yr.asInstanceOf[Double].toInt,
+            d.kraftslag.toString,
+            d.capture_rate.asInstanceOf[Double],
+            d.baspris.asInstanceOf[Double],
+            d.twh.asInstanceOf[Double]
+          )
+        )
+      }
+      .groupBy(_._1)
+      .map((z, xs) => z -> xs.map(_._2).toVector)
 
   final case class PV(yr: Int, bin: Int, prisMedian: Double)
   lazy val pvByZone: Map[String, Vector[PV]] =
-    Globals.elmixPrisVind.toOption.map(_.toList).getOrElse(Nil).map { d =>
-      (d.zone.toString, PV(d.yr.asInstanceOf[Double].toInt,
-        d.vind_bin.asInstanceOf[Double].toInt, d.pris_median.asInstanceOf[Double]))
-    }.groupBy(_._1).map((z, xs) => z -> xs.map(_._2).toVector)
+    Globals.elmixPrisVind.toOption
+      .map(_.toList)
+      .getOrElse(Nil)
+      .map { d =>
+        (
+          d.zone.toString,
+          PV(
+            d.yr.asInstanceOf[Double].toInt,
+            d.vind_bin.asInstanceOf[Double].toInt,
+            d.pris_median.asInstanceOf[Double]
+          )
+        )
+      }
+      .groupBy(_._1)
+      .map((z, xs) => z -> xs.map(_._2).toVector)
 
   /** Stabil färgramp per förekommande år. */
   def yearColors(years: Seq[Int]): Map[Int, String] =
@@ -354,7 +380,8 @@ object Main:
     obj(
       title = obj(
         text = s"Pris vs vindnivå – ${zone.replace("_", "")}",
-        subtext = "medianpris per vind-percentil (1 = låg vind … 20 = hög) · nedåtlutning = kannibalisering",
+        subtext =
+          "medianpris per vind-percentil (1 = låg vind … 20 = hög) · nedåtlutning = kannibalisering",
         left = "center",
         textStyle = obj(fontSize = 13),
         subtextStyle = obj(fontSize = 11)
@@ -362,7 +389,8 @@ object Main:
       legend = obj(top = 46, `type` = "scroll"),
       tooltip = obj(trigger = "axis"),
       grid = obj(top = 84, bottom = 40, left = 58, right = 28),
-      xAxis = obj(`type` = "category", name = "vind-bin", data = js.Array((1 to 20).map(_.toString)*)),
+      xAxis =
+        obj(`type` = "category", name = "vind-bin", data = js.Array((1 to 20).map(_.toString)*)),
       yAxis = obj(`type` = "value", name = "EUR/MWh"),
       series = js.Array(series*)
     )

@@ -1,3 +1,4 @@
 # Kända men botblockerande URL:er (giltiga i webbläsare, men lychee/HTTP/2
 # avvisas av servern). Exkluderas från länkkontrollen.
 mckinsey\.com
+linkedin\.com
