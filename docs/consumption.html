@@ -2,15 +2,32 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8">
-  <title>Elmix – runda vyer (mix & kannibalisering)</title>
+  <title>Elmix – förbrukningsmix (produktion + nettoimport)</title>
   <script src="vendor/echarts.min.js"></script>
-  <script src="data/round-data.js"></script>
+  <script src="data/consumption-data.js"></script>
+  <script>
+    // Config för den delade round.js: förbrukningsdata, importkil, importandels-heatmap.
+    window.ROUND_CFG = {
+      data: window.elmixConsumption,
+      fuels: [
+        { key: 'v',   name: 'Vind',           c: '#5470c6' },
+        { key: 's',   name: 'Sol',            c: '#fac858' },
+        { key: 'va',  name: 'Vattenkraft',    c: '#91cc75' },
+        { key: 'k',   name: 'Kärnkraft',      c: '#ee6666' },
+        { key: 'kv',  name: 'Kraftvärme/övr', c: '#73c0de' },
+        { key: 'imp', name: 'Import (netto)', c: '#9aa7b8' }
+      ],
+      heat: 'import'
+    }
+  </script>
   <style>
     body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;
            max-width: 1180px; padding: 0 16px 48px; color: #222; }
     h1 { font-size: 20px; margin-top: 24px; }
     h2 { font-size: 16px; color: #333; margin: 0 0 2px; }
     .lead { color: #555; font-size: 14px; line-height: 1.5; }
+    .note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px;
+            padding: 8px 14px; font-size: 13px; color: #7c4a02; line-height: 1.5; margin: 12px 0; }
     .controls { margin: 14px 0 6px; font-size: 14px; display: flex; gap: 26px; flex-wrap: wrap; }
     .controls fieldset { border: 1px solid #e3e8ef; border-radius: 8px; padding: 4px 12px 8px; margin: 0; }
     .controls legend { font-size: 12px; color: #777; padding: 0 4px; }
@@ -27,14 +44,11 @@
              font-size: 13px; color: #666; }
     footer a { color: #36c; }
     .topnav { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap;
-              padding: 10px 0 8px; margin-bottom: 4px; border-bottom: 1px solid #e3e8ef;
-              font-size: 14px; }
+              padding: 10px 0 8px; margin-bottom: 4px; border-bottom: 1px solid #e3e8ef; font-size: 14px; }
     .topnav .brand { font-weight: 600; color: #333; margin-right: 4px; }
     .topnav a { color: #36c; text-decoration: none; }
     .topnav a:hover { text-decoration: underline; }
     .topnav a.current { color: #222; font-weight: 600; text-decoration: none; cursor: default; }
-    .note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px;
-            padding: 8px 14px; font-size: 13px; color: #7c4a02; line-height: 1.5; margin: 12px 0; }
   </style>
 </head>
 <body>
@@ -42,30 +56,30 @@
     <span class="brand">Elmix · SE1–SE4</span>
     <a href="index.html">Interaktiv</a>
     <a href="prerendered.html">Prerenderad</a>
-    <a class="current" href="round.html">Runda vyer</a>
-    <a href="consumption.html">Förbrukningsmix</a>
+    <a href="round.html">Runda vyer</a>
+    <a class="current" href="consumption.html">Förbrukningsmix</a>
   </nav>
-  <h1>Elmix – runda vyer: energimix & kannibalisering</h1>
-  <p class="lead">Tre runda sätt att läsa ett helt år av svensk elproduktion (SE1–SE4):
-  mixen kraftslag för kraftslag och hur priset faller när väderkraften flödar
-  (kannibalisering). Välj zon och år; klicka på en dag för att drilla ner till dygnet.</p>
-  <p class="note">Obs: mixen visar <strong>inhemsk produktion</strong> per kraftslag –
-  import/export mellan elområden ingår inte. En nettoimporterande zon (t.ex. SE4) visar
-  alltså bara sin egen produktion, inte den importerade energin. Se
-  <a href="consumption.html">Förbrukningsmix</a> för en vy som även räknar in nettoimport.</p>
+  <h1>Elmix – förbrukningsmix: produktion + nettoimport</h1>
+  <p class="lead">Till skillnad från de andra vyerna (som visar inhemsk <em>produktion</em>) räknar den
+  här in <strong>nettoimport mellan elområden</strong>. Då syns hur stor del av förbrukningen som
+  egentligen kommer utifrån – t.ex. importerar SE4 mer än det självt producerar.</p>
+  <p class="note">Förbrukning ≈ produktion + nettoimport, beräknat på <strong>fysiska flöden (ENTSO-E
+  A11)</strong> – en approximation; transit-/loop-flöden och nätförluster separeras inte, och importen
+  saknar kraftslagsuppdelning (egen grå kil). En nettoexportör (t.ex. SE2) får ingen importkil. Endast
+  data <strong>efter att flödesbaserad marknadskoppling (Nordic FBMC) infördes</strong> (okt 2024) visas:
+  2025 (helår) och 2026 (hittills).</p>
 
   <div class="controls">
     <fieldset id="zone-picker"><legend>Elområde</legend></fieldset>
-    <fieldset id="year-picker"><legend>År</legend></fieldset>
+    <fieldset id="year-picker"><legend>År (FBMC-eran)</legend></fieldset>
   </div>
 
   <section class="pane">
     <h2>Polär stack-klocka</h2>
-    <p class="desc">Helcirkeln är <strong>ett år</strong> (12 månader medurs). Varje stapel är
-    en dags produktionsmix <strong>normaliserad till 100 %</strong> – andelen per kraftslag.
-    Den svarta linjen är dygnsmedelpriset (skalat till ringen). Där vind- och solandelen är hög
-    dippar prislinjen: <strong>kannibalisering</strong>. Klicka på en dag → samma klocka men
-    24 timmar (intradagsmix + prisdipp mitt på dagen när solen toppar).</p>
+    <p class="desc">Året medurs; varje stapel är en dags <strong>förbrukningsmix</strong> normaliserad
+    till 100 % – kraftslagen plus den grå <strong>Import (netto)</strong>-kilen. Ju större grå andel,
+    desto mer av förbrukningen täcks av import den dagen. Svart linje = pris (skalat). Klicka på en dag
+    → 24-timmarsvy (intradagsmönstret i importberoendet).</p>
     <div class="toolbar" id="bar-toolbar" style="display:none">
       <button id="bar-prev">‹ Föregående dag</button>
       <button id="bar-next">Nästa dag ›</button>
@@ -77,21 +91,16 @@
 
   <section class="pane">
     <h2>Sunburst</h2>
-    <p class="desc">Hierarkisk vy: innersta ringen är årets <strong>månader</strong>, mellanringen
-    <strong>dagar</strong>, ytterringen <strong>kraftslagens andel</strong> den dagen.
-    Sektorstorlek = producerad energi (MWh), färg = kraftslag. Klicka på en månad eller dag för
-    att zooma in; klicka i mitten för att backa. Bra för att se hur t.ex. vattenkraft och vind
-    byter dominans mellan säsonger.</p>
+    <p class="desc">Månad → dag → kraftslag/import, sektorstorlek = energi (MWh). Den grå importkilen i
+    ytterringen visar importens absoluta bidrag per dag. Klicka för att zooma in; mitten backar.</p>
     <div id="pane-sun" class="chart"></div>
   </section>
 
   <section class="pane">
-    <h2>Radiell heatmap – kannibaliserings-klocka</h2>
-    <p class="desc">Varje cell är en <strong>timme</strong>: vinkeln är dag på året
-    (månadsetiketter runt kanten), radien är timme på dygnet (00 i mitten → 23 ytterst).
-    Färgen är <strong>elpriset</strong> – blått billigt, rött dyrt. De blå banden (blåsiga
-    perioder, soliga sommarmiddagar) är kannibaliseringen avläst direkt över hela året i
-    timupplösning. Klicka på en dag för att drilla 24h-vyn i den översta panelen.</p>
+    <h2>Radiell heatmap – importberoende</h2>
+    <p class="desc">Varje cell är en timme: vinkel = dag på året, radie = timme på dygnet (00 i mitten →
+    23 ytterst). Färgen är <strong>nettoimportandelen</strong> (andel av förbrukningen som är import) –
+    grön låg, lila hög. Visar när på året och dygnet zonen är som mest importberoende.</p>
     <div id="pane-heat" class="chart"></div>
   </section>
 
