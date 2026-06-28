@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 
 ./viz/export-data.sh
 ./viz/export-round.sh
+./viz/export-consumption.sh
 (cd viz && mill app.fullLinkJS)
 (cd viz/ssr && node render.mjs)
 
@@ -16,9 +17,9 @@ cp viz/vendor/echarts.min.js docs/vendor/
 cp viz/data/elmix-data.js docs/data/
 cp viz/prerendered.html docs/
 sed 's|out/app/fastLinkJS.dest/main.js|main.js|' viz/index.html > docs/index.html
-# Runda experimentsidan (fristående, läser round-data.js direkt).
-cp viz/round.html viz/round.js docs/
-cp viz/data/round-data.js docs/data/
+# Runda experimentsidor (fristående, delar round.js, läser *-data.js direkt).
+cp viz/round.html viz/consumption.html viz/round.js docs/
+cp viz/data/round-data.js viz/data/consumption-data.js docs/data/
 
 echo "docs/ klar:"
 ls docs/

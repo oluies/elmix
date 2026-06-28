@@ -33,6 +33,8 @@
     .topnav a { color: #36c; text-decoration: none; }
     .topnav a:hover { text-decoration: underline; }
     .topnav a.current { color: #222; font-weight: 600; text-decoration: none; cursor: default; }
+    .note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px;
+            padding: 8px 14px; font-size: 13px; color: #7c4a02; line-height: 1.5; margin: 12px 0; }
   </style>
 </head>
 <body>
@@ -41,11 +43,16 @@
     <a href="index.html">Interaktiv</a>
     <a href="prerendered.html">Prerenderad</a>
     <a class="current" href="round.html">Runda vyer</a>
+    <a href="consumption.html">Förbrukningsmix</a>
   </nav>
   <h1>Elmix – runda vyer: energimix & kannibalisering</h1>
   <p class="lead">Tre runda sätt att läsa ett helt år av svensk elproduktion (SE1–SE4):
   mixen kraftslag för kraftslag och hur priset faller när väderkraften flödar
   (kannibalisering). Välj zon och år; klicka på en dag för att drilla ner till dygnet.</p>
+  <p class="note">Obs: mixen visar <strong>inhemsk produktion</strong> per kraftslag –
+  import/export mellan elområden ingår inte. En nettoimporterande zon (t.ex. SE4) visar
+  alltså bara sin egen produktion, inte den importerade energin. Se
+  <a href="consumption.html">Förbrukningsmix</a> för en vy som även räknar in nettoimport.</p>
 
   <div class="controls">
     <fieldset id="zone-picker"><legend>Elområde</legend></fieldset>
@@ -91,7 +98,8 @@
   <footer>© 2026 Örjan Lundberg ·
     <a href="https://github.com/oluies">GitHub</a> ·
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
-    Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a></footer>
+    Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
+    Byggd med <a href="https://duckdb.org">DuckDB</a>, <a href="https://laminar.dev">Scala.js + Laminar</a> &amp; <a href="https://echarts.apache.org">ECharts</a></footer>
 
   <script src="round.js"></script>
 </body>

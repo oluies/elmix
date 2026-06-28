@@ -247,6 +247,7 @@ const html = `<!doctype html>
   <a href="index.html">Interaktiv</a>
   <a class="current" href="prerendered.html">Prerenderad</a>
   <a href="round.html">Runda vyer</a>
+  <a href="consumption.html">Förbrukningsmix</a>
 </nav>
 <h1>Elmix – SE1–SE4 (ENTSO-E, 15-min, från 2 dec 2025, prerenderad SVG)</h1>
 <p>Statisk variant. Den <a href="index.html">interaktiva rapporten</a> låter
@@ -311,7 +312,7 @@ ${parts.join('\n')}
   <a href="https://github.com/oluies">GitHub</a> ·
   <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
   Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
-  Byggd med <a href="https://laminar.dev">Scala.js + Laminar</a></footer>
+  Byggd med <a href="https://duckdb.org">DuckDB</a>, <a href="https://laminar.dev">Scala.js + Laminar</a> &amp; <a href="https://echarts.apache.org">ECharts</a></footer>
 </body></html>`
 
 writeFileSync('../prerendered.html', html)
