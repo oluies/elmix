@@ -18,16 +18,20 @@ function svg(opt, w, h) {
 
 const rr = r(R.data, 'SE_3', 2025)
 const cc = r(C.data, 'SE_4', 2025)
+const cc26 = r(C.data, 'SE_4', 2026)
+const dayBuckets = (rec, day) => rec.h.reduce((n, _, i) => n + (rec.doy[i] === day ? 1 : 0), 0)
 const cases = [
   ['round barYear', RV.barYearOption(rr, 'SE_3', 2025, RV.DEFAULT_FUELS)],
   ['round barDay', RV.barDayOption(rr, 'SE_3', 2025, 166, RV.DEFAULT_FUELS)],
   ['round sunburst', RV.sunburstOption(rr, 'SE_3', 2025, RV.DEFAULT_FUELS)],
   ['round heat', RV.heatOption(rr, 'SE_3', 2025, RV.priceHeat)],
   ['cons barYear', RV.barYearOption(cc, 'SE_4', 2025, CONS_FUELS)],
-  ['cons barDay', RV.barDayOption(cc, 'SE_4', 2025, 166, CONS_FUELS)],
+  ['cons barDay-h', RV.barDayOption(cc, 'SE_4', 2025, 166, CONS_FUELS)],
+  ['cons barDay-15m', RV.barDayOption(cc26, 'SE_4', 2026, 90, CONS_FUELS)],
   ['cons sunburst', RV.sunburstOption(cc, 'SE_4', 2025, CONS_FUELS)],
   ['cons heat(imp)', RV.heatOption(cc, 'SE_4', 2025, RV.importHeat)]
 ]
+console.log(`2026 dag 90 har ${dayBuckets(cc26, 90)} buckets (väntat 96), heatmap aggregerar -> 24 ringar`)
 for (const [name, opt] of cases) {
   const s = svg(opt, 720, 560)
   console.log(name.padEnd(16), 'OK —', (s.match(/<path/g) || []).length, 'paths')

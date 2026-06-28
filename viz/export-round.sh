@@ -8,39 +8,44 @@ cd "$(dirname "$0")/.."
 mkdir -p viz/data
 duckdb -readonly elmix.duckdb <<'SQL'
 COPY (
-  WITH gh AS (
-    SELECT zone, date_trunc('hour', ts) AS ts_h, kraftslag, sum(mwh) AS mwh
-    FROM fct_gen WHERE year(ts) IN (2019, 2022, 2025) GROUP BY ALL
-  ),
-  piv AS (
-    SELECT zone, ts_h,
+  -- Bucketa på generationens NATIVA upplösning (15-min från 2 dec 2025, annars
+  -- tim). q = kvart i timmen (0..3). Pris läses ur rå-priserna på exakt ts, så
+  -- kvartspris (från 1 okt 2025) följer med; äldre = tim.
+  WITH piv AS (
+    SELECT zone, ts,
       sum(mwh) FILTER (WHERE kraftslag='Vind')           AS v,
       sum(mwh) FILTER (WHERE kraftslag='Sol')            AS s,
       sum(mwh) FILTER (WHERE kraftslag='Vattenkraft')    AS va,
       sum(mwh) FILTER (WHERE kraftslag='Kärnkraft')      AS k,
       sum(mwh) FILTER (WHERE kraftslag='Kraftvärme/övr') AS kv
-    FROM gh GROUP BY zone, ts_h
+    FROM fct_gen WHERE year(ts) IN (2019, 2022, 2025) GROUP BY zone, ts
+  ),
+  pr AS (
+    SELECT zone, ts, avg(eur_mwh) AS eur
+    FROM read_parquet('data/raw/prices/SE_*.parquet')
+    WHERE year(ts) IN (2019, 2022, 2025) GROUP BY zone, ts
   ),
   j AS (
-    SELECT p.zone AS z, year(p.ts_h) AS y,
-           dayofyear(p.ts_h) AS doy, hour(p.ts_h) AS hh,
-           CAST(round(COALESCE(p.v, 0))  AS INTEGER) AS v,
-           CAST(round(COALESCE(p.s, 0))  AS INTEGER) AS s,
-           CAST(round(COALESCE(p.va, 0)) AS INTEGER) AS va,
-           CAST(round(COALESCE(p.k, 0))  AS INTEGER) AS k,
-           CAST(round(COALESCE(p.kv, 0)) AS INTEGER) AS kv,
-           round(pr.eur_mwh, 1) AS p
-    FROM piv p LEFT JOIN fct_price_h pr ON pr.zone = p.zone AND pr.ts_h = p.ts_h
+    SELECT p.zone AS z, year(p.ts) AS y, dayofyear(p.ts) AS doy,
+           hour(p.ts) AS hh, CAST(minute(p.ts) / 15 AS INTEGER) AS q,
+           CAST(round(COALESCE(v, 0))  AS INTEGER) AS v,
+           CAST(round(COALESCE(s, 0))  AS INTEGER) AS s,
+           CAST(round(COALESCE(va, 0)) AS INTEGER) AS va,
+           CAST(round(COALESCE(k, 0))  AS INTEGER) AS k,
+           CAST(round(COALESCE(kv, 0)) AS INTEGER) AS kv,
+           round(pr.eur, 1) AS p
+    FROM piv p LEFT JOIN pr ON pr.zone = p.zone AND pr.ts = p.ts
   )
   SELECT z, y,
-    list(doy ORDER BY doy, hh) AS doy,
-    list(hh  ORDER BY doy, hh) AS h,
-    list(v   ORDER BY doy, hh) AS v,
-    list(s   ORDER BY doy, hh) AS s,
-    list(va  ORDER BY doy, hh) AS va,
-    list(k   ORDER BY doy, hh) AS k,
-    list(kv  ORDER BY doy, hh) AS kv,
-    list(p   ORDER BY doy, hh) AS p
+    list(doy ORDER BY doy, hh, q) AS doy,
+    list(hh  ORDER BY doy, hh, q) AS h,
+    list(q   ORDER BY doy, hh, q) AS q,
+    list(v   ORDER BY doy, hh, q) AS v,
+    list(s   ORDER BY doy, hh, q) AS s,
+    list(va  ORDER BY doy, hh, q) AS va,
+    list(k   ORDER BY doy, hh, q) AS k,
+    list(kv  ORDER BY doy, hh, q) AS kv,
+    list(p   ORDER BY doy, hh, q) AS p
   FROM j GROUP BY z, y ORDER BY z, y
 ) TO 'viz/data/round.json' (FORMAT json, ARRAY true);
 SQL
