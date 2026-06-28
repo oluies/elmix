@@ -18,12 +18,12 @@ COPY (
       sum(mwh) FILTER (WHERE kraftslag='Vattenkraft')    AS va,
       sum(mwh) FILTER (WHERE kraftslag='Kärnkraft')      AS k,
       sum(mwh) FILTER (WHERE kraftslag='Kraftvärme/övr') AS kv
-    FROM fct_gen WHERE year(ts) IN (2019, 2022, 2025) GROUP BY zone, ts
+    FROM fct_gen WHERE year(ts) IN (2019, 2022, 2025, 2026) GROUP BY zone, ts
   ),
   pr AS (
     SELECT zone, ts, avg(eur_mwh) AS eur
     FROM read_parquet('data/raw/prices/SE_*.parquet')
-    WHERE year(ts) IN (2019, 2022, 2025) GROUP BY zone, ts
+    WHERE year(ts) IN (2019, 2022, 2025, 2026) GROUP BY zone, ts
   ),
   j AS (
     SELECT p.zone AS z, year(p.ts) AS y, dayofyear(p.ts) AS doy,
@@ -51,7 +51,7 @@ COPY (
 SQL
 
 {
-  printf 'window.elmixRound = { years: [2019, 2022, 2025], zones: ["SE_1","SE_2","SE_3","SE_4"], data: '
+  printf 'window.elmixRound = { years: [2019, 2022, 2025, 2026], zones: ["SE_1","SE_2","SE_3","SE_4"], data: '
   cat viz/data/round.json
   printf ' };\n'
 } > viz/data/round-data.js
