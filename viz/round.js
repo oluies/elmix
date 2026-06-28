@@ -6,20 +6,22 @@
   'use strict'
 
   const DEFAULT_FUELS = [
-    { key: 'v',  name: 'Vind',          c: '#5470c6' },
-    { key: 's',  name: 'Sol',           c: '#fac858' },
-    { key: 'va', name: 'Vattenkraft',   c: '#91cc75' },
-    { key: 'k',  name: 'Kärnkraft',     c: '#ee6666' },
-    { key: 'kv', name: 'Kraftvärme/övr', c: '#73c0de' }
+    { key: 'v',  name: 'Vind',           nameEn: 'Wind',      c: '#5470c6' },
+    { key: 's',  name: 'Sol',            nameEn: 'Solar',     c: '#fac858' },
+    { key: 'va', name: 'Vattenkraft',    nameEn: 'Hydro',     c: '#91cc75' },
+    { key: 'k',  name: 'Kärnkraft',      nameEn: 'Nuclear',   c: '#ee6666' },
+    { key: 'kv', name: 'Kraftvärme/övr', nameEn: 'CHP/other', c: '#73c0de' }
   ]
-  // Heatmap-lägen: värde per timme + färgskala.
+  // Heatmap-lägen: värde per timme + färgskala (sv/en).
   const priceHeat = {
-    suffix: 'pris per dag × timme', tip: v => `${v} €/MWh`, text: ['dyrt', 'billigt'],
+    suffix: 'pris per dag × timme', suffixEn: 'price per day × hour',
+    unit: '€/MWh', unitEn: '€/MWh', text: ['dyrt', 'billigt'], textEn: ['expensive', 'cheap'],
     colors: ['#2c7fb8', '#7fcdbb', '#ffffcc', '#fd8d3c', '#c0392b'],
     value: (d, i) => d.p[i]
   }
   const importHeat = {
-    suffix: 'nettoimportandel per dag × timme', tip: v => `${v} % från import`, text: ['hög', 'låg'],
+    suffix: 'nettoimportandel per dag × timme', suffixEn: 'net-import share per day × hour',
+    unit: '% från import', unitEn: '% from import', text: ['hög', 'låg'], textEn: ['high', 'low'],
     colors: ['#1a9850', '#a6d96a', '#ffffbf', '#fdae61', '#7b3294'],
     value: (d, i) => {
       const imp = d.imp ? d.imp[i] : 0
@@ -29,15 +31,25 @@
   }
 
   const MNAME = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
+  const MNAME_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const MDAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
   const MSTART = (() => { const s = []; let a = 1; for (const m of MDAYS) { s.push(a); a += m } return s })()
   const monthOf = day => { for (let m = 11; m >= 0; m--) if (day >= MSTART[m]) return m; return 0 }
+  // doy (1..365) -> ISO-datum (YYYY-MM-DD); UTC för att undvika tidszonsskift.
+  const isoDate = (year, doy) => new Date(Date.UTC(year, 0, doy)).toISOString().slice(0, 10)
+
+  // Språk (sv/en). Byggarna läser modulvariabeln LANG vid render; DOM-lagret
+  // sätter den via språkväljaren. Node-röktestet kör default 'sv'.
+  let LANG = 'sv'
+  const t = (sv, en) => LANG === 'en' ? en : sv
+  const fname = f => (LANG === 'en' && f.nameEn) ? f.nameEn : f.name
+  const mName = m => (LANG === 'en' ? MNAME_EN : MNAME)[m]
 
   // Delad layout: legend vertikalt till höger, stor cirkel nedflyttad under titeln.
   const legendRight = data => ({ type: 'scroll', orient: 'vertical', right: 10, top: 'middle', itemGap: 10, data })
   const POLAR = { center: ['44%', '56%'], radius: ['17%', '86%'] }
   const titleTop = text => ({ text, left: '44%', top: 8, textAlign: 'center', textStyle: { fontSize: 14 } })
-  const monthLabel = { interval: 0, fontSize: 11, color: '#555', formatter: v => { const mi = MSTART.indexOf(+v); return mi >= 0 ? MNAME[mi] : '' } }
+  const monthLabel = { interval: 0, fontSize: 11, color: '#555', formatter: v => { const mi = MSTART.indexOf(+v); return mi >= 0 ? mName(mi) : '' } }
 
   // ---- datahjälpare (rena) --------------------------------------------------
   // Dagsaggregat: summera valda kraftslag per dag, snittpris per dag.
@@ -84,7 +96,7 @@
   }
 
   const shareSeries = (rows, fuels) => fuels.map(f => ({
-    name: f.name, type: 'bar', coordinateSystem: 'polar', stack: 'mix', itemStyle: { color: f.c },
+    name: fname(f), type: 'bar', coordinateSystem: 'polar', stack: 'mix', itemStyle: { color: f.c },
     data: rows.map(x => { const t = fuels.reduce((s, g) => s + x[g.key], 0); return t ? +(x[f.key] / t * 100).toFixed(1) : 0 })
   }))
   // Pris min–max-skalat över perioden: billigaste -> 0 (centrum), dyraste -> 100
@@ -95,7 +107,7 @@
     const pmax = ps.length ? Math.max(...ps) : 1
     const span = (pmax - pmin) || 1
     return {
-      name: 'Pris', type: 'line', coordinateSystem: 'polar', smooth: true, showSymbol: false, z: 10,
+      name: t('Pris', 'Price'), type: 'line', coordinateSystem: 'polar', smooth: true, showSymbol: false, z: 10,
       lineStyle: { color: '#111', width: 1.5 },
       data: rows.map(x => x.p == null ? null : +((x.p - pmin) / span * 100).toFixed(1))
     }
@@ -111,12 +123,14 @@
       const spot = x.p * EUR_SEK / 10 // EUR/MWh -> öre/kWh
       const moms = spot * MOMS
       const full = (spot + ENERGISKATT_ORE) * MOMS
-      const t = `${String(x.h).padStart(2, '0')}:${String(x.q * 15).padStart(2, '0')}`
-      return `<tr><td>${t}</td><td>${spot.toFixed(1)}</td><td>${moms.toFixed(1)}</td><td>${full.toFixed(1)}</td></tr>`
+      const tm = `${String(x.h).padStart(2, '0')}:${String(x.q * 15).padStart(2, '0')}`
+      return `<tr><td>${tm}</td><td>${spot.toFixed(1)}</td><td>${moms.toFixed(1)}</td><td>${full.toFixed(1)}</td></tr>`
     }).join('')
-    return `<div class="cap">öre/kWh · spot = day-ahead · antaget 1 EUR = ${EUR_SEK} SEK · ` +
-      `energiskatt ${ENERGISKATT_ORE} öre/kWh (exkl moms) · moms 25 %</div>` +
-      '<table><thead><tr><th>Tid</th><th>Spot</th><th>+moms</th><th>+skatt+moms</th></tr></thead>' +
+    return `<div class="cap">${t('öre/kWh · spot = day-ahead · antaget', 'öre/kWh · spot = day-ahead · assuming')} ` +
+      `1 EUR = ${EUR_SEK} SEK · ${t('energiskatt', 'energy tax')} ${ENERGISKATT_ORE} öre/kWh ` +
+      `(${t('exkl moms', 'excl VAT')}) · ${t('moms 25 %', 'VAT 25 %')}</div>` +
+      `<table><thead><tr><th>${t('Tid', 'Time')}</th><th>Spot</th>` +
+      `<th>${t('+moms', '+VAT')}</th><th>${t('+skatt+moms', '+tax+VAT')}</th></tr></thead>` +
       `<tbody>${body}</tbody></table>`
   }
 
@@ -124,8 +138,8 @@
   function barYearOption(d, zone, year, fuels) {
     const rows = daily(d, fuels)
     return {
-      title: titleTop(`${zone.replace('_', '')} ${year} – mix-andel över året`),
-      legend: legendRight(fuels.map(f => f.name).concat('Pris')),
+      title: titleTop(`${zone.replace('_', '')} ${year} – ${t('mix-andel över året', 'mix share over the year')}`),
+      legend: legendRight(fuels.map(fname).concat(t('Pris', 'Price'))),
       tooltip: { trigger: 'item' },
       polar: POLAR,
       angleAxis: {
@@ -139,8 +153,8 @@
   function barDayOption(d, zone, year, day, fuels) {
     const rows = dayHours(d, day, fuels)
     return {
-      title: titleTop(`${zone.replace('_', '')} ${year} – dygnsmix, dag ${day} (${rows.length > 24 ? rows.length + ' kvart' : '24 h'})`),
-      legend: legendRight(fuels.map(f => f.name).concat('Pris')),
+      title: titleTop(`${zone.replace('_', '')} – ${isoDate(year, day)} (${t('dag', 'day')} ${day}, ${rows.length > 24 ? rows.length + (LANG === 'en' ? ' quarters' : ' kvart') : '24 h'})`),
+      legend: legendRight(fuels.map(fname).concat(t('Pris', 'Price'))),
       tooltip: { trigger: 'item' },
       polar: POLAR,
       angleAxis: {
@@ -158,15 +172,15 @@
     const months = new Map()
     for (const x of rows) { const m = monthOf(x.day); if (!months.has(m)) months.set(m, []); months.get(m).push(x) }
     const data = [...months.keys()].sort((a, b) => a - b).map(m => ({
-      name: MNAME[m], itemStyle: { color: '#e9edf3' },
+      name: mName(m), itemStyle: { color: '#e9edf3' },
       children: months.get(m).map(x => ({
-        name: 'Dag ' + x.day,
-        children: fuels.map(f => ({ name: f.name, value: Math.max(0, x[f.key]), itemStyle: { color: f.c } }))
+        name: t('Dag ', 'Day ') + x.day,
+        children: fuels.map(f => ({ name: fname(f), value: Math.max(0, x[f.key]), itemStyle: { color: f.c } }))
       }))
     }))
     return {
-      title: { text: `${zone.replace('_', '')} ${year} – mix (månad → dag → kraftslag)`, left: 'center', top: 8, textStyle: { fontSize: 14 } },
-      tooltip: { formatter: p => `${p.name}<br/>${Math.round(p.value).toLocaleString('sv')} MWh` },
+      title: { text: `${zone.replace('_', '')} ${year} – ${t('mix (månad → dag → kraftslag)', 'mix (month → day → source)')}`, left: 'center', top: 8, textStyle: { fontSize: 14 } },
+      tooltip: { formatter: p => `${p.name}<br/>${Math.round(p.value).toLocaleString(LANG === 'en' ? 'en' : 'sv')} MWh` },
       series: [{
         type: 'sunburst', center: ['50%', '54%'], radius: ['8%', '94%'], data, sort: null, animationDurationUpdate: 500,
         emphasis: { focus: 'ancestor' }, nodeClick: 'rootToNode',
@@ -187,11 +201,11 @@
     const vmin = Math.min(...vals), vmax = Math.max(...vals)
     const N = doys.length
     return {
-      title: titleTop(`${zone.replace('_', '')} ${year} – ${hc.suffix}`),
-      tooltip: { trigger: 'item', formatter: p => `dag ${p.value[3]}, kl ${String(p.value[1]).padStart(2, '0')}<br/>${hc.tip(p.value[2])}` },
+      title: titleTop(`${zone.replace('_', '')} ${year} – ${t(hc.suffix, hc.suffixEn)}`),
+      tooltip: { trigger: 'item', formatter: p => `${isoDate(year, p.value[3])} (${t('dag', 'day')} ${p.value[3]}), ${t('kl', 'h')} ${String(p.value[1]).padStart(2, '0')}<br/>${p.value[2]} ${t(hc.unit, hc.unitEn)}` },
       visualMap: {
         type: 'continuous', min: vmin, max: vmax, dimension: 2, calculable: true,
-        orient: 'vertical', right: 12, top: 'middle', text: hc.text, itemHeight: 160,
+        orient: 'vertical', right: 12, top: 'middle', text: LANG === 'en' ? hc.textEn : hc.text, itemHeight: 160,
         inRange: { color: hc.colors }
       },
       polar: POLAR,
@@ -253,7 +267,7 @@
       const days = dayList(), i = days.indexOf(drillDay)
       document.getElementById('bar-prev').disabled = i <= 0
       document.getElementById('bar-next').disabled = i >= days.length - 1
-      document.getElementById('bar-daylabel').textContent = `dag ${drillDay} (← → byter dag)`
+      document.getElementById('bar-daylabel').textContent = `${isoDate(year, drillDay)} · ${t('dag', 'day')} ${drillDay} ${t('(← → byter dag)', '(← → change day)')}`
     } else {
       barChart.setOption(barYearOption(d, zone, year, FUELS), true)
       if (tbl) tbl.style.display = 'none'
@@ -305,5 +319,19 @@
   radios('zone-picker', R.zones.map(z => ({ val: z, txt: z.replace('_', '') })), zone, z => { zone = z; drillDay = null; renderAll() })
   radios('year-picker', R.years.map(y => ({ val: y, txt: String(y) })), year, y => { year = +y; drillDay = null; renderAll() })
 
-  renderAll()
+  // Språkväljare (SV/EN): byter LANG, sätter html[data-lang] (statisk text via
+  // CSS) och ritar om diagrammen.
+  function setLang(l) {
+    LANG = l
+    document.documentElement.setAttribute('data-lang', l)
+    const el = document.getElementById('lang-switch')
+    if (el) el.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.lang === l))
+    renderAll()
+  }
+  const langSwitch = document.getElementById('lang-switch')
+  if (langSwitch) ['sv', 'en'].forEach(l => {
+    const b = document.createElement('button'); b.textContent = l.toUpperCase(); b.dataset.lang = l
+    b.onclick = () => setLang(l); langSwitch.appendChild(b)
+  })
+  setLang('sv')
 })()

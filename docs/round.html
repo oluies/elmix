@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv">
+<html lang="sv" data-lang="sv">
 <head>
   <meta charset="utf-8">
   <title>Elmix – runda vyer (mix & kannibalisering)</title>
@@ -44,42 +44,64 @@
     .topnav a.current { color: #222; font-weight: 600; text-decoration: none; cursor: default; }
     .note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px;
             padding: 8px 14px; font-size: 13px; color: #7c4a02; line-height: 1.5; margin: 12px 0; }
+    /* Språkväxling: dölj det inaktiva språket. */
+    html[data-lang="en"] [lang="sv"] { display: none; }
+    html[data-lang="sv"] [lang="en"] { display: none; }
+    .langswitch { margin-left: auto; display: inline-flex; }
+    .langswitch button { font: inherit; font-size: 12px; padding: 2px 9px; border: 1px solid #c9d2e0;
+                         background: #fff; cursor: pointer; color: #36c; }
+    .langswitch button.active { background: #36c; color: #fff; border-color: #36c; }
+    .langswitch button:first-child { border-radius: 6px 0 0 6px; }
+    .langswitch button:last-child { border-radius: 0 6px 6px 0; border-left: none; }
   </style>
 </head>
 <body>
   <nav class="topnav">
     <span class="brand">Elmix · SE1–SE4</span>
-    <a href="index.html">Interaktiv</a>
-    <a href="prerendered.html">Prerenderad</a>
-    <a class="current" href="round.html">Runda vyer</a>
-    <a href="consumption.html">Förbrukningsmix</a>
+    <a href="index.html"><span lang="sv">Interaktiv</span><span lang="en">Interactive</span></a>
+    <a href="prerendered.html"><span lang="sv">Prerenderad</span><span lang="en">Prerendered</span></a>
+    <a class="current" href="round.html"><span lang="sv">Runda vyer</span><span lang="en">Round views</span></a>
+    <a href="consumption.html"><span lang="sv">Förbrukningsmix</span><span lang="en">Consumption mix</span></a>
+    <span id="lang-switch" class="langswitch"></span>
   </nav>
-  <h1>Elmix – runda vyer: energimix & kannibalisering</h1>
-  <p class="lead">Tre runda sätt att läsa ett helt år av svensk elproduktion (SE1–SE4):
+  <h1><span lang="sv">Elmix – runda vyer: energimix &amp; kannibalisering</span><span lang="en">Elmix – round views: energy mix &amp; cannibalisation</span></h1>
+  <p class="lead" lang="sv">Tre runda sätt att läsa ett helt år av svensk elproduktion (SE1–SE4):
   mixen kraftslag för kraftslag och hur priset faller när väderkraften flödar
   (kannibalisering). Välj zon och år; klicka på en dag för att drilla ner till dygnet.</p>
-  <p class="note">Obs: mixen visar <strong>inhemsk produktion</strong> per kraftslag –
+  <p class="lead" lang="en">Three circular ways to read a full year of Swedish electricity generation
+  (SE1–SE4): the mix source by source, and how the price falls when weather-driven power floods in
+  (cannibalisation). Pick a zone and year; click a day to drill down to that day.</p>
+  <p class="note" lang="sv">Obs: mixen visar <strong>inhemsk produktion</strong> per kraftslag –
   import/export mellan elområden ingår inte. En nettoimporterande zon (t.ex. SE4) visar
   alltså bara sin egen produktion, inte den importerade energin. Se
   <a href="consumption.html">Förbrukningsmix</a> för en vy som även räknar in nettoimport.</p>
+  <p class="note" lang="en">Note: the mix shows <strong>domestic generation</strong> per source –
+  import/export between bidding zones is not included. A net-importing zone (e.g. SE4) therefore
+  shows only its own generation, not the imported energy. See
+  <a href="consumption.html">Consumption mix</a> for a view that also includes net imports.</p>
 
   <div class="controls">
-    <fieldset id="zone-picker"><legend>Elområde</legend></fieldset>
-    <fieldset id="year-picker"><legend>År</legend></fieldset>
+    <fieldset id="zone-picker"><legend><span lang="sv">Elområde</span><span lang="en">Bidding zone</span></legend></fieldset>
+    <fieldset id="year-picker"><legend><span lang="sv">År</span><span lang="en">Year</span></legend></fieldset>
   </div>
 
   <section class="pane">
-    <h2>Polär stack-klocka</h2>
-    <p class="desc">Helcirkeln är <strong>ett år</strong> (12 månader medurs). Varje stapel är
+    <h2><span lang="sv">Polär stack-klocka</span><span lang="en">Polar stacked clock</span></h2>
+    <p class="desc" lang="sv">Helcirkeln är <strong>ett år</strong> (12 månader medurs). Varje stapel är
     en dags produktionsmix <strong>normaliserad till 100 %</strong> – andelen per kraftslag.
     Den svarta linjen är dygnsmedelpriset (skalat till ringen). Där vind- och solandelen är hög
     dippar prislinjen: <strong>kannibalisering</strong>. Klicka på en dag → samma klocka men
-    24 timmar (intradagsmix + prisdipp mitt på dagen när solen toppar).</p>
+    24 timmar (eller 96 kvart i 15-min-eran). Tabellen till vänster visar priset med/utan skatt.</p>
+    <p class="desc" lang="en">The full circle is <strong>one year</strong> (12 months clockwise). Each bar
+    is one day's generation mix <strong>normalised to 100 %</strong> – the share per source. The black
+    line is the daily average price (scaled to the ring). Where wind and solar shares are high the price
+    line dips: <strong>cannibalisation</strong>. Click a day → the same clock but 24 hours (or 96 quarters
+    in the 15-min era). The table on the left shows price with/without tax.</p>
     <div class="toolbar" id="bar-toolbar" style="display:none">
-      <button id="bar-prev">‹ Föregående dag</button>
-      <button id="bar-next">Nästa dag ›</button>
-      <button id="bar-back">← Tillbaka till helår</button>
-      <span class="hint" id="bar-daylabel">visar ett enskilt dygn (← → byter dag)</span>
+      <button id="bar-prev"><span lang="sv">‹ Föregående dag</span><span lang="en">‹ Previous day</span></button>
+      <button id="bar-next"><span lang="sv">Nästa dag ›</span><span lang="en">Next day ›</span></button>
+      <button id="bar-back"><span lang="sv">← Tillbaka till helår</span><span lang="en">← Back to full year</span></button>
+      <span class="hint" id="bar-daylabel"></span>
     </div>
     <div class="bar-row">
       <div id="bar-table" class="pricetable" style="display:none"></div>
@@ -89,29 +111,38 @@
 
   <section class="pane">
     <h2>Sunburst</h2>
-    <p class="desc">Hierarkisk vy: innersta ringen är årets <strong>månader</strong>, mellanringen
+    <p class="desc" lang="sv">Hierarkisk vy: innersta ringen är årets <strong>månader</strong>, mellanringen
     <strong>dagar</strong>, ytterringen <strong>kraftslagens andel</strong> den dagen.
     Sektorstorlek = producerad energi (MWh), färg = kraftslag. Klicka på en månad eller dag för
     att zooma in; klicka i mitten för att backa. Bra för att se hur t.ex. vattenkraft och vind
     byter dominans mellan säsonger.</p>
+    <p class="desc" lang="en">Hierarchical view: the inner ring is the year's <strong>months</strong>, the
+    middle ring <strong>days</strong>, the outer ring <strong>each source's share</strong> that day.
+    Sector size = generated energy (MWh), colour = source. Click a month or day to zoom in; click the
+    centre to go back. Good for seeing how e.g. hydro and wind swap dominance between seasons.</p>
     <div id="pane-sun" class="chart"></div>
   </section>
 
   <section class="pane">
-    <h2>Radiell heatmap – kannibaliserings-klocka</h2>
-    <p class="desc">Varje cell är en <strong>timme</strong>: vinkeln är dag på året
+    <h2><span lang="sv">Radiell heatmap – kannibaliserings-klocka</span><span lang="en">Radial heatmap – cannibalisation clock</span></h2>
+    <p class="desc" lang="sv">Varje cell är en <strong>timme</strong>: vinkeln är dag på året
     (månadsetiketter runt kanten), radien är timme på dygnet (00 i mitten → 23 ytterst).
     Färgen är <strong>elpriset</strong> – blått billigt, rött dyrt. De blå banden (blåsiga
     perioder, soliga sommarmiddagar) är kannibaliseringen avläst direkt över hela året i
     timupplösning. Klicka på en dag för att drilla 24h-vyn i den översta panelen.</p>
+    <p class="desc" lang="en">Each cell is one <strong>hour</strong>: the angle is day of the year
+    (month labels around the edge), the radius is hour of the day (00 in the centre → 23 at the rim).
+    The colour is the <strong>electricity price</strong> – blue cheap, red expensive. The blue bands
+    (windy spells, sunny summer middays) are cannibalisation read directly across the whole year at
+    hourly resolution. Click a day to drill the 24h view in the top panel.</p>
     <div id="pane-heat" class="chart"></div>
   </section>
 
   <footer>© 2026 Örjan Lundberg ·
     <a href="https://github.com/oluies">GitHub</a> ·
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
-    Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
-    Byggd med <a href="https://duckdb.org">DuckDB</a>, <a href="https://laminar.dev">Scala.js + Laminar</a> &amp; <a href="https://echarts.apache.org">ECharts</a></footer>
+    <span lang="sv">Källkod:</span><span lang="en">Source:</span> <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
+    <span lang="sv">Byggd med</span><span lang="en">Built with</span> <a href="https://duckdb.org">DuckDB</a> &amp; <a href="https://echarts.apache.org">ECharts</a> <span lang="sv">(ren JS, ej Laminar)</span><span lang="en">(plain JS, no Laminar)</span></footer>
 
   <script src="round.js"></script>
 </body>
