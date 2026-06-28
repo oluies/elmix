@@ -56,25 +56,30 @@
     })
   }
 
-  // Ett dygns timmar (sorterade).
+  // Ett dygns intervall (timme eller 15-min) sorterade på h*4+q.
   function dayHours(d, day, fuels) {
     const keys = fuels.map(f => f.key)
     const out = []
     for (let i = 0; i < d.h.length; i++) if (d.doy[i] === day) {
-      const r = { h: d.h[i], p: d.p ? d.p[i] : null }; keys.forEach(k => r[k] = d[k] ? d[k][i] : 0); out.push(r)
+      const q = d.q ? d.q[i] : 0
+      const r = { h: d.h[i], q, p: d.p ? d.p[i] : null }; keys.forEach(k => r[k] = d[k] ? d[k][i] : 0); out.push(r)
     }
-    return out.sort((a, b) => a.h - b.h)
+    return out.sort((a, b) => (a.h * 4 + a.q) - (b.h * 4 + b.q))
   }
 
   // Heatmap-celler [dagIndex, timme, värde, doy] via valueFn(d, i).
+  // Aggregerar ev. 15-min till TIMME (snitt) så heatmappen alltid har 24 ringar.
   function heatData(d, valueFn) {
     const doys = [...new Set(d.doy)].sort((a, b) => a - b)
     const idx = new Map(doys.map((dy, i) => [dy, i]))
-    const out = []
+    const acc = new Map()
     for (let i = 0; i < d.h.length; i++) {
-      const val = valueFn(d, i)
-      if (val != null) out.push([idx.get(d.doy[i]), d.h[i], val, d.doy[i]])
+      const val = valueFn(d, i); if (val == null) continue
+      const di = idx.get(d.doy[i]), key = di * 24 + d.h[i]
+      let o = acc.get(key); if (!o) { o = { di, h: d.h[i], doy: d.doy[i], sum: 0, n: 0 }; acc.set(key, o) }
+      o.sum += val; o.n++
     }
+    const out = [...acc.values()].map(o => [o.di, o.h, +(o.sum / o.n).toFixed(1), o.doy])
     return { out, doys }
   }
 
@@ -115,13 +120,13 @@
   function barDayOption(d, zone, year, day, fuels) {
     const rows = dayHours(d, day, fuels)
     return {
-      title: titleTop(`${zone.replace('_', '')} ${year} – dygnsmix, dag ${day} (24 h)`),
+      title: titleTop(`${zone.replace('_', '')} ${year} – dygnsmix, dag ${day} (${rows.length > 24 ? rows.length + ' kvart' : '24 h'})`),
       legend: legendRight(fuels.map(f => f.name).concat('Pris')),
       tooltip: { trigger: 'item' },
       polar: POLAR,
       angleAxis: {
-        type: 'category', data: rows.map(x => x.h + ':00'), startAngle: 90, clockwise: true,
-        axisTick: { show: false }, splitLine: { show: false }, axisLabel: { interval: 1, fontSize: 11, color: '#555' }
+        type: 'category', data: rows.map(x => x.q === 0 ? x.h + ':00' : ''), startAngle: 90, clockwise: true,
+        axisTick: { show: false }, splitLine: { show: false }, axisLabel: { interval: 0, fontSize: 11, color: '#555' }
       },
       radiusAxis: { min: 0, max: 100, axisLabel: { formatter: '{value}%' }, splitLine: { lineStyle: { color: '#eee' } } },
       series: [...shareSeries(rows, fuels), priceLine(rows)]
