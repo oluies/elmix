@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv">
+<html lang="sv" data-lang="sv">
 <head>
   <meta charset="utf-8">
   <title>Elmix – förbrukningsmix (produktion + nettoimport)</title>
@@ -10,12 +10,12 @@
     window.ROUND_CFG = {
       data: window.elmixConsumption,
       fuels: [
-        { key: 'v',   name: 'Vind',           c: '#5470c6' },
-        { key: 's',   name: 'Sol',            c: '#fac858' },
-        { key: 'va',  name: 'Vattenkraft',    c: '#91cc75' },
-        { key: 'k',   name: 'Kärnkraft',      c: '#ee6666' },
-        { key: 'kv',  name: 'Kraftvärme/övr', c: '#73c0de' },
-        { key: 'imp', name: 'Import (netto)', c: '#9aa7b8' }
+        { key: 'v',   name: 'Vind',           nameEn: 'Wind',       c: '#5470c6' },
+        { key: 's',   name: 'Sol',            nameEn: 'Solar',      c: '#fac858' },
+        { key: 'va',  name: 'Vattenkraft',    nameEn: 'Hydro',      c: '#91cc75' },
+        { key: 'k',   name: 'Kärnkraft',      nameEn: 'Nuclear',    c: '#ee6666' },
+        { key: 'kv',  name: 'Kraftvärme/övr', nameEn: 'CHP/other',  c: '#73c0de' },
+        { key: 'imp', name: 'Import (netto)', nameEn: 'Net import', c: '#9aa7b8' }
       ],
       heat: 'import'
     }
@@ -58,42 +58,64 @@
     .topnav a { color: #36c; text-decoration: none; }
     .topnav a:hover { text-decoration: underline; }
     .topnav a.current { color: #222; font-weight: 600; text-decoration: none; cursor: default; }
+    /* Språkväxling: dölj det inaktiva språket. */
+    html[data-lang="en"] [lang="sv"] { display: none; }
+    html[data-lang="sv"] [lang="en"] { display: none; }
+    .langswitch { margin-left: auto; display: inline-flex; }
+    .langswitch button { font: inherit; font-size: 12px; padding: 2px 9px; border: 1px solid #c9d2e0;
+                         background: #fff; cursor: pointer; color: #36c; }
+    .langswitch button.active { background: #36c; color: #fff; border-color: #36c; }
+    .langswitch button:first-child { border-radius: 6px 0 0 6px; }
+    .langswitch button:last-child { border-radius: 0 6px 6px 0; border-left: none; }
   </style>
 </head>
 <body>
   <nav class="topnav">
     <span class="brand">Elmix · SE1–SE4</span>
-    <a href="index.html">Interaktiv</a>
-    <a href="prerendered.html">Prerenderad</a>
-    <a href="round.html">Runda vyer</a>
-    <a class="current" href="consumption.html">Förbrukningsmix</a>
+    <a href="index.html"><span lang="sv">Interaktiv</span><span lang="en">Interactive</span></a>
+    <a href="prerendered.html"><span lang="sv">Prerenderad</span><span lang="en">Prerendered</span></a>
+    <a href="round.html"><span lang="sv">Runda vyer</span><span lang="en">Round views</span></a>
+    <a class="current" href="consumption.html"><span lang="sv">Förbrukningsmix</span><span lang="en">Consumption mix</span></a>
+    <span id="lang-switch" class="langswitch"></span>
   </nav>
-  <h1>Elmix – förbrukningsmix: produktion + nettoimport</h1>
-  <p class="lead">Till skillnad från de andra vyerna (som visar inhemsk <em>produktion</em>) räknar den
+  <h1><span lang="sv">Elmix – förbrukningsmix: produktion + nettoimport</span><span lang="en">Elmix – consumption mix: generation + net imports</span></h1>
+  <p class="lead" lang="sv">Till skillnad från de andra vyerna (som visar inhemsk <em>produktion</em>) räknar den
   här in <strong>nettoimport mellan elområden</strong>. Då syns hur stor del av förbrukningen som
   egentligen kommer utifrån – t.ex. importerar SE4 mer än det självt producerar.</p>
-  <p class="note">Förbrukning ≈ produktion + nettoimport, beräknat på <strong>fysiska flöden (ENTSO-E
+  <p class="lead" lang="en">Unlike the other views (which show domestic <em>generation</em>), this one includes
+  <strong>net imports between bidding zones</strong>. That reveals how much of consumption actually comes
+  from outside – e.g. SE4 imports more than it generates itself.</p>
+  <p class="note" lang="sv">Förbrukning ≈ produktion + nettoimport, beräknat på <strong>fysiska flöden (ENTSO-E
   A11)</strong> – en approximation; transit-/loop-flöden och nätförluster separeras inte, och importen
   saknar kraftslagsuppdelning (egen grå kil). En nettoexportör (t.ex. SE2) får ingen importkil. Endast
   data <strong>efter att flödesbaserad marknadskoppling (Nordic FBMC) infördes</strong> (okt 2024) visas:
   2025 (helår) och 2026 (hittills).</p>
+  <p class="note" lang="en">Consumption ≈ generation + net imports, computed from <strong>physical flows
+  (ENTSO-E A11)</strong> – an approximation; transit/loop flows and grid losses are not separated, and
+  imports have no source breakdown (their own grey wedge). A net exporter (e.g. SE2) gets no import wedge.
+  Only data <strong>after flow-based market coupling (Nordic FBMC) went live</strong> (Oct 2024) is shown:
+  2025 (full year) and 2026 (so far).</p>
 
   <div class="controls">
-    <fieldset id="zone-picker"><legend>Elområde</legend></fieldset>
-    <fieldset id="year-picker"><legend>År (FBMC-eran)</legend></fieldset>
+    <fieldset id="zone-picker"><legend><span lang="sv">Elområde</span><span lang="en">Bidding zone</span></legend></fieldset>
+    <fieldset id="year-picker"><legend><span lang="sv">År (FBMC-eran)</span><span lang="en">Year (FBMC era)</span></legend></fieldset>
   </div>
 
   <section class="pane">
-    <h2>Polär stack-klocka</h2>
-    <p class="desc">Året medurs; varje stapel är en dags <strong>förbrukningsmix</strong> normaliserad
+    <h2><span lang="sv">Polär stack-klocka</span><span lang="en">Polar stacked clock</span></h2>
+    <p class="desc" lang="sv">Året medurs; varje stapel är en dags <strong>förbrukningsmix</strong> normaliserad
     till 100 % – kraftslagen plus den grå <strong>Import (netto)</strong>-kilen. Ju större grå andel,
     desto mer av förbrukningen täcks av import den dagen. Svart linje = pris (skalat). Klicka på en dag
-    → 24-timmarsvy (intradagsmönstret i importberoendet).</p>
+    → 24-timmars- eller 96-kvartsvy (intradagsmönstret i importberoendet). Tabellen visar pris med/utan skatt.</p>
+    <p class="desc" lang="en">The year clockwise; each bar is one day's <strong>consumption mix</strong> normalised
+    to 100 % – the sources plus the grey <strong>Net import</strong> wedge. The larger the grey share, the more
+    of consumption is covered by imports that day. Black line = price (scaled). Click a day → 24-hour or
+    96-quarter view (the intraday pattern of import dependence). The table shows price with/without tax.</p>
     <div class="toolbar" id="bar-toolbar" style="display:none">
-      <button id="bar-prev">‹ Föregående dag</button>
-      <button id="bar-next">Nästa dag ›</button>
-      <button id="bar-back">← Tillbaka till helår</button>
-      <span class="hint" id="bar-daylabel">visar ett enskilt dygn (← → byter dag)</span>
+      <button id="bar-prev"><span lang="sv">‹ Föregående dag</span><span lang="en">‹ Previous day</span></button>
+      <button id="bar-next"><span lang="sv">Nästa dag ›</span><span lang="en">Next day ›</span></button>
+      <button id="bar-back"><span lang="sv">← Tillbaka till helår</span><span lang="en">← Back to full year</span></button>
+      <span class="hint" id="bar-daylabel"></span>
     </div>
     <div class="bar-row">
       <div id="bar-table" class="pricetable" style="display:none"></div>
@@ -103,24 +125,29 @@
 
   <section class="pane">
     <h2>Sunburst</h2>
-    <p class="desc">Månad → dag → kraftslag/import, sektorstorlek = energi (MWh). Den grå importkilen i
+    <p class="desc" lang="sv">Månad → dag → kraftslag/import, sektorstorlek = energi (MWh). Den grå importkilen i
     ytterringen visar importens absoluta bidrag per dag. Klicka för att zooma in; mitten backar.</p>
+    <p class="desc" lang="en">Month → day → source/import, sector size = energy (MWh). The grey import wedge in
+    the outer ring shows imports' absolute contribution per day. Click to zoom in; the centre goes back.</p>
     <div id="pane-sun" class="chart"></div>
   </section>
 
   <section class="pane">
-    <h2>Radiell heatmap – importberoende</h2>
-    <p class="desc">Varje cell är en timme: vinkel = dag på året, radie = timme på dygnet (00 i mitten →
+    <h2><span lang="sv">Radiell heatmap – importberoende</span><span lang="en">Radial heatmap – import dependence</span></h2>
+    <p class="desc" lang="sv">Varje cell är en timme: vinkel = dag på året, radie = timme på dygnet (00 i mitten →
     23 ytterst). Färgen är <strong>nettoimportandelen</strong> (andel av förbrukningen som är import) –
     grön låg, lila hög. Visar när på året och dygnet zonen är som mest importberoende.</p>
+    <p class="desc" lang="en">Each cell is one hour: angle = day of year, radius = hour of day (00 centre →
+    23 rim). The colour is the <strong>net-import share</strong> (share of consumption that is imported) –
+    green low, purple high. Shows when in the year and day the zone is most import-dependent.</p>
     <div id="pane-heat" class="chart"></div>
   </section>
 
   <footer>© 2026 Örjan Lundberg ·
     <a href="https://github.com/oluies">GitHub</a> ·
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
-    Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
-    Byggd med <a href="https://duckdb.org">DuckDB</a>, <a href="https://laminar.dev">Scala.js + Laminar</a> &amp; <a href="https://echarts.apache.org">ECharts</a></footer>
+    <span lang="sv">Källkod:</span><span lang="en">Source:</span> <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
+    <span lang="sv">Byggd med</span><span lang="en">Built with</span> <a href="https://duckdb.org">DuckDB</a> &amp; <a href="https://echarts.apache.org">ECharts</a> <span lang="sv">(ren JS, ej Laminar)</span><span lang="en">(plain JS, no Laminar)</span></footer>
 
   <script src="round.js"></script>
 </body>
