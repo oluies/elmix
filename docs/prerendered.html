@@ -12,7 +12,19 @@
                 border-radius: 8px; padding: 4px 20px 12px; font-size: 14px;
                 line-height: 1.5; }
   .forklaring li { margin: 5px 0; }
+  .topnav { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap;
+            padding: 10px 0 8px; margin-bottom: 4px; border-bottom: 1px solid #e3e8ef; font-size: 14px; }
+  .topnav .brand { font-weight: 600; color: #333; margin-right: 4px; }
+  .topnav a { color: #36c; text-decoration: none; }
+  .topnav a:hover { text-decoration: underline; }
+  .topnav a.current { color: #222; font-weight: 600; text-decoration: none; cursor: default; }
 </style></head><body>
+<nav class="topnav">
+  <span class="brand">Elmix · SE1–SE4</span>
+  <a href="index.html">Interaktiv</a>
+  <a class="current" href="prerendered.html">Prerenderad</a>
+  <a href="round.html">Runda vyer</a>
+</nav>
 <h1>Elmix – SE1–SE4 (ENTSO-E, 15-min, från 2 dec 2025, prerenderad SVG)</h1>
 <p>Statisk variant. Den <a href="index.html">interaktiva rapporten</a> låter
 dig välja zon och tidsperiod och räknar om PCA:n live i webbläsaren.</p>
