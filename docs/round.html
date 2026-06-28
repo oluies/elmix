@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <title>Elmix – runda vyer (mix & kannibalisering)</title>
+  <script src="vendor/echarts.min.js"></script>
+  <script src="data/round-data.js"></script>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;
+           max-width: 1180px; padding: 0 16px 48px; color: #222; }
+    h1 { font-size: 20px; margin-top: 24px; }
+    h2 { font-size: 16px; color: #333; margin: 0 0 2px; }
+    .lead { color: #555; font-size: 14px; line-height: 1.5; }
+    .controls { margin: 14px 0 6px; font-size: 14px; display: flex; gap: 26px; flex-wrap: wrap; }
+    .controls fieldset { border: 1px solid #e3e8ef; border-radius: 8px; padding: 4px 12px 8px; margin: 0; }
+    .controls legend { font-size: 12px; color: #777; padding: 0 4px; }
+    .pane { margin-top: 26px; background: #fafbfd; border: 1px solid #e3e8ef;
+            border-radius: 10px; padding: 14px 18px 18px; }
+    .desc { color: #555; font-size: 13.5px; line-height: 1.55; margin: 4px 0 8px; }
+    .chart { width: 100%; height: 680px; }
+    .toolbar { margin: 2px 0 6px; font-size: 13px; }
+    .toolbar button { font: inherit; padding: 3px 10px; border: 1px solid #c9d2e0;
+                      background: #fff; border-radius: 6px; cursor: pointer; }
+    .toolbar .hint { color: #888; margin-left: 10px; }
+    footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd;
+             font-size: 13px; color: #666; }
+    footer a { color: #36c; }
+  </style>
+</head>
+<body>
+  <h1>Elmix – runda vyer: energimix & kannibalisering</h1>
+  <p class="lead">Tre runda sätt att läsa ett helt år av svensk elproduktion (SE1–SE4):
+  mixen kraftslag för kraftslag och hur priset faller när väderkraften flödar
+  (kannibalisering). Välj zon och år; klicka på en dag för att drilla ner till dygnet.</p>
+
+  <div class="controls">
+    <fieldset id="zone-picker"><legend>Elområde</legend></fieldset>
+    <fieldset id="year-picker"><legend>År</legend></fieldset>
+  </div>
+
+  <section class="pane">
+    <h2>Polär stack-klocka</h2>
+    <p class="desc">Helcirkeln är <strong>ett år</strong> (12 månader medurs). Varje stapel är
+    en dags produktionsmix <strong>normaliserad till 100 %</strong> – andelen per kraftslag.
+    Den svarta linjen är dygnsmedelpriset (skalat till ringen). Där vind- och solandelen är hög
+    dippar prislinjen: <strong>kannibalisering</strong>. Klicka på en dag → samma klocka men
+    24 timmar (intradagsmix + prisdipp mitt på dagen när solen toppar).</p>
+    <div class="toolbar" id="bar-toolbar" style="display:none">
+      <button id="bar-back">← Tillbaka till helår</button>
+      <span class="hint">visar ett enskilt dygn</span>
+    </div>
+    <div id="pane-bar" class="chart"></div>
+  </section>
+
+  <section class="pane">
+    <h2>Sunburst</h2>
+    <p class="desc">Hierarkisk vy: innersta ringen är årets <strong>månader</strong>, mellanringen
+    <strong>dagar</strong>, ytterringen <strong>kraftslagens andel</strong> den dagen.
+    Sektorstorlek = producerad energi (MWh), färg = kraftslag. Klicka på en månad eller dag för
+    att zooma in; klicka i mitten för att backa. Bra för att se hur t.ex. vattenkraft och vind
+    byter dominans mellan säsonger.</p>
+    <div id="pane-sun" class="chart"></div>
+  </section>
+
+  <section class="pane">
+    <h2>Radiell heatmap – kannibaliserings-klocka</h2>
+    <p class="desc">Varje cell är en <strong>timme</strong>: vinkeln är dag på året
+    (månadsetiketter runt kanten), radien är timme på dygnet (00 i mitten → 23 ytterst).
+    Färgen är <strong>elpriset</strong> – blått billigt, rött dyrt. De blå banden (blåsiga
+    perioder, soliga sommarmiddagar) är kannibaliseringen avläst direkt över hela året i
+    timupplösning. Klicka på en dag för att drilla 24h-vyn i den översta panelen.</p>
+    <div id="pane-heat" class="chart"></div>
+  </section>
+
+  <footer>© 2026 Örjan Lundberg ·
+    <a href="https://github.com/oluies">GitHub</a> ·
+    <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
+    <a href="index.html">tillbaka till huvudrapporten</a></footer>
+
+  <script src="round.js"></script>
+</body>
+</html>
