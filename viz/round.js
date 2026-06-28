@@ -187,10 +187,25 @@
   const heatChart = echarts.init(document.getElementById('pane-heat'))
   window.addEventListener('resize', () => { barChart.resize(); sunChart.resize(); heatChart.resize() })
 
+  const dayList = () => daily(rec()).map(x => x.day)
   function renderBar() {
     const d = rec()
-    barChart.setOption(drillDay ? barDayOption(d, zone, year, drillDay) : barYearOption(d, zone, year), true)
-    document.getElementById('bar-toolbar').style.display = drillDay ? 'block' : 'none'
+    if (drillDay != null) {
+      barChart.setOption(barDayOption(d, zone, year, drillDay), true)
+      const days = dayList(), i = days.indexOf(drillDay)
+      document.getElementById('bar-prev').disabled = i <= 0
+      document.getElementById('bar-next').disabled = i >= days.length - 1
+      document.getElementById('bar-daylabel').textContent = `dag ${drillDay} (← → byter dag)`
+    } else {
+      barChart.setOption(barYearOption(d, zone, year), true)
+    }
+    document.getElementById('bar-toolbar').style.display = drillDay != null ? 'block' : 'none'
+  }
+  function stepDay(delta) {
+    if (drillDay == null) return
+    const days = dayList(), i = days.indexOf(drillDay)
+    const ni = Math.min(days.length - 1, Math.max(0, i + delta))
+    if (days[ni] !== drillDay) { drillDay = days[ni]; renderBar() }
   }
   function renderAll() { renderBar(); sunChart.setOption(sunburstOption(rec(), zone, year), true); heatChart.setOption(heatOption(rec(), zone, year), true) }
 
@@ -206,6 +221,13 @@
     document.getElementById('pane-bar').scrollIntoView({ behavior: 'smooth', block: 'center' })
   })
   document.getElementById('bar-back').onclick = () => { drillDay = null; renderBar() }
+  document.getElementById('bar-prev').onclick = () => stepDay(-1)
+  document.getElementById('bar-next').onclick = () => stepDay(1)
+  document.addEventListener('keydown', e => {
+    if (drillDay == null) return
+    if (e.key === 'ArrowLeft') stepDay(-1)
+    else if (e.key === 'ArrowRight') stepDay(1)
+  })
 
   // Väljare.
   function radios(host, items, current, on) {
