@@ -82,12 +82,17 @@
     name: f.name, type: 'bar', coordinateSystem: 'polar', stack: 'mix', itemStyle: { color: f.c },
     data: rows.map(x => { const t = fuels.reduce((s, g) => s + x[g.key], 0); return t ? +(x[f.key] / t * 100).toFixed(1) : 0 })
   }))
+  // Pris min–max-skalat över perioden: billigaste -> 0 (centrum), dyraste -> 100
+  // (kant). Då spänner linjen hela radien och dipparna (kannibalisering) syns.
   const priceLine = (rows) => {
-    const maxP = Math.max(1, ...rows.map(x => x.p == null ? 0 : x.p))
+    const ps = rows.map(x => x.p).filter(v => v != null)
+    const pmin = ps.length ? Math.min(...ps) : 0
+    const pmax = ps.length ? Math.max(...ps) : 1
+    const span = (pmax - pmin) || 1
     return {
       name: 'Pris', type: 'line', coordinateSystem: 'polar', smooth: true, showSymbol: false, z: 10,
       lineStyle: { color: '#111', width: 1.5 },
-      data: rows.map(x => x.p == null ? null : +(x.p / maxP * 100).toFixed(1))
+      data: rows.map(x => x.p == null ? null : +((x.p - pmin) / span * 100).toFixed(1))
     }
   }
 
