@@ -32,6 +32,9 @@ const cases = [
   ['cons heat(imp)', RV.heatOption(cc, 'SE_4', 2025, RV.importHeat)]
 ]
 console.log(`2026 dag 90 har ${dayBuckets(cc26, 90)} buckets (väntat 96), heatmap aggregerar -> 24 ringar`)
+const tbl = RV.priceTableHtml(RV.dayHours(cc26, 90, CONS_FUELS))
+const tradeRows = (tbl.match(/<tr>/g) || []).length - 1 // minus header
+console.log(`pristabell: ${tradeRows} rader, har kolumner: ${/\+skatt\+moms/.test(tbl) && /Spot/.test(tbl)}`)
 for (const [name, opt] of cases) {
   const s = svg(opt, 720, 560)
   console.log(name.padEnd(16), 'OK —', (s.match(/<path/g) || []).length, 'paths')

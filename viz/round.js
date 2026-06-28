@@ -101,6 +101,25 @@
     }
   }
 
+  // Pristabell (öre/kWh) för dagsvyn: spot, + moms, + energiskatt + moms.
+  // Tydligt deklarerade antaganden – justera konstanterna vid behov.
+  const EUR_SEK = 11.30          // antagen växelkurs
+  const ENERGISKATT_ORE = 35.12 // energiskatt exkl moms, öre/kWh (sv 2025)
+  const MOMS = 1.25
+  function priceTableHtml(rows) {
+    const body = rows.filter(x => x.p != null).map(x => {
+      const spot = x.p * EUR_SEK / 10 // EUR/MWh -> öre/kWh
+      const moms = spot * MOMS
+      const full = (spot + ENERGISKATT_ORE) * MOMS
+      const t = `${String(x.h).padStart(2, '0')}:${String(x.q * 15).padStart(2, '0')}`
+      return `<tr><td>${t}</td><td>${spot.toFixed(1)}</td><td>${moms.toFixed(1)}</td><td>${full.toFixed(1)}</td></tr>`
+    }).join('')
+    return `<div class="cap">öre/kWh · spot = day-ahead · antaget 1 EUR = ${EUR_SEK} SEK · ` +
+      `energiskatt ${ENERGISKATT_ORE} öre/kWh (exkl moms) · moms 25 %</div>` +
+      '<table><thead><tr><th>Tid</th><th>Spot</th><th>+moms</th><th>+skatt+moms</th></tr></thead>' +
+      `<tbody>${body}</tbody></table>`
+  }
+
   // ---- 1. Polär stack-klocka (år) + drilldown (dygn) ------------------------
   function barYearOption(d, zone, year, fuels) {
     const rows = daily(d, fuels)
@@ -205,7 +224,7 @@
     }
   }
 
-  const API = { DEFAULT_FUELS, priceHeat, importHeat, daily, dayHours, heatData, barYearOption, barDayOption, sunburstOption, heatOption }
+  const API = { DEFAULT_FUELS, priceHeat, importHeat, daily, dayHours, heatData, barYearOption, barDayOption, sunburstOption, heatOption, priceTableHtml }
   if (typeof module !== 'undefined' && module.exports) module.exports = API
 
   // ---- DOM-wiring (endast webbläsare) ---------------------------------------
@@ -227,16 +246,20 @@
   const dayList = () => daily(rec(), FUELS).map(x => x.day)
   function renderBar() {
     const d = rec()
+    const tbl = document.getElementById('bar-table')
     if (drillDay != null) {
       barChart.setOption(barDayOption(d, zone, year, drillDay, FUELS), true)
+      if (tbl) { tbl.innerHTML = priceTableHtml(dayHours(d, drillDay, FUELS)); tbl.style.display = 'block' }
       const days = dayList(), i = days.indexOf(drillDay)
       document.getElementById('bar-prev').disabled = i <= 0
       document.getElementById('bar-next').disabled = i >= days.length - 1
       document.getElementById('bar-daylabel').textContent = `dag ${drillDay} (← → byter dag)`
     } else {
       barChart.setOption(barYearOption(d, zone, year, FUELS), true)
+      if (tbl) tbl.style.display = 'none'
     }
     document.getElementById('bar-toolbar').style.display = drillDay != null ? 'block' : 'none'
+    barChart.resize() // bredden ändras när tabellen visas/döljs
   }
   function stepDay(delta) {
     if (drillDay == null) return
