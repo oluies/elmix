@@ -7,10 +7,10 @@ const window = {}; eval(readFileSync('../data/round-data.js','utf8')); const R =
 const d = R.data.find(x => x.z === 'SE_3' && x.y === 2025)
 const svg = (opt,w,h) => { const c=echarts.init(null,null,{renderer:'svg',ssr:true,width:w,height:h}); c.setOption(opt); const s=c.renderToSVGString(); c.dispose(); return s }
 const blocks = [
-  ['Polär stack-klocka (helår)', 'Ett år medurs, varje stapel = en dags mix normaliserad till 100 %. Svart linje = pris (skalat) – dippar = kannibalisering. I appen: klicka en dag → 24h.', RV.barYearOption(d,'SE_3',2025)],
-  ['Polär stack-klocka (drilldown, dygn 166)', 'Samma klocka men 24 timmar – intradagsmix + prisprofil för ett enskilt dygn.', RV.barDayOption(d,'SE_3',2025,166)],
-  ['Sunburst (månad → dag → kraftslag)', 'Innerring månader, mitten dagar, ytterring kraftslagens andel. Klick zoomar in.', RV.sunburstOption(d,'SE_3',2025)],
-  ['Radiell heatmap (dag × timme, färg = pris)', 'Vinkel = dag, radie = timme (0 i mitten → 23 ytterst), färg = pris (blått billigt/kannibaliserat, rött dyrt).', RV.heatOption(d,'SE_3',2025)]
+  ['Polär stack-klocka (helår)', 'Ett år medurs, varje stapel = en dags mix normaliserad till 100 %. Svart linje = pris (skalat) – dippar = kannibalisering. I appen: klicka en dag → 24h.', RV.barYearOption(d,'SE_3',2025,RV.DEFAULT_FUELS)],
+  ['Polär stack-klocka (drilldown, dygn 166)', 'Samma klocka men 24 timmar – intradagsmix + prisprofil för ett enskilt dygn.', RV.barDayOption(d,'SE_3',2025,166,RV.DEFAULT_FUELS)],
+  ['Sunburst (månad → dag → kraftslag)', 'Innerring månader, mitten dagar, ytterring kraftslagens andel. Klick zoomar in.', RV.sunburstOption(d,'SE_3',2025,RV.DEFAULT_FUELS)],
+  ['Radiell heatmap (dag × timme, färg = pris)', 'Vinkel = dag, radie = timme (0 i mitten → 23 ytterst), färg = pris (blått billigt/kannibaliserat, rött dyrt).', RV.heatOption(d,'SE_3',2025,RV.priceHeat)]
 ]
 const html = `<!doctype html><html lang="sv"><head><meta charset="utf-8"><title>round – preview SE3 2025</title>
 <style>body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:0 16px 40px;color:#222}
