@@ -295,6 +295,7 @@ ${parts.join('\n')}
   </ul>
 </section>
 <footer>© 2026 Örjan Lundberg ·
+  <a href="round.html">Runda vyer</a> ·
   <a href="https://github.com/oluies">GitHub</a> ·
   <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
   Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
