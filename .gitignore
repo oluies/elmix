@@ -5,6 +5,7 @@
 viz/out/
 viz/data/
 viz/prerendered.html
+viz/round-preview.html
 viz/ssr/node_modules/
 
 # lokalt

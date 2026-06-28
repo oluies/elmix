@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ./viz/export-data.sh
+./viz/export-round.sh
 (cd viz && mill app.fullLinkJS)
 (cd viz/ssr && node render.mjs)
 
@@ -15,6 +16,9 @@ cp viz/vendor/echarts.min.js docs/vendor/
 cp viz/data/elmix-data.js docs/data/
 cp viz/prerendered.html docs/
 sed 's|out/app/fastLinkJS.dest/main.js|main.js|' viz/index.html > docs/index.html
+# Runda experimentsidan (fristående, läser round-data.js direkt).
+cp viz/round.html viz/round.js docs/
+cp viz/data/round-data.js docs/data/
 
 echo "docs/ klar:"
 ls docs/
