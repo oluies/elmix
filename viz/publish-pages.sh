@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 ./viz/export-data.sh
 ./viz/export-round.sh
 ./viz/export-consumption.sh
-(cd viz && mill app.fullLinkJS)
+(cd viz && ../mill app.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
 (cd viz/ssr && node render.mjs)
 
 rm -rf docs
