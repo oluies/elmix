@@ -1,0 +1,66 @@
+name: Data refresh
+
+on:
+  schedule:
+    - cron: '17 5 * * *'   # 05:17 UTC dagligen
+  workflow_dispatch: {}    # manuell körning från Actions-fliken
+
+permissions:
+  contents: write          # för att committa/pusha ombyggd docs/
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Installera DuckDB CLI
+        run: |
+          curl -sL https://github.com/duckdb/duckdb/releases/latest/download/duckdb_cli-linux-amd64.zip -o duckdb.zip
+          unzip -q duckdb.zip && sudo mv duckdb /usr/local/bin/ && duckdb --version
+
+      - name: npm (SSR-prerendering)
+        run: cd viz/ssr && npm install
+
+      # Persistera rådata + elmix.duckdb mellan körningar så bara innevarande år
+      # behöver hämtas om. run_id i nyckeln => varje körning sparar ny cache;
+      # restore-keys återställer den senaste.
+      - name: Cache rådata
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/raw
+            elmix.duckdb
+          key: elmix-rawdata-v1-${{ github.run_id }}
+          restore-keys: elmix-rawdata-v1-
+
+      - name: Refresh data + bygg rapporter
+        env:
+          ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
+        run: |
+          if ! ls data/raw/generation/SE_*.parquet >/dev/null 2>&1; then
+            echo "Kall cache – full hämtning 2016..$(date +%Y)"
+            ./mill Elmix.scala fetch --start 2016 --end "$(date +%Y)" --data all
+          fi
+          ./viz/refresh.sh
+
+      - name: Committa ombyggd docs
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- docs; then
+            echo "Inga ändringar i docs/ – hoppar commit."
+          else
+            git add docs
+            git commit -m "data refresh $(date -u +%Y-%m-%d) [skip ci]"
+            git push
+          fi
