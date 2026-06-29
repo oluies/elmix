@@ -313,6 +313,7 @@ ${parts.join('\n')}
   <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
   Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
   Byggd med <a href="https://duckdb.org">DuckDB</a>, <a href="https://laminar.dev">Scala.js + Laminar</a> &amp; <a href="https://echarts.apache.org">ECharts</a></footer>
+<script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body></html>`
 
 writeFileSync('../prerendered.html', html)
