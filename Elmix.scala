@@ -261,6 +261,12 @@ def fetchFlows(
 
 def withConn[A](db: String)(f: Connection => A): A =
   val conn = DriverManager.getConnection(s"jdbc:duckdb:$db")
+  // Kapa DuckDB:s resurser sa native-lagret inte spranger CI-runnerns RAM (delas
+  // med JVM-heapen) -> faerre OOM-relaterade kraschar. Overstyr via env vid behov.
+  val st0 = conn.createStatement()
+  st0.execute(s"SET memory_limit='${sys.env.getOrElse("DUCKDB_MEMORY_LIMIT", "3GB")}'")
+  st0.execute(s"SET threads=${sys.env.getOrElse("DUCKDB_THREADS", "2")}")
+  st0.close()
   try f(conn)
   finally conn.close()
 
