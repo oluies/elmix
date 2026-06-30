@@ -34,8 +34,8 @@ jobs:
       # Persistera rådata + elmix.duckdb mellan körningar så bara innevarande år
       # behöver hämtas om. run_id i nyckeln => varje körning sparar ny cache;
       # restore-keys återställer den senaste.
-      - name: Cache rådata
-        uses: actions/cache@v4
+      - name: Restore rådata-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             data/raw
@@ -64,3 +64,13 @@ jobs:
             git commit -m "data refresh $(date -u +%Y-%m-%d) [skip ci]"
             git push
           fi
+
+      # Spara även vid fel (annars tvingas full hämtning nästa körning).
+      - name: Spara rådata-cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/raw
+            elmix.duckdb
+          key: elmix-rawdata-v1-${{ github.run_id }}
