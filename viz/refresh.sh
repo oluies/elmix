@@ -20,7 +20,17 @@ fi
 YEAR="${1:-$(date +%Y)}"
 echo "Refresh: tvingar om-hämtning av $YEAR (tidigare år hoppas över inkrementellt)"
 rm -f data/raw/*/SE_*_"$YEAR".parquet
-./mill Elmix.scala fetch --start "$YEAR" --end "$YEAR" --data all
+
+# DuckDB-native kan ge en flaky mid-run-krasch i CI (icke-deterministiskt,
+# utan stacktrace). Fetch är inkrementell (skipIfExists) så en omkörning
+# ÅTERUPPTAR automatiskt – retry tills den lyckas (max 4 försök).
+for attempt in 1 2 3 4; do
+  if ./mill Elmix.scala fetch --start "$YEAR" --end "$YEAR" --data all; then break; fi
+  echo "  fetch $YEAR: försök $attempt gav exit ≠0 – återupptar inkrementellt..." >&2
+  [ "$attempt" = 4 ] && { echo "FEL: fetch $YEAR misslyckades efter 4 försök" >&2; exit 1; }
+  sleep 5
+done
+
 ./mill Elmix.scala transform
 # pca skriver sina marts + "Klart", men mill-subprocessen kan i CI exita non-zero
 # vid JVM-avslut (flaky, utan stacktrace). Acceptera om marterna faktiskt skrevs.

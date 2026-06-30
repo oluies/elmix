@@ -48,8 +48,13 @@ jobs:
           ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
         run: |
           if ! ls data/raw/generation/SE_*.parquet >/dev/null 2>&1; then
-            echo "Kall cache – full hämtning 2016..$(date +%Y)"
-            ./mill Elmix.scala fetch --start 2016 --end "$(date +%Y)" --data all
+            echo "Kall cache – full hämtning 2016..$(date +%Y) (retry vid flaky DuckDB-krasch)"
+            for a in 1 2 3 4; do
+              ./mill Elmix.scala fetch --start 2016 --end "$(date +%Y)" --data all && break
+              echo "full fetch försök $a gav fel – återupptar inkrementellt..."
+              [ "$a" = 4 ] && { echo "full fetch misslyckades efter 4 försök"; exit 1; }
+              sleep 5
+            done
           fi
           ./viz/refresh.sh
 
