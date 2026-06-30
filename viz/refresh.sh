@@ -22,6 +22,14 @@ echo "Refresh: tvingar om-hämtning av $YEAR (tidigare år hoppas över inkremen
 rm -f data/raw/*/SE_*_"$YEAR".parquet
 ./mill Elmix.scala fetch --start "$YEAR" --end "$YEAR" --data all
 ./mill Elmix.scala transform
-./mill Elmix.scala pca
+# pca skriver sina marts + "Klart", men mill-subprocessen kan i CI exita non-zero
+# vid JVM-avslut (flaky, utan stacktrace). Acceptera om marterna faktiskt skrevs.
+if ! ./mill Elmix.scala pca; then
+  if [ -f data/marts/pca_scores.parquet ] && [ data/marts/pca_scores.parquet -nt elmix.duckdb ]; then
+    echo "OBS: 'mill pca' gav exitkod ≠0 men pca-marts skrevs nyss – fortsätter."
+  else
+    echo "FEL: pca misslyckades (pca-marts saknas eller föråldrade)" >&2; exit 1
+  fi
+fi
 ./viz/publish-pages.sh
 echo "Klart – rapporterna ombyggda med $YEAR uppdaterat."
