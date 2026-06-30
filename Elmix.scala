@@ -636,3 +636,7 @@ def main(
     case other =>
       System.err.println(s"Okant kommando: $other (fetch | transform | pca | test)")
       sys.exit(1)
+  // DuckDB-JDBC kan lamna native-tradar som ger ett flaky non-zero JVM-exit vid
+  // avslut i CI aven nar kommandot lyckats. Tvinga ren exit pa framgangsvagen
+  // (runTests har redan sys.exit(1) vid testfel, sa det maskeras inte).
+  sys.exit(0)
