@@ -248,6 +248,7 @@ const html = `<!doctype html>
   <a class="current" href="prerendered.html">Prerenderad</a>
   <a href="round.html">Runda vyer</a>
   <a href="consumption.html">Förbrukningsmix</a>
+  <a href="consumption-eu.html">DE vs FR</a>
 </nav>
 <h1>Elmix – SE1–SE4 (ENTSO-E, 15-min, från 2 dec 2025, prerenderad SVG)</h1>
 <p>Statisk variant. Den <a href="index.html">interaktiva rapporten</a> låter

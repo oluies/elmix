@@ -20,6 +20,7 @@ fi
 YEAR="${1:-$(date +%Y)}"
 echo "Refresh: tvingar om-hämtning av $YEAR (tidigare år hoppas över inkrementellt)"
 rm -f data/raw/*/SE_*_"$YEAR".parquet
+rm -f data/raw/eu/*/*_"$YEAR".parquet
 
 # DuckDB-native flaky-kraschar slumpvis i CI (icke-deterministiskt, utan
 # stacktrace, drabbar fetch/transform/pca oberoende – oftast vid teardown efter
@@ -35,6 +36,8 @@ retry() {
   return 1
 }
 retry ./mill Elmix.scala fetch --start "$YEAR" --end "$YEAR" --data all || { echo "FEL: fetch $YEAR" >&2; exit 1; }
+# DE/FR (icke-fatal – bryt inte hela refreshen om kontinentala hämtningen strular)
+retry ./mill Elmix.scala fetcheu --start "$YEAR" --end "$YEAR" || echo "VARNING: fetcheu $YEAR misslyckades – DE/FR ej uppdaterat" >&2
 retry ./mill Elmix.scala transform || { echo "FEL: transform" >&2; exit 1; }
 retry ./mill Elmix.scala pca || { echo "FEL: pca" >&2; exit 1; }
 ./viz/publish-pages.sh

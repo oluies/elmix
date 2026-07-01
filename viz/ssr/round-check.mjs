@@ -8,7 +8,9 @@ const RV = require('../round.js')
 function loadGlobal(path, name) { const window = {}; eval(readFileSync(path, 'utf8')); return window[name] }
 const R = loadGlobal('../data/round-data.js', 'elmixRound')
 const C = loadGlobal('../data/consumption-data.js', 'elmixConsumption')
+const E = loadGlobal('../data/consumption-eu-data.js', 'elmixEu')
 const CONS_FUELS = [...RV.DEFAULT_FUELS, { key: 'imp', name: 'Import (netto)', c: '#9aa7b8' }]
+const EU_FUELS = ['k', 'kol', 'gas', 'v', 's', 'va', 'ov', 'imp'].map(k => ({ key: k, name: k, c: '#888' }))
 const r = (data, z, y) => data.find(x => x.z === z && x.y === y)
 
 function svg(opt, w, h) {
@@ -29,7 +31,10 @@ const cases = [
   ['cons barDay-h', RV.barDayOption(cc, 'SE_4', 2025, 166, CONS_FUELS)],
   ['cons barDay-15m', RV.barDayOption(cc26, 'SE_4', 2026, 90, CONS_FUELS)],
   ['cons sunburst', RV.sunburstOption(cc, 'SE_4', 2025, CONS_FUELS)],
-  ['cons heat(imp)', RV.heatOption(cc, 'SE_4', 2025, RV.importHeat)]
+  ['cons heat(imp)', RV.heatOption(cc, 'SE_4', 2025, RV.importHeat)],
+  ['eu DE barYear', RV.barYearOption(r(E.data, 'DE_LU', 2025), 'DE', 2025, EU_FUELS)],
+  ['eu DE barDay', RV.barDayOption(r(E.data, 'DE_LU', 2026), 'DE', 2026, 100, EU_FUELS)],
+  ['eu FR barYear', RV.barYearOption(r(E.data, 'FR', 2025), 'FR', 2025, EU_FUELS)]
 ]
 console.log(`2026 dag 90 har ${dayBuckets(cc26, 90)} buckets (väntat 96), heatmap aggregerar -> 24 ringar`)
 const tbl = RV.priceTableHtml(RV.dayHours(cc26, 90, CONS_FUELS))

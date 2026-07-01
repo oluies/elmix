@@ -56,6 +56,15 @@ jobs:
               sleep 5
             done
           fi
+          if ! ls data/raw/eu/generation/*.parquet >/dev/null 2>&1; then
+            echo "Kall cache – full DE/FR-hämtning 2025..$(date +%Y)"
+            for a in 1 2 3 4; do
+              ./mill Elmix.scala fetcheu --start 2025 --end "$(date +%Y)" && break
+              echo "eu fetch försök $a gav fel – återupptar..."
+              [ "$a" = 4 ] && { echo "VARNING: eu fetch misslyckades (icke-fatal)"; break; }
+              sleep 5
+            done
+          fi
           ./viz/refresh.sh
 
       - name: Committa ombyggd docs

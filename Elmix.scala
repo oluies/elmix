@@ -33,6 +33,15 @@ val Zones: Map[String, String] = Map(
   "SE_4" -> "10Y1001A1001A47J"
 )
 
+/**
+ * Kontinentala zoner for forbrukningsmix-jamforelsen (fetcheu): produktion, pris och total last.
+ * Nettoimport = last - produktion (behover inga floden).
+ */
+val EuZones: Map[String, String] = Map(
+  "DE_LU" -> "10Y1001A1001A82H",
+  "FR" -> "10YFR-RTE------C"
+)
+
 /** Grannar per elomrade for fysiska floden (A11). */
 val Neighbours: Map[String, Map[String, String]] = Map(
   "SE_1" -> Map("NO_4" -> "10YNO-4--------9", "FI" -> "10YFI-1--------U", "SE_2" -> Zones("SE_2")),
@@ -232,6 +241,23 @@ def fetchImbalance(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[R
         .flatMap(expandPeriod(_, "imbalance_Price.amount"))
         .map(_.copy(key = cat))
     }
+  }
+
+/** A65: faktisk total last (forbrukning) for en zon. key = "load". */
+def fetchLoad(eic: String, from: OffsetDateTime, to: OffsetDateTime): Seq[Row] =
+  apiGet(
+    Map(
+      "documentType" -> "A65",
+      "processType" -> "A16",
+      "outBiddingZone_Domain" -> eic,
+      "periodStart" -> fmtReq(from),
+      "periodEnd" -> fmtReq(to)
+    )
+  ).flatMap { xml =>
+    (xml \ "TimeSeries")
+      .flatMap(_ \ "Period")
+      .flatMap(expandPeriod(_, "quantity"))
+      .map(_.copy(key = "load"))
   }
 
 /** A11: fysiska floden for en riktning. key = gransnamn. */
@@ -457,6 +483,48 @@ def doFetch(start: Int, end: Int, data: String): Unit =
           writeParquet(p, zone, "border", "mw", rows)
         case _ => () // fanns redan
 
+/**
+ * Hamtar DE/FR: produktion (A75), pris (A44) och total last (A65) till data/raw/eu/. Inga floden -
+ * nettoimport = last - produktion i exporten.
+ */
+/** Manadsspann inom ett ar, klippt mot nutid (senaste ar ar partiellt). */
+def monthlySpans(year: Int): Seq[(OffsetDateTime, OffsetDateTime)] =
+  val now = OffsetDateTime.now(ZoneOffset.UTC)
+  (1 to 12).flatMap { m =>
+    val s = OffsetDateTime.of(year, m, 1, 0, 0, 0, 0, ZoneOffset.UTC)
+    if s.isAfter(now) then None
+    else Some((s, if s.plusMonths(1).isAfter(now) then now else s.plusMonths(1)))
+  }
+
+def doFetchEu(start: Int, end: Int): Unit =
+  val base = Raw.resolve("eu")
+  for
+    year <- start to end
+    (zone, eic) <- EuZones
+  do
+    val spans = monthlySpans(year)
+    if spans.nonEmpty then
+      // DE:s A75 for ett helt ar timeoutar (enormt svar) -> hamta manadsvis och
+      // sla ihop; en Parquet-fil per zon/ar (skipIfExists pa arsniva).
+      def w(
+          kind: String,
+          keyCol: String,
+          valCol: String,
+          f: (OffsetDateTime, OffsetDateTime) => Seq[Row]
+      ): Unit =
+        val p = base.resolve(kind).resolve(s"${zone}_$year.parquet")
+        if !skipIfExists(p) then
+          println(s"eu/$kind $zone $year (${spans.size} man)")
+          val rows = spans.flatMap { (from, to) =>
+            val r = f(from, to)
+            Thread.sleep(SleepMs)
+            r
+          }
+          writeParquet(p, zone, keyCol, valCol, rows)
+      w("generation", "psr_type", "mw", fetchGeneration(eic, _, _))
+      w("prices", "kontrakt", "eur_mwh", fetchPrices(eic, _, _))
+      w("load", "kategori", "mw", fetchLoad(eic, _, _))
+
 def doTransform(): Unit =
   Files.createDirectories(Path.of("data", "marts"))
   runScript("elmix.duckdb", Path.of("transform.sql"))
@@ -636,11 +704,12 @@ def main(
 ): Unit =
   command match
     case "fetch" => doFetch(start, end, data)
+    case "fetcheu" => doFetchEu(start, end)
     case "transform" => doTransform()
     case "pca" => doPca()
     case "test" => runTests()
     case other =>
-      System.err.println(s"Okant kommando: $other (fetch | transform | pca | test)")
+      System.err.println(s"Okant kommando: $other (fetch | fetcheu | transform | pca | test)")
       sys.exit(1)
   // DuckDB-native kraschar ibland i sitt shutdown-/teardown-lager i CI (efter att
   // arbetet ar klart och "Klart" skrivits) -> non-zero exit utan stacktrace, aven
