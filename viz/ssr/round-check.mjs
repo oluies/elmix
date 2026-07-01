@@ -36,7 +36,9 @@ const cases = [
   ['eu DE barDay', RV.barDayOption(r(E.data, 'DE_LU', 2026), 'DE', 2026, 100, EU_FUELS)],
   ['eu FR barYear', RV.barYearOption(r(E.data, 'FR', 2025), 'FR', 2025, EU_FUELS)],
   ['eu DE co2', RV.heatOption(r(E.data, 'DE_LU', 2025), 'DE', 2025, RV.co2Heat)],
-  ['eu FR co2', RV.heatOption(r(E.data, 'FR', 2025), 'FR', 2025, RV.co2Heat)]
+  ['eu FR co2', RV.heatOption(r(E.data, 'FR', 2025), 'FR', 2025, RV.co2Heat)],
+  ['eu DE co2Day', RV.co2DayOption(r(E.data, 'DE_LU', 2026), 'DE', 2026, 100, EU_FUELS)],
+  ['se co2Day', RV.co2DayOption(r(C.data, 'SE_4', 2026), 'SE4', 2026, 100, CONS_FUELS)]
 ]
 const meanCo2 = z => {
   const d = r(E.data, z, 2025); let s = 0, n = 0

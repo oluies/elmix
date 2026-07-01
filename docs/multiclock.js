@@ -13,7 +13,7 @@
   const TXT = cfg.texts
 
   let lang = LANGS[0]
-  let year = E.years.includes(2025) ? 2025 : E.years[E.years.length - 1]
+  let year = E.years[E.years.length - 1] // senaste året
   let drillDay = null
   const li = () => LANGS.indexOf(lang)
   const rec = z => E.data.find(d => d.z === z && d.y === year)
@@ -87,7 +87,10 @@
     RV.setLang(lang)
     E.zones.forEach(renderZone)
     if (cfg.co2) E.zones.forEach(z => {
-      co2charts[z].setOption(RV.heatOption(rec(z), label(z), year, RV.co2Heat), true); co2charts[z].resize()
+      co2charts[z].setOption(drillDay != null
+        ? RV.co2DayOption(rec(z), label(z), year, drillDay, FUELS)
+        : RV.heatOption(rec(z), label(z), year, RV.co2Heat), true)
+      co2charts[z].resize()
     })
     updateText()
   }
@@ -130,5 +133,8 @@
   document.documentElement.setAttribute('data-lang', lang)
   for (const c of sw.children) c.classList.toggle('active', c.textContent === lang.toUpperCase())
 
+  // Öppna direkt inzoomad på senaste dygnet -> gör drilldownen uppenbar (många
+  // missar annars att man kan klicka/zooma). "← Helår" tar en till årsvyn.
+  drillDay = Math.max(...dayList())
   renderAll()
 })()
