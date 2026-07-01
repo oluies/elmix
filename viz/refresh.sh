@@ -21,25 +21,21 @@ YEAR="${1:-$(date +%Y)}"
 echo "Refresh: tvingar om-hämtning av $YEAR (tidigare år hoppas över inkrementellt)"
 rm -f data/raw/*/SE_*_"$YEAR".parquet
 
-# DuckDB-native kan ge en flaky mid-run-krasch i CI (icke-deterministiskt,
-# utan stacktrace). Fetch är inkrementell (skipIfExists) så en omkörning
-# ÅTERUPPTAR automatiskt – retry tills den lyckas (max 4 försök).
-for attempt in 1 2 3 4; do
-  if ./mill Elmix.scala fetch --start "$YEAR" --end "$YEAR" --data all; then break; fi
-  echo "  fetch $YEAR: försök $attempt gav exit ≠0 – återupptar inkrementellt..." >&2
-  [ "$attempt" = 4 ] && { echo "FEL: fetch $YEAR misslyckades efter 4 försök" >&2; exit 1; }
-  sleep 5
-done
-
-./mill Elmix.scala transform
-# pca skriver sina marts + "Klart", men mill-subprocessen kan i CI exita non-zero
-# vid JVM-avslut (flaky, utan stacktrace). Acceptera om marterna faktiskt skrevs.
-if ! ./mill Elmix.scala pca; then
-  if [ -f data/marts/pca_scores.parquet ] && [ data/marts/pca_scores.parquet -nt elmix.duckdb ]; then
-    echo "OBS: 'mill pca' gav exitkod ≠0 men pca-marts skrevs nyss – fortsätter."
-  else
-    echo "FEL: pca misslyckades (pca-marts saknas eller föråldrade)" >&2; exit 1
-  fi
-fi
+# DuckDB-native flaky-kraschar slumpvis i CI (icke-deterministiskt, utan
+# stacktrace, drabbar fetch/transform/pca oberoende – oftast vid teardown efter
+# klart arbete). Alla tre är idempotenta (fetch inkrementell, transform/pca
+# skriver om sina marts) så en omkörning är säker – retry runt var och en.
+retry() {
+  local a
+  for a in 1 2 3 4; do
+    "$@" && return 0
+    echo "  retry $a/4 (exit ≠0, flaky DuckDB-native): $*" >&2
+    sleep 5
+  done
+  return 1
+}
+retry ./mill Elmix.scala fetch --start "$YEAR" --end "$YEAR" --data all || { echo "FEL: fetch $YEAR" >&2; exit 1; }
+retry ./mill Elmix.scala transform || { echo "FEL: transform" >&2; exit 1; }
+retry ./mill Elmix.scala pca || { echo "FEL: pca" >&2; exit 1; }
 ./viz/publish-pages.sh
 echo "Klart – rapporterna ombyggda med $YEAR uppdaterat."
