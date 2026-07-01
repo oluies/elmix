@@ -38,6 +38,23 @@
       : RV.barYearOption(d, label(z), year, FUELS), true)
     charts[z].resize()
   }
+  // Kombinerad spot-pristabell (tid × zoner, €/MWh) för vald dag – jämför
+  // zonernas prisspridning. Alla zoner har samma upplösning per dag (24 h / 96 kv).
+  function priceTableHtml() {
+    const cols = E.zones.map(z => RV.dayHours(rec(z), drillDay, FUELS))
+    const n = Math.max(0, ...cols.map(a => a.length))
+    const head = `<tr><th>${RV.t('Tid', 'Time', 'Heure', 'Zeit')}</th>` +
+      E.zones.map(z => `<th>${label(z)}</th>`).join('') + '</tr>'
+    let body = ''
+    for (let i = 0; i < n; i++) {
+      const h0 = cols[0][i]
+      const tm = h0 ? `${String(h0.h).padStart(2, '0')}:${String(h0.q * 15).padStart(2, '0')}` : ''
+      const cells = cols.map(a => { const r = a[i]; return `<td>${r && r.p != null ? r.p.toFixed(1) : ''}</td>` }).join('')
+      body += `<tr><td>${tm}</td>${cells}</tr>`
+    }
+    return `<div class="cap">€/MWh · ${RV.t('day-ahead spot', 'day-ahead spot', 'spot day-ahead', 'Day-Ahead-Spot')}</div>` +
+      `<table><thead>${head}</thead><tbody>${body}</tbody></table>`
+  }
   function updateText() {
     const i = li()
     $('mc-title').textContent = TXT.title[i]
@@ -48,6 +65,11 @@
     document.querySelector('#year-picker legend').textContent = TXT.yr[i]
     $('mc-toolbar').style.display = drillDay != null ? 'block' : 'none'
     $('mc-daylabel').textContent = drillDay != null ? RV.isoDate(year, drillDay) : ''
+    const tbl = $('mc-table')
+    if (tbl) {
+      if (drillDay != null) { tbl.innerHTML = priceTableHtml(); tbl.style.display = 'block' }
+      else tbl.style.display = 'none'
+    }
     const days = dayList(), k = days.indexOf(drillDay)
     $('mc-prev').disabled = drillDay == null || k <= 0
     $('mc-next').disabled = drillDay == null || k >= days.length - 1
