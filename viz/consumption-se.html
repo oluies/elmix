@@ -10,6 +10,7 @@
       data: window.elmixConsumption,
       langs: ['sv', 'en'],
       label: z => z.replace('_', ''),
+      co2: true,
       fuels: [
         { key: 'v',   name: 'Vind',           nameEn: 'Wind',       c: '#5470c6' },
         { key: 's',   name: 'Sol',            nameEn: 'Solar',      c: '#fac858' },
@@ -25,7 +26,10 @@
         back: ['← Helår', '← Full year'],
         prev: ['‹ Föreg. dag', '‹ Prev day'],
         next: ['Nästa dag ›', 'Next day ›'],
-        yr: ['År (FBMC)', 'Year (FBMC)']
+        yr: ['År (FBMC)', 'Year (FBMC)'],
+        co2title: ['CO₂-intensitet (g/kWh)', 'CO₂ intensity (g/kWh)'],
+        co2note: ['Grön = ren, röd = fossil, per dag × timme. Σ(kraftslag × utsläppsfaktor) / produktion; kol ~950, gas ~490, kärnkraft/vind/sol/vatten ~0, Kraftvärme/övr ~100 gCO₂/kWh; import exkluderad. De svenska zonerna är nästan noll (vatten/kärnkraft/vind).',
+          'Green = clean, red = fossil, per day × hour. Σ(source × emission factor) / generation; coal ~950, gas ~490, nuclear/wind/solar/hydro ~0, CHP/other ~100 gCO₂/kWh; imports excluded. The Swedish zones are near zero (hydro/nuclear/wind).']
       }
     }
   </script>
@@ -77,7 +81,6 @@
     <a href="consumption.html">Förbrukningsmix SE</a>
     <a class="current" href="consumption-se.html">SE alla zoner</a>
     <a href="consumption-eu.html">DE vs FR</a>
-    <a href="co2.html">CO₂</a>
     <span id="lang-switch" class="langswitch"></span>
   </nav>
 
@@ -97,6 +100,10 @@
   <div id="clocks" class="clocks"></div>
   <div id="mc-table" class="pricetable"></div>
 
+  <h2 id="mc-co2title" style="font-size:16px;color:#333;margin:28px 0 2px"></h2>
+  <p class="lead" id="mc-co2note"></p>
+  <div id="co2clocks" class="clocks"></div>
+
   <footer>© 2026 Örjan Lundberg ·
     <a href="https://github.com/oluies">GitHub</a> ·
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
@@ -105,5 +112,6 @@
 
   <script src="round.js"></script>
   <script src="multiclock.js"></script>
+  <script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

@@ -29,7 +29,15 @@
     clocksEl.appendChild(div)
     charts[z] = echarts.init(div)
   })
-  window.addEventListener('resize', () => E.zones.forEach(z => charts[z].resize()))
+  // Valfri CO2-intensitets-heatmap-sektion (heatOption + co2Heat), en per zon.
+  const co2charts = {}
+  if (cfg.co2 && $('co2clocks')) E.zones.forEach(z => {
+    const div = document.createElement('div'); div.className = 'chart'; div.id = 'co2-' + z
+    $('co2clocks').appendChild(div); co2charts[z] = echarts.init(div)
+  })
+  window.addEventListener('resize', () => E.zones.forEach(z => {
+    charts[z].resize(); if (co2charts[z]) co2charts[z].resize()
+  }))
 
   function renderZone(z) {
     const d = rec(z)
@@ -59,6 +67,7 @@
     const i = li()
     $('mc-title').textContent = TXT.title[i]
     $('mc-lead').textContent = TXT.lead[i]
+    if (cfg.co2) { $('mc-co2title').textContent = TXT.co2title[i]; $('mc-co2note').textContent = TXT.co2note[i] }
     $('mc-back').textContent = TXT.back[i]
     $('mc-prev').textContent = TXT.prev[i]
     $('mc-next').textContent = TXT.next[i]
@@ -74,7 +83,14 @@
     $('mc-prev').disabled = drillDay == null || k <= 0
     $('mc-next').disabled = drillDay == null || k >= days.length - 1
   }
-  function renderAll() { RV.setLang(lang); E.zones.forEach(renderZone); updateText() }
+  function renderAll() {
+    RV.setLang(lang)
+    E.zones.forEach(renderZone)
+    if (cfg.co2) E.zones.forEach(z => {
+      co2charts[z].setOption(RV.heatOption(rec(z), label(z), year, RV.co2Heat), true); co2charts[z].resize()
+    })
+    updateText()
+  }
 
   E.zones.forEach(z => charts[z].on('click', p => {
     if (drillDay != null || !(p.seriesType === 'bar' || p.seriesType === 'line')) return

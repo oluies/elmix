@@ -24,9 +24,9 @@ cp viz/round.html viz/consumption.html viz/round.js docs/
 cp viz/data/round-data.js viz/data/consumption-data.js docs/data/
 # Multi-klock-sidor (delar multiclock.js + round.js). SE-alla-zoner alltid;
 # DE/FR bara om fetcheu-datan byggts.
-cp viz/multiclock.js viz/co2.js viz/consumption-se.html docs/
+cp viz/multiclock.js viz/consumption-se.html docs/
 if [ -f viz/data/consumption-eu-data.js ]; then
-  cp viz/consumption-eu.html viz/co2.html docs/
+  cp viz/consumption-eu.html docs/
   cp viz/data/consumption-eu-data.js docs/data/
 fi
 
