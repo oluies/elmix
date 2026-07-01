@@ -13,8 +13,8 @@ const capture  = readJson('../data/capture.json')
 const prisVind = readJson('../data/pris_vs_vind.json')
 
 const FARG = {
-  'Vind': '#5470c6', 'Sol': '#fac858', 'Vattenkraft': '#91cc75',
-  'Kärnkraft': '#ee6666', 'Kraftvärme/övr': '#73c0de'
+  'Vind': '#4dc4d4', 'Sol': '#fac858', 'Vattenkraft': '#2e6fd6',
+  'Kärnkraft': '#4caf50', 'Kraftvärme/övr': '#9c6b3f'
 }
 
 function svg(option, width, height) {

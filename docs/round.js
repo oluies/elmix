@@ -6,11 +6,11 @@
   'use strict'
 
   const DEFAULT_FUELS = [
-    { key: 'v',  name: 'Vind',           nameEn: 'Wind',      c: '#5470c6' },
+    { key: 'v',  name: 'Vind',           nameEn: 'Wind',      c: '#4dc4d4' },
     { key: 's',  name: 'Sol',            nameEn: 'Solar',     c: '#fac858' },
-    { key: 'va', name: 'Vattenkraft',    nameEn: 'Hydro',     c: '#91cc75' },
-    { key: 'k',  name: 'Kärnkraft',      nameEn: 'Nuclear',   c: '#ee6666' },
-    { key: 'kv', name: 'Kraftvärme/övr', nameEn: 'CHP/other', c: '#73c0de' }
+    { key: 'va', name: 'Vattenkraft',    nameEn: 'Hydro',     c: '#2e6fd6' },
+    { key: 'k',  name: 'Kärnkraft',      nameEn: 'Nuclear',   c: '#4caf50' },
+    { key: 'kv', name: 'Kraftvärme/övr', nameEn: 'CHP/other', c: '#9c6b3f' }
   ]
   // Heatmap-lägen: värde per timme + färgskala (sv/en).
   const priceHeat = {
