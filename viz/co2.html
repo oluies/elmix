@@ -4,22 +4,29 @@
   <meta charset="utf-8">
   <title>Elmix – CO₂-intensitet DE vs FR</title>
   <script src="vendor/echarts.min.js"></script>
+  <script src="data/consumption-data.js"></script>
   <script src="data/consumption-eu-data.js"></script>
   <script>
-    window.CO2_CFG = {
-      data: window.elmixEu,
-      langs: ['sv', 'en', 'fr', 'de'],
-      label: z => z === 'DE_LU' ? 'DE' : 'FR',
-      texts: {
-        title: ['CO₂-intensitet: Tyskland vs Frankrike', 'CO₂ intensity: Germany vs France',
-          'Intensité CO₂ : Allemagne vs France', 'CO₂-Intensität: Deutschland vs Frankreich'],
-        lead: ['Grön = ren el, röd = fossil, över hela året i timupplösning. Intensitet = Σ(kraftslag × utsläppsfaktor) / produktion. Antaget (gCO₂/kWh): kol ~950, gas ~490, kärnkraft/vind/sol/vatten ~0, övrigt ~300; import exkluderas (okänt ursprung). FR:s kärnkraft ger ~50, DE:s kol/gas ~350–400.',
-          'Green = clean power, red = fossil, across the whole year at hourly resolution. Intensity = Σ(source × emission factor) / generation. Assumed (gCO₂/kWh): coal ~950, gas ~490, nuclear/wind/solar/hydro ~0, other ~300; imports excluded (unknown origin). FR nuclear gives ~50, DE coal/gas ~350–400.',
-          'Vert = électricité propre, rouge = fossile, sur toute l’année en résolution horaire. Intensité = Σ(source × facteur d’émission) / production. Hypothèses (gCO₂/kWh) : charbon ~950, gaz ~490, nucléaire/éolien/solaire/hydro ~0, autres ~300 ; imports exclus. Le nucléaire FR ~50, charbon/gaz DE ~350–400.',
-          'Grün = sauberer Strom, rot = fossil, übers ganze Jahr in Stundenauflösung. Intensität = Σ(Quelle × Emissionsfaktor) / Erzeugung. Annahme (gCO₂/kWh): Kohle ~950, Gas ~490, Kernkraft/Wind/Solar/Wasser ~0, Sonstige ~300; Importe ausgeschlossen. FR-Kernkraft ~50, DE-Kohle/Gas ~350–400.'],
-        yr: ['År (FBMC)', 'Year (FBMC)', 'Année (FBMC)', 'Jahr (FBMC)']
+    // Slå ihop SE-zoner (elmixConsumption) + DE/FR (elmixEu). Tolerant om DE/FR
+    // saknas (då visas bara SE). co2Heat hanterar båda kolumnuppsättningarna.
+    (function () {
+      var se = window.elmixConsumption || { zones: [], years: [2025, 2026], data: [] }
+      var eu = window.elmixEu || { zones: [], years: [2025, 2026], data: [] }
+      window.CO2_CFG = {
+        data: { zones: se.zones.concat(eu.zones), years: se.years, data: se.data.concat(eu.data) },
+        langs: ['sv', 'en', 'fr', 'de'],
+        label: function (z) { return z === 'DE_LU' ? 'DE' : z.replace('_', '') },
+        texts: {
+          title: ['CO₂-intensitet: alla zoner (SE1–4, DE, FR)', 'CO₂ intensity: all zones (SE1–4, DE, FR)',
+            'Intensité CO₂ : toutes zones (SE1–4, DE, FR)', 'CO₂-Intensität: alle Zonen (SE1–4, DE, FR)'],
+          lead: ['Grön = ren el, röd = fossil, över hela året i timupplösning. Intensitet = Σ(kraftslag × utsläppsfaktor) / produktion. Antaget (gCO₂/kWh): kol ~950, gas ~490, kärnkraft/vind/sol/vatten ~0, övrigt ~300, SE kraftvärme ~100; import exkluderas. De svenska zonerna nästan noll (vatten/kärnkraft/vind), DE ~325, FR ~18.',
+            'Green = clean, red = fossil, whole year at hourly resolution. Intensity = Σ(source × emission factor) / generation. Assumed (gCO₂/kWh): coal ~950, gas ~490, nuclear/wind/solar/hydro ~0, other ~300, SE CHP ~100; imports excluded. Swedish zones near zero (hydro/nuclear/wind), DE ~325, FR ~18.',
+            'Vert = propre, rouge = fossile, toute l’année en résolution horaire. Intensité = Σ(source × facteur) / production. Hypothèses (gCO₂/kWh) : charbon ~950, gaz ~490, nucléaire/éolien/solaire/hydro ~0, autres ~300, cogé. SE ~100 ; imports exclus. Zones suédoises quasi nulles, DE ~325, FR ~18.',
+            'Grün = sauber, rot = fossil, ganzes Jahr stündlich. Intensität = Σ(Quelle × Faktor) / Erzeugung. Annahme (gCO₂/kWh): Kohle ~950, Gas ~490, Kernkraft/Wind/Solar/Wasser ~0, Sonstige ~300, SE-KWK ~100; Importe ausgeschlossen. Schwedische Zonen nahe null, DE ~325, FR ~18.'],
+          yr: ['År (FBMC)', 'Year (FBMC)', 'Année (FBMC)', 'Jahr (FBMC)']
+        }
       }
-    }
+    })()
   </script>
   <style>
     body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;

@@ -10,6 +10,7 @@
       data: window.elmixEu,
       langs: ['sv', 'en', 'fr', 'de'],
       label: z => z === 'DE_LU' ? 'DE' : 'FR',
+      co2: true,
       fuels: [
         { key: 'k',   name: 'Kärnkraft',      nameEn: 'Nuclear',    nameFr: 'Nucléaire',    nameDe: 'Kernkraft',      c: '#ee6666' },
         { key: 'kol', name: 'Kol',            nameEn: 'Coal',       nameFr: 'Charbon',      nameDe: 'Kohle',          c: '#4d4d4d' },
@@ -30,7 +31,12 @@
         back: ['← Helår', '← Full year', '← Année', '← Ganzes Jahr'],
         prev: ['‹ Föreg. dag', '‹ Prev day', '‹ Jour préc.', '‹ Vortag'],
         next: ['Nästa dag ›', 'Next day ›', 'Jour suiv. ›', 'Nächster Tag ›'],
-        yr: ['År (FBMC)', 'Year (FBMC)', 'Année (FBMC)', 'Jahr (FBMC)']
+        yr: ['År (FBMC)', 'Year (FBMC)', 'Année (FBMC)', 'Jahr (FBMC)'],
+        co2title: ['CO₂-intensitet (g/kWh)', 'CO₂ intensity (g/kWh)', 'Intensité CO₂ (g/kWh)', 'CO₂-Intensität (g/kWh)'],
+        co2note: ['Grön = ren, röd = fossil, per dag × timme. Σ(kraftslag × utsläppsfaktor) / produktion; kol ~950, gas ~490, kärnkraft/vind/sol/vatten ~0, övrigt ~300 gCO₂/kWh; import exkluderad. DE ~325 vs FR ~18.',
+          'Green = clean, red = fossil, per day × hour. Σ(source × emission factor) / generation; coal ~950, gas ~490, nuclear/wind/solar/hydro ~0, other ~300 gCO₂/kWh; imports excluded. DE ~325 vs FR ~18.',
+          'Vert = propre, rouge = fossile, par jour × heure. Σ(source × facteur) / production ; charbon ~950, gaz ~490, nucléaire/renouvelables ~0, autres ~300 gCO₂/kWh ; imports exclus. DE ~325 vs FR ~18.',
+          'Grün = sauber, rot = fossil, pro Tag × Stunde. Σ(Quelle × Faktor) / Erzeugung; Kohle ~950, Gas ~490, Kernkraft/Erneuerbare ~0, Sonstige ~300 gCO₂/kWh; Importe ausgeschlossen. DE ~325 vs FR ~18.']
       }
     }
   </script>
@@ -82,7 +88,6 @@
     <a href="consumption.html">Förbrukningsmix SE</a>
     <a href="consumption-se.html">SE alla zoner</a>
     <a class="current" href="consumption-eu.html">DE vs FR</a>
-    <a href="co2.html">CO₂</a>
     <span id="lang-switch" class="langswitch"></span>
   </nav>
 
@@ -102,6 +107,10 @@
   <div id="clocks" class="clocks"></div>
   <div id="mc-table" class="pricetable"></div>
 
+  <h2 id="mc-co2title" style="font-size:16px;color:#333;margin:28px 0 2px"></h2>
+  <p class="lead" id="mc-co2note"></p>
+  <div id="co2clocks" class="clocks"></div>
+
   <footer>© 2026 Örjan Lundberg ·
     <a href="https://github.com/oluies">GitHub</a> ·
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
@@ -110,5 +119,6 @@
 
   <script src="round.js"></script>
   <script src="multiclock.js"></script>
+  <script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
