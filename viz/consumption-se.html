@@ -28,8 +28,8 @@
         next: ['Nästa dag ›', 'Next day ›'],
         yr: ['År (FBMC)', 'Year (FBMC)'],
         co2title: ['CO₂-intensitet (g/kWh)', 'CO₂ intensity (g/kWh)'],
-        co2note: ['Grön = ren, röd = fossil, per dag × timme. Σ(kraftslag × utsläppsfaktor) / produktion; kol ~950, gas ~490, kärnkraft/vind/sol/vatten ~0, Kraftvärme/övr ~100 gCO₂/kWh; import exkluderad. De svenska zonerna är nästan noll (vatten/kärnkraft/vind).',
-          'Green = clean, red = fossil, per day × hour. Σ(source × emission factor) / generation; coal ~950, gas ~490, nuclear/wind/solar/hydro ~0, CHP/other ~100 gCO₂/kWh; imports excluded. The Swedish zones are near zero (hydro/nuclear/wind).']
+        co2note: ['Grön = ren, röd = fossil (fast skala 0–600 för jämförbarhet). CO₂-intensitet = Σ(kraftslag × livscykelfaktor) / produktion. Livscykel-CO₂ (IPCC AR5, gCO₂eq/kWh): kärnkraft 12, vind 11, sol 48, vatten 24, gas 490, kol 820, Kraftvärme/övr (biomassa) 230; import exkluderad. SE1–3 ~20–26, SE4 ~58 – nästan allt grönt (vatten/kärnkraft/vind).',
+          'Green = clean, red = fossil (fixed 0–600 scale for comparability). CO₂ intensity = Σ(source × lifecycle factor) / generation. Lifecycle CO₂ (IPCC AR5, gCO₂eq/kWh): nuclear 12, wind 11, solar 48, hydro 24, gas 490, coal 820, CHP/other (biomass) 230; imports excluded. SE1–3 ~20–26, SE4 ~58 – almost all green (hydro/nuclear/wind).']
       }
     }
   </script>

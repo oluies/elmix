@@ -29,17 +29,22 @@
       return g ? +(imp / g * 100).toFixed(1) : null
     }
   }
-  // CO2-intensitet: direkta utsläppsfaktorer (gCO2/kWh) per kraftslag. Antaganden:
-  // kol ~950, gas ~490, kärn/vind/sol/vatten ~0, SE Kraftvärme/övr (biomassa-CHP)
-  // ~100, DE/FR Övrigt (bio/olja/avfall) ~300. Import exkluderas (okänt ursprung)
-  // -> intensitet av inhemsk produktion. Fungerar för både SE- och DE/FR-kolumner.
-  const CO2FACTOR = { k: 0, v: 0, s: 0, va: 0, kol: 950, gas: 490, ov: 300, kv: 100 }
+  // CO2-intensitet med LIVSCYKELfaktorer (gCO2eq/kWh) – IPCC AR5 (WG3 2014,
+  // Annex III) medianvärden: kärnkraft 12, vind (onshore) 11, sol-PV 48,
+  // vattenkraft 24, gas (CCGT) 490, kol 820, biomassa 230. "Övrigt" (bio/olja/
+  // avfall) och SE Kraftvärme/övr (biomassa-CHP) approximeras som biomassa 230.
+  // Import exkluderas (okänt ursprung) -> intensitet = Σ(prod × faktor) / Σ prod
+  // för INHEMSK produktion. Fungerar för både SE- och DE/FR-kolumner. Se README.
+  const CO2FACTOR = { k: 12, v: 11, s: 48, va: 24, kol: 820, gas: 490, ov: 230, kv: 230 }
   const co2Heat = {
     suffix: 'CO₂-intensitet (g/kWh) per dag × timme', suffixEn: 'CO₂ intensity (g/kWh) per day × hour',
     suffixFr: 'intensité CO₂ (g/kWh) par jour × heure', suffixDe: 'CO₂-Intensität (g/kWh) pro Tag × Stunde',
     unit: 'g/kWh', unitEn: 'g/kWh', text: ['smutsig', 'ren'], textEn: ['dirty', 'clean'],
     textFr: ['sale', 'propre'], textDe: ['schmutzig', 'sauber'],
     colors: ['#1a9850', '#a6d96a', '#ffffbf', '#fdae61', '#d73027'],
+    // Fast, delad skala (0-600 gCO2eq/kWh) så zonerna är JÄMFÖRBARA i färg –
+    // annars normaliseras varje heatmap mot sitt eget min/max (DE ser grön ut).
+    fixedMin: 0, fixedMax: 600,
     value: (d, i) => {
       let em = 0, gen = 0
       for (const key in CO2FACTOR) if (d[key]) { const mw = d[key][i] || 0; em += mw * CO2FACTOR[key]; gen += mw }
@@ -219,7 +224,8 @@
   function heatOption(d, zone, year, hc) {
     const { out, doys } = heatData(d, hc.value)
     const vals = out.map(o => o[2])
-    const vmin = Math.min(...vals), vmax = Math.max(...vals)
+    const vmin = hc.fixedMin != null ? hc.fixedMin : Math.min(...vals)
+    const vmax = hc.fixedMax != null ? hc.fixedMax : Math.max(...vals)
     const N = doys.length
     return {
       title: titleTop(`${zone.replace('_', '')} ${year} – ${t(hc.suffix, hc.suffixEn, hc.suffixFr, hc.suffixDe)}`),
@@ -268,12 +274,11 @@
       for (const key in CO2FACTOR) if (r[key] != null) { em += r[key] * CO2FACTOR[key]; gen += r[key] }
       return gen ? Math.round(em / gen) : null
     })
-    const vmax = Math.max(1, ...vals.filter(v => v != null))
     return {
       title: titleTop(`${zone.replace('_', '')} – ${isoDate(year, day)} · CO₂ g/kWh`),
       tooltip: { trigger: 'item', formatter: p => `${t('kl', 'h', 'h', 'Uhr')} ${rows[p.dataIndex] ? String(rows[p.dataIndex].h).padStart(2, '0') + ':' + String(rows[p.dataIndex].q * 15).padStart(2, '0') : ''}<br/>${p.value} g/kWh` },
       visualMap: {
-        type: 'continuous', min: 0, max: vmax, calculable: true, orient: 'vertical',
+        type: 'continuous', min: co2Heat.fixedMin, max: co2Heat.fixedMax, calculable: true, orient: 'vertical',
         right: 10, top: 'middle', itemHeight: 150,
         text: [t('smutsig', 'dirty', 'sale', 'schmutzig'), t('ren', 'clean', 'propre', 'sauber')],
         inRange: { color: co2Heat.colors }
