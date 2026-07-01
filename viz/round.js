@@ -274,12 +274,23 @@
       for (const key in CO2FACTOR) if (r[key] != null) { em += r[key] * CO2FACTOR[key]; gen += r[key] }
       return gen ? Math.round(em / gen) : null
     })
+    // Färga staplarna EXPLICIT (visualMap färgar inte polära stapel-serier
+    // tillförlitligt) – interpolera co2Heat.colors på fast skala 0..fixedMax.
+    const cols = co2Heat.colors
+    const co2color = v => {
+      if (v == null) return '#ccc'
+      const x = Math.max(0, Math.min(1, v / co2Heat.fixedMax)) * (cols.length - 1)
+      const i = Math.min(cols.length - 2, Math.floor(x)), f = x - i
+      const hx = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16))
+      const a = hx(cols[i]), b = hx(cols[i + 1])
+      return `rgb(${a.map((av, k) => Math.round(av + (b[k] - av) * f)).join(',')})`
+    }
     return {
       title: titleTop(`${zone.replace('_', '')} – ${isoDate(year, day)} · CO₂ g/kWh`),
       tooltip: { trigger: 'item', formatter: p => `${t('kl', 'h', 'h', 'Uhr')} ${rows[p.dataIndex] ? String(rows[p.dataIndex].h).padStart(2, '0') + ':' + String(rows[p.dataIndex].q * 15).padStart(2, '0') : ''}<br/>${p.value} g/kWh` },
       visualMap: {
         type: 'continuous', min: co2Heat.fixedMin, max: co2Heat.fixedMax, calculable: true, orient: 'vertical',
-        right: 10, top: 'middle', itemHeight: 150,
+        right: 10, top: 'middle', itemHeight: 150, seriesIndex: 9, // legend enbart
         text: [t('smutsig', 'dirty', 'sale', 'schmutzig'), t('ren', 'clean', 'propre', 'sauber')],
         inRange: { color: co2Heat.colors }
       },
@@ -289,7 +300,7 @@
         axisTick: { show: false }, splitLine: { show: false }, axisLabel: { interval: 0, fontSize: 11, color: '#555' }
       },
       radiusAxis: { min: 0, name: 'g/kWh', splitLine: { lineStyle: { color: '#eee' } } },
-      series: [{ type: 'bar', coordinateSystem: 'polar', data: vals }]
+      series: [{ type: 'bar', coordinateSystem: 'polar', data: vals.map(v => ({ value: v, itemStyle: { color: co2color(v) } })) }]
     }
   }
 
