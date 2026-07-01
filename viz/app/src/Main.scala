@@ -14,11 +14,11 @@ object Main:
   def fuelAbb(f: String): String = if f == "Kraftvärme/övr" then "Kraftv." else f
 
   val FuelColor: Map[String, String] = Map(
-    "Vind" -> "#5470c6",
+    "Vind" -> "#4dc4d4",
     "Sol" -> "#fac858",
-    "Vattenkraft" -> "#91cc75",
-    "Kärnkraft" -> "#ee6666",
-    "Kraftvärme/övr" -> "#73c0de"
+    "Vattenkraft" -> "#2e6fd6",
+    "Kärnkraft" -> "#4caf50",
+    "Kraftvärme/övr" -> "#9c6b3f"
   )
 
   // elmix15: {z,t,v,s,va,k,kv,p} -> per zon, sorterade observationer.
