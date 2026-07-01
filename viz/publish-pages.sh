@@ -7,6 +7,8 @@ cd "$(dirname "$0")/.."
 ./viz/export-data.sh
 ./viz/export-round.sh
 ./viz/export-consumption.sh
+# DE/FR-förbrukningsmix (fetcheu-data) – bygg bara om rådatan finns.
+if ls data/raw/eu/generation/*.parquet >/dev/null 2>&1; then ./viz/export-consumption-eu.sh; fi
 (cd viz && ../mill app.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
 (cd viz/ssr && node render.mjs)
 
@@ -20,6 +22,11 @@ sed 's|out/app/fastLinkJS.dest/main.js|main.js|' viz/index.html > docs/index.htm
 # Runda experimentsidor (fristående, delar round.js, läser *-data.js direkt).
 cp viz/round.html viz/consumption.html viz/round.js docs/
 cp viz/data/round-data.js viz/data/consumption-data.js docs/data/
+# DE/FR-sidan (om datan byggts).
+if [ -f viz/data/consumption-eu-data.js ]; then
+  cp viz/consumption-eu.html viz/eu.js docs/
+  cp viz/data/consumption-eu-data.js docs/data/
+fi
 
 echo "docs/ klar:"
 ls docs/

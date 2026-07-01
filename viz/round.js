@@ -32,6 +32,8 @@
 
   const MNAME = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
   const MNAME_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const MNAME_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
+  const MNAME_DE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
   const MDAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
   const MSTART = (() => { const s = []; let a = 1; for (const m of MDAYS) { s.push(a); a += m } return s })()
   const monthOf = day => { for (let m = 11; m >= 0; m--) if (day >= MSTART[m]) return m; return 0 }
@@ -41,9 +43,11 @@
   // Språk (sv/en). Byggarna läser modulvariabeln LANG vid render; DOM-lagret
   // sätter den via språkväljaren. Node-röktestet kör default 'sv'.
   let LANG = 'sv'
-  const t = (sv, en) => LANG === 'en' ? en : sv
-  const fname = f => (LANG === 'en' && f.nameEn) ? f.nameEn : f.name
-  const mName = m => (LANG === 'en' ? MNAME_EN : MNAME)[m]
+  const t = (sv, en, fr, de) => ({ sv, en, fr, de })[LANG] ?? sv
+  const NKEY = { sv: 'name', en: 'nameEn', fr: 'nameFr', de: 'nameDe' }
+  const fname = f => f[NKEY[LANG]] || f.name
+  const MONTHS = { sv: MNAME, en: MNAME_EN, fr: MNAME_FR, de: MNAME_DE }
+  const mName = m => (MONTHS[LANG] || MNAME)[m]
 
   // Delad layout: legend vertikalt till höger, stor cirkel nedflyttad under titeln.
   const legendRight = data => ({ type: 'scroll', orient: 'vertical', right: 10, top: 'middle', itemGap: 10, data })
@@ -107,7 +111,7 @@
     const pmax = ps.length ? Math.max(...ps) : 1
     const span = (pmax - pmin) || 1
     return {
-      name: t('Pris', 'Price'), type: 'line', coordinateSystem: 'polar', smooth: true, showSymbol: false, z: 10,
+      name: t('Pris', 'Price', 'Prix', 'Preis'), type: 'line', coordinateSystem: 'polar', smooth: true, showSymbol: false, z: 10,
       lineStyle: { color: '#111', width: 1.5 },
       data: rows.map(x => x.p == null ? null : +((x.p - pmin) / span * 100).toFixed(1))
     }
@@ -138,8 +142,8 @@
   function barYearOption(d, zone, year, fuels) {
     const rows = daily(d, fuels)
     return {
-      title: titleTop(`${zone.replace('_', '')} ${year} – ${t('mix-andel över året', 'mix share over the year')}`),
-      legend: legendRight(fuels.map(fname).concat(t('Pris', 'Price'))),
+      title: titleTop(`${zone.replace('_', '')} ${year} – ${t('mix-andel över året', 'mix share over the year', 'part du mix sur l’année', 'Mix-Anteil übers Jahr')}`),
+      legend: legendRight(fuels.map(fname).concat(t('Pris', 'Price', 'Prix', 'Preis'))),
       tooltip: { trigger: 'item' },
       polar: POLAR,
       angleAxis: {
@@ -153,8 +157,8 @@
   function barDayOption(d, zone, year, day, fuels) {
     const rows = dayHours(d, day, fuels)
     return {
-      title: titleTop(`${zone.replace('_', '')} – ${isoDate(year, day)} (${t('dag', 'day')} ${day}, ${rows.length > 24 ? rows.length + (LANG === 'en' ? ' quarters' : ' kvart') : '24 h'})`),
-      legend: legendRight(fuels.map(fname).concat(t('Pris', 'Price'))),
+      title: titleTop(`${zone.replace('_', '')} – ${isoDate(year, day)} (${t('dag', 'day', 'jour', 'Tag')} ${day}, ${rows.length > 24 ? rows.length + t(' kvart', ' quarters', ' quarts', ' Viertel') : '24 h'})`),
+      legend: legendRight(fuels.map(fname).concat(t('Pris', 'Price', 'Prix', 'Preis'))),
       tooltip: { trigger: 'item' },
       polar: POLAR,
       angleAxis: {
@@ -243,6 +247,13 @@
 
   // ---- DOM-wiring (endast webbläsare) ---------------------------------------
   if (typeof document === 'undefined') return
+  // Exponera rena byggare + språk-setter för fristående sidor (eu.js).
+  window.RoundViz = {
+    barYearOption, barDayOption, daily, dayHours, isoDate, t,
+    setLang: l => { LANG = l }, getLang: () => LANG
+  }
+  // Standardsidans wiring (round/consumption) körs bara om dess layout finns.
+  if (!document.getElementById('pane-bar')) return
   const cfg = window.ROUND_CFG || {}
   const R = cfg.data || window.elmixRound
   const FUELS = cfg.fuels || DEFAULT_FUELS
