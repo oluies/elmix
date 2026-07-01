@@ -259,14 +259,43 @@
     }
   }
 
-  const API = { DEFAULT_FUELS, priceHeat, importHeat, co2Heat, daily, dayHours, heatData, barYearOption, barDayOption, sunburstOption, heatOption, priceTableHtml }
+  // ---- CO2-intensitet för ETT dygn: polär stapel (g/kWh per intervall) ------
+  // Zoomar in CO2 när man drillar en dag (mirror av mix-klockans dygnsvy).
+  function co2DayOption(d, zone, year, day, fuels) {
+    const rows = dayHours(d, day, fuels)
+    const vals = rows.map(r => {
+      let em = 0, gen = 0
+      for (const key in CO2FACTOR) if (r[key] != null) { em += r[key] * CO2FACTOR[key]; gen += r[key] }
+      return gen ? Math.round(em / gen) : null
+    })
+    const vmax = Math.max(1, ...vals.filter(v => v != null))
+    return {
+      title: titleTop(`${zone.replace('_', '')} – ${isoDate(year, day)} · CO₂ g/kWh`),
+      tooltip: { trigger: 'item', formatter: p => `${t('kl', 'h', 'h', 'Uhr')} ${rows[p.dataIndex] ? String(rows[p.dataIndex].h).padStart(2, '0') + ':' + String(rows[p.dataIndex].q * 15).padStart(2, '0') : ''}<br/>${p.value} g/kWh` },
+      visualMap: {
+        type: 'continuous', min: 0, max: vmax, calculable: true, orient: 'vertical',
+        right: 10, top: 'middle', itemHeight: 150,
+        text: [t('smutsig', 'dirty', 'sale', 'schmutzig'), t('ren', 'clean', 'propre', 'sauber')],
+        inRange: { color: co2Heat.colors }
+      },
+      polar: POLAR,
+      angleAxis: {
+        type: 'category', data: rows.map(x => x.q === 0 ? x.h + ':00' : ''), startAngle: 90, clockwise: true,
+        axisTick: { show: false }, splitLine: { show: false }, axisLabel: { interval: 0, fontSize: 11, color: '#555' }
+      },
+      radiusAxis: { min: 0, name: 'g/kWh', splitLine: { lineStyle: { color: '#eee' } } },
+      series: [{ type: 'bar', coordinateSystem: 'polar', data: vals }]
+    }
+  }
+
+  const API = { DEFAULT_FUELS, priceHeat, importHeat, co2Heat, daily, dayHours, heatData, barYearOption, barDayOption, sunburstOption, heatOption, co2DayOption, priceTableHtml }
   if (typeof module !== 'undefined' && module.exports) module.exports = API
 
   // ---- DOM-wiring (endast webbläsare) ---------------------------------------
   if (typeof document === 'undefined') return
   // Exponera rena byggare + språk-setter för fristående sidor (eu.js).
   window.RoundViz = {
-    barYearOption, barDayOption, heatOption, daily, dayHours, isoDate, t, co2Heat,
+    barYearOption, barDayOption, heatOption, co2DayOption, daily, dayHours, isoDate, t, co2Heat,
     setLang: l => { LANG = l }, getLang: () => LANG
   }
   // Standardsidans wiring (round/consumption) körs bara om dess layout finns.
