@@ -34,8 +34,16 @@ const cases = [
   ['cons heat(imp)', RV.heatOption(cc, 'SE_4', 2025, RV.importHeat)],
   ['eu DE barYear', RV.barYearOption(r(E.data, 'DE_LU', 2025), 'DE', 2025, EU_FUELS)],
   ['eu DE barDay', RV.barDayOption(r(E.data, 'DE_LU', 2026), 'DE', 2026, 100, EU_FUELS)],
-  ['eu FR barYear', RV.barYearOption(r(E.data, 'FR', 2025), 'FR', 2025, EU_FUELS)]
+  ['eu FR barYear', RV.barYearOption(r(E.data, 'FR', 2025), 'FR', 2025, EU_FUELS)],
+  ['eu DE co2', RV.heatOption(r(E.data, 'DE_LU', 2025), 'DE', 2025, RV.co2Heat)],
+  ['eu FR co2', RV.heatOption(r(E.data, 'FR', 2025), 'FR', 2025, RV.co2Heat)]
 ]
+const meanCo2 = z => {
+  const d = r(E.data, z, 2025); let s = 0, n = 0
+  for (let i = 0; i < d.h.length; i++) { const v = RV.co2Heat.value(d, i); if (v != null) { s += v; n++ } }
+  return Math.round(s / n)
+}
+console.log(`CO2-intensitet 2025: DE ${meanCo2('DE_LU')} g/kWh · FR ${meanCo2('FR')} g/kWh`)
 console.log(`2026 dag 90 har ${dayBuckets(cc26, 90)} buckets (väntat 96), heatmap aggregerar -> 24 ringar`)
 const tbl = RV.priceTableHtml(RV.dayHours(cc26, 90, CONS_FUELS))
 const tradeRows = (tbl.match(/<tr>/g) || []).length - 1 // minus header

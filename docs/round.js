@@ -29,6 +29,23 @@
       return g ? +(imp / g * 100).toFixed(1) : null
     }
   }
+  // CO2-intensitet: direkta utsläppsfaktorer (gCO2/kWh) per kraftslag. Antaganden:
+  // kol ~950, gas ~490, kärn/vind/sol/vatten ~0, SE Kraftvärme/övr (biomassa-CHP)
+  // ~100, DE/FR Övrigt (bio/olja/avfall) ~300. Import exkluderas (okänt ursprung)
+  // -> intensitet av inhemsk produktion. Fungerar för både SE- och DE/FR-kolumner.
+  const CO2FACTOR = { k: 0, v: 0, s: 0, va: 0, kol: 950, gas: 490, ov: 300, kv: 100 }
+  const co2Heat = {
+    suffix: 'CO₂-intensitet (g/kWh) per dag × timme', suffixEn: 'CO₂ intensity (g/kWh) per day × hour',
+    suffixFr: 'intensité CO₂ (g/kWh) par jour × heure', suffixDe: 'CO₂-Intensität (g/kWh) pro Tag × Stunde',
+    unit: 'g/kWh', unitEn: 'g/kWh', text: ['smutsig', 'ren'], textEn: ['dirty', 'clean'],
+    textFr: ['sale', 'propre'], textDe: ['schmutzig', 'sauber'],
+    colors: ['#1a9850', '#a6d96a', '#ffffbf', '#fdae61', '#d73027'],
+    value: (d, i) => {
+      let em = 0, gen = 0
+      for (const key in CO2FACTOR) if (d[key]) { const mw = d[key][i] || 0; em += mw * CO2FACTOR[key]; gen += mw }
+      return gen ? Math.round(em / gen) : null
+    }
+  }
 
   const MNAME = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
   const MNAME_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -205,11 +222,11 @@
     const vmin = Math.min(...vals), vmax = Math.max(...vals)
     const N = doys.length
     return {
-      title: titleTop(`${zone.replace('_', '')} ${year} – ${t(hc.suffix, hc.suffixEn)}`),
-      tooltip: { trigger: 'item', formatter: p => `${isoDate(year, p.value[3])} (${t('dag', 'day')} ${p.value[3]}), ${t('kl', 'h')} ${String(p.value[1]).padStart(2, '0')}<br/>${p.value[2]} ${t(hc.unit, hc.unitEn)}` },
+      title: titleTop(`${zone.replace('_', '')} ${year} – ${t(hc.suffix, hc.suffixEn, hc.suffixFr, hc.suffixDe)}`),
+      tooltip: { trigger: 'item', formatter: p => `${isoDate(year, p.value[3])} (${t('dag', 'day', 'jour', 'Tag')} ${p.value[3]}), ${t('kl', 'h', 'h', 'Uhr')} ${String(p.value[1]).padStart(2, '0')}<br/>${p.value[2]} ${t(hc.unit, hc.unitEn, hc.unitFr, hc.unitDe)}` },
       visualMap: {
         type: 'continuous', min: vmin, max: vmax, dimension: 2, calculable: true,
-        orient: 'vertical', right: 12, top: 'middle', text: LANG === 'en' ? hc.textEn : hc.text, itemHeight: 160,
+        orient: 'vertical', right: 12, top: 'middle', text: ({ sv: hc.text, en: hc.textEn, fr: hc.textFr, de: hc.textDe })[LANG] || hc.text, itemHeight: 160,
         inRange: { color: hc.colors }
       },
       polar: POLAR,
@@ -242,14 +259,14 @@
     }
   }
 
-  const API = { DEFAULT_FUELS, priceHeat, importHeat, daily, dayHours, heatData, barYearOption, barDayOption, sunburstOption, heatOption, priceTableHtml }
+  const API = { DEFAULT_FUELS, priceHeat, importHeat, co2Heat, daily, dayHours, heatData, barYearOption, barDayOption, sunburstOption, heatOption, priceTableHtml }
   if (typeof module !== 'undefined' && module.exports) module.exports = API
 
   // ---- DOM-wiring (endast webbläsare) ---------------------------------------
   if (typeof document === 'undefined') return
   // Exponera rena byggare + språk-setter för fristående sidor (eu.js).
   window.RoundViz = {
-    barYearOption, barDayOption, daily, dayHours, isoDate, t,
+    barYearOption, barDayOption, heatOption, daily, dayHours, isoDate, t, co2Heat,
     setLang: l => { LANG = l }, getLang: () => LANG
   }
   // Standardsidans wiring (round/consumption) körs bara om dess layout finns.
