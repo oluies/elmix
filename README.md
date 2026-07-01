@@ -105,6 +105,32 @@ Elmix.scala) kompileras till Scala.js och räknas om för vald tidsperiod.
 Ingen SQL/DuckDB i klienten. Den prerenderade vyn läser i stället de
 färdiga `pca_*.json` direkt (ECharts Node-SSR).
 
+### CO₂-intensitet (metod)
+
+CO₂-heatmapsen (förbrukningssidorna, `co2Heat`/`co2DayOption` i `round.js`) räknas
+**klientsidan ur produktionsmixen** – ingen extra hämtning. Per intervall:
+
+```
+CO₂-intensitet (gCO₂eq/kWh) = Σ(produktion_kraftslag × faktor) / Σ produktion
+```
+
+Faktorerna är **livscykelmedianer från IPCC AR5** (WG3 2014, Annex III,
+Table A.III.2), gCO₂eq/kWh:
+
+| Kraftslag | Faktor | | Kraftslag | Faktor |
+|---|---:|---|---|---:|
+| Kärnkraft | 12 | | Gas (CCGT) | 490 |
+| Vind (onshore) | 11 | | Kol | 820 |
+| Sol-PV | 48 | | Biomassa | 230 |
+| Vattenkraft | 24 | | | |
+
+`Övrigt` (bio/olja/avfall) och SE `Kraftvärme/övr` (biomassa-CHP) approximeras som
+biomassa (230). **Import exkluderas** (okänt ursprung) – siffran är intensiteten
+för den *inhemska produktionen*. Färgskalan är **fast 0–600** så zonerna är
+jämförbara (annars normaliseras varje heatmap mot sitt eget min/max). Typiska
+värden 2025: DE ~300, FR ~32, SE1–3 ~20–26, SE4 ~58 gCO₂eq/kWh. Justera i
+`CO2FACTOR` i `viz/round.js` (t.ex. biomassa 0 för biogen bokföring).
+
 ## Status
 
 - Kompilerar, röktestat med syntetisk data och **skarpkört mot ENTSO-E**
