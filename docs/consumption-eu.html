@@ -5,11 +5,40 @@
   <title>Elmix – förbrukningsmix DE vs FR</title>
   <script src="vendor/echarts.min.js"></script>
   <script src="data/consumption-eu-data.js"></script>
+  <script>
+    window.MULTI_CFG = {
+      data: window.elmixEu,
+      langs: ['sv', 'en', 'fr', 'de'],
+      label: z => z === 'DE_LU' ? 'DE' : 'FR',
+      fuels: [
+        { key: 'k',   name: 'Kärnkraft',      nameEn: 'Nuclear',    nameFr: 'Nucléaire',    nameDe: 'Kernkraft',      c: '#ee6666' },
+        { key: 'kol', name: 'Kol',            nameEn: 'Coal',       nameFr: 'Charbon',      nameDe: 'Kohle',          c: '#4d4d4d' },
+        { key: 'gas', name: 'Gas',            nameEn: 'Gas',        nameFr: 'Gaz',          nameDe: 'Gas',            c: '#e8853a' },
+        { key: 'v',   name: 'Vind',           nameEn: 'Wind',       nameFr: 'Éolien',       nameDe: 'Wind',           c: '#5470c6' },
+        { key: 's',   name: 'Sol',            nameEn: 'Solar',      nameFr: 'Solaire',      nameDe: 'Solar',          c: '#fac858' },
+        { key: 'va',  name: 'Vattenkraft',    nameEn: 'Hydro',      nameFr: 'Hydro',        nameDe: 'Wasser',         c: '#91cc75' },
+        { key: 'ov',  name: 'Övrigt',         nameEn: 'Other',      nameFr: 'Autres',       nameDe: 'Sonstige',       c: '#9a60b4' },
+        { key: 'imp', name: 'Import (netto)', nameEn: 'Net import', nameFr: 'Import (net)', nameDe: 'Import (netto)', c: '#9aa7b8' }
+      ],
+      texts: {
+        title: ['Förbrukningsmix: Tyskland vs Frankrike', 'Consumption mix: Germany vs France',
+          'Mix de consommation : Allemagne vs France', 'Verbrauchsmix: Deutschland vs Frankreich'],
+        lead: ['Förbrukningsmix (produktion + nettoimport) sida vid sida. Nettoimport = total last − produktion; grå kil = import. Klicka på en dag för dygnsvy (båda). FBMC-eran (2025/2026).',
+          'Consumption mix (generation + net imports) side by side. Net import = total load − generation; grey wedge = imports. Click a day for the daily view (both). FBMC era (2025/2026).',
+          'Mix de consommation (production + import net) côte à côte. Import net = charge totale − production ; coin gris = import. Cliquez un jour pour la vue journalière. Ère FBMC (2025/2026).',
+          'Verbrauchsmix (Erzeugung + Nettoimport) nebeneinander. Nettoimport = Gesamtlast − Erzeugung; grauer Keil = Import. Klicken Sie einen Tag für die Tagesansicht. FBMC-Ära (2025/2026).'],
+        back: ['← Helår', '← Full year', '← Année', '← Ganzes Jahr'],
+        prev: ['‹ Föreg. dag', '‹ Prev day', '‹ Jour préc.', '‹ Vortag'],
+        next: ['Nästa dag ›', 'Next day ›', 'Jour suiv. ›', 'Nächster Tag ›'],
+        yr: ['År (FBMC)', 'Year (FBMC)', 'Année (FBMC)', 'Jahr (FBMC)']
+      }
+    }
+  </script>
   <style>
     body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;
            max-width: 1300px; padding: 0 16px 48px; color: #222; }
     h1 { font-size: 20px; margin-top: 24px; }
-    .lead { color: #555; font-size: 14px; line-height: 1.5; max-width: 900px; }
+    .lead { color: #555; font-size: 14px; line-height: 1.5; max-width: 940px; }
     .controls { margin: 14px 0 6px; font-size: 14px; display: flex; gap: 26px; flex-wrap: wrap; align-items: center; }
     .controls fieldset { border: 1px solid #e3e8ef; border-radius: 8px; padding: 4px 12px 8px; margin: 0; }
     .controls legend { font-size: 12px; color: #777; padding: 0 4px; }
@@ -19,7 +48,7 @@
     .toolbar button:disabled { opacity: 0.4; cursor: default; }
     .toolbar .hint { color: #888; margin-left: 8px; }
     .clocks { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
-    .chart { flex: 1 1 520px; height: 580px; min-width: 380px;
+    .chart { flex: 1 1 45%; height: 580px; min-width: 360px;
              background: #fafbfd; border: 1px solid #e3e8ef; border-radius: 10px; }
     footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
     footer a { color: #36c; }
@@ -44,35 +73,33 @@
     <a href="prerendered.html">Prerenderad</a>
     <a href="round.html">Runda vyer</a>
     <a href="consumption.html">Förbrukningsmix SE</a>
+    <a href="consumption-se.html">SE alla zoner</a>
     <a class="current" href="consumption-eu.html">DE vs FR</a>
     <span id="lang-switch" class="langswitch"></span>
   </nav>
 
-  <h1 id="eu-title">Förbrukningsmix: Tyskland vs Frankrike</h1>
-  <p class="lead" id="eu-lead"></p>
+  <h1 id="mc-title">Förbrukningsmix: Tyskland vs Frankrike</h1>
+  <p class="lead" id="mc-lead"></p>
 
   <div class="controls">
     <fieldset id="year-picker"><legend>År (FBMC)</legend></fieldset>
-    <div class="toolbar" id="eu-toolbar" style="display:none">
-      <button id="eu-prev">‹</button>
-      <button id="eu-next">›</button>
-      <button id="eu-back">←</button>
-      <span class="hint" id="eu-daylabel"></span>
+    <div class="toolbar" id="mc-toolbar" style="display:none">
+      <button id="mc-prev">‹</button>
+      <button id="mc-next">›</button>
+      <button id="mc-back">←</button>
+      <span class="hint" id="mc-daylabel"></span>
     </div>
   </div>
 
-  <div class="clocks">
-    <div id="clock-DE_LU" class="chart"></div>
-    <div id="clock-FR" class="chart"></div>
-  </div>
+  <div id="clocks" class="clocks"></div>
 
   <footer>© 2026 Örjan Lundberg ·
     <a href="https://github.com/oluies">GitHub</a> ·
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
     Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
-    <span lang="sv">Data</span> ENTSO-E (A75/A44/A65) · DuckDB &amp; ECharts</footer>
+    Data ENTSO-E (A75/A44/A65) · DuckDB &amp; ECharts</footer>
 
   <script src="round.js"></script>
-  <script src="eu.js"></script>
+  <script src="multiclock.js"></script>
 </body>
 </html>

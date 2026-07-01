@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="sv" data-lang="sv">
+<head>
+  <meta charset="utf-8">
+  <title>Elmix – förbrukningsmix alla SE-zoner</title>
+  <script src="vendor/echarts.min.js"></script>
+  <script src="data/consumption-data.js"></script>
+  <script>
+    window.MULTI_CFG = {
+      data: window.elmixConsumption,
+      langs: ['sv', 'en'],
+      label: z => z.replace('_', ''),
+      fuels: [
+        { key: 'v',   name: 'Vind',           nameEn: 'Wind',       c: '#5470c6' },
+        { key: 's',   name: 'Sol',            nameEn: 'Solar',      c: '#fac858' },
+        { key: 'va',  name: 'Vattenkraft',    nameEn: 'Hydro',      c: '#91cc75' },
+        { key: 'k',   name: 'Kärnkraft',      nameEn: 'Nuclear',    c: '#ee6666' },
+        { key: 'kv',  name: 'Kraftvärme/övr', nameEn: 'CHP/other',  c: '#73c0de' },
+        { key: 'imp', name: 'Import (netto)', nameEn: 'Net import', c: '#9aa7b8' }
+      ],
+      texts: {
+        title: ['Förbrukningsmix – alla svenska elområden', 'Consumption mix – all Swedish bidding zones'],
+        lead: ['Alla fyra elområdena (SE1–SE4) samtidigt. Förbrukningsmix = produktion + nettoimport (grå kil = import). Klicka på en dag → alla fyra klockor drillar till samma dygn. FBMC-eran (2025/2026).',
+          'All four bidding zones (SE1–SE4) at once. Consumption mix = generation + net imports (grey wedge = imports). Click a day → all four clocks drill to the same day. FBMC era (2025/2026).'],
+        back: ['← Helår', '← Full year'],
+        prev: ['‹ Föreg. dag', '‹ Prev day'],
+        next: ['Nästa dag ›', 'Next day ›'],
+        yr: ['År (FBMC)', 'Year (FBMC)']
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;
+           max-width: 1300px; padding: 0 16px 48px; color: #222; }
+    h1 { font-size: 20px; margin-top: 24px; }
+    .lead { color: #555; font-size: 14px; line-height: 1.5; max-width: 940px; }
+    .controls { margin: 14px 0 6px; font-size: 14px; display: flex; gap: 26px; flex-wrap: wrap; align-items: center; }
+    .controls fieldset { border: 1px solid #e3e8ef; border-radius: 8px; padding: 4px 12px 8px; margin: 0; }
+    .controls legend { font-size: 12px; color: #777; padding: 0 4px; }
+    .toolbar { font-size: 13px; }
+    .toolbar button { font: inherit; padding: 3px 10px; border: 1px solid #c9d2e0;
+                      background: #fff; border-radius: 6px; cursor: pointer; margin-right: 6px; }
+    .toolbar button:disabled { opacity: 0.4; cursor: default; }
+    .toolbar .hint { color: #888; margin-left: 8px; }
+    .clocks { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+    .chart { flex: 1 1 45%; height: 560px; min-width: 360px;
+             background: #fafbfd; border: 1px solid #e3e8ef; border-radius: 10px; }
+    footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
+    footer a { color: #36c; }
+    .topnav { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap;
+              padding: 10px 0 8px; margin-bottom: 4px; border-bottom: 1px solid #e3e8ef; font-size: 14px; }
+    .topnav .brand { font-weight: 600; color: #333; margin-right: 4px; }
+    .topnav a { color: #36c; text-decoration: none; }
+    .topnav a:hover { text-decoration: underline; }
+    .topnav a.current { color: #222; font-weight: 600; cursor: default; }
+    .langswitch { margin-left: auto; display: inline-flex; }
+    .langswitch button { font: inherit; font-size: 12px; padding: 2px 9px; border: 1px solid #c9d2e0;
+                         background: #fff; cursor: pointer; color: #36c; border-left: none; }
+    .langswitch button:first-child { border-left: 1px solid #c9d2e0; border-radius: 6px 0 0 6px; }
+    .langswitch button:last-child { border-radius: 0 6px 6px 0; }
+    .langswitch button.active { background: #36c; color: #fff; border-color: #36c; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <span class="brand">Elmix · SE1–SE4</span>
+    <a href="index.html">Interaktiv</a>
+    <a href="prerendered.html">Prerenderad</a>
+    <a href="round.html">Runda vyer</a>
+    <a href="consumption.html">Förbrukningsmix SE</a>
+    <a class="current" href="consumption-se.html">SE alla zoner</a>
+    <a href="consumption-eu.html">DE vs FR</a>
+    <span id="lang-switch" class="langswitch"></span>
+  </nav>
+
+  <h1 id="mc-title">Förbrukningsmix – alla svenska elområden</h1>
+  <p class="lead" id="mc-lead"></p>
+
+  <div class="controls">
+    <fieldset id="year-picker"><legend>År (FBMC)</legend></fieldset>
+    <div class="toolbar" id="mc-toolbar" style="display:none">
+      <button id="mc-prev">‹</button>
+      <button id="mc-next">›</button>
+      <button id="mc-back">←</button>
+      <span class="hint" id="mc-daylabel"></span>
+    </div>
+  </div>
+
+  <div id="clocks" class="clocks"></div>
+
+  <footer>© 2026 Örjan Lundberg ·
+    <a href="https://github.com/oluies">GitHub</a> ·
+    <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
+    Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
+    <a href="consumption-eu.html">DE vs FR</a> · DuckDB &amp; ECharts</footer>
+
+  <script src="round.js"></script>
+  <script src="multiclock.js"></script>
+</body>
+</html>
