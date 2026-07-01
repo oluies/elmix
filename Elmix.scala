@@ -642,7 +642,11 @@ def main(
     case other =>
       System.err.println(s"Okant kommando: $other (fetch | transform | pca | test)")
       sys.exit(1)
-  // DuckDB-JDBC kan lamna native-tradar som ger ett flaky non-zero JVM-exit vid
-  // avslut i CI aven nar kommandot lyckats. Tvinga ren exit pa framgangsvagen
-  // (runTests har redan sys.exit(1) vid testfel, sa det maskeras inte).
-  sys.exit(0)
+  // DuckDB-native kraschar ibland i sitt shutdown-/teardown-lager i CI (efter att
+  // arbetet ar klart och "Klart" skrivits) -> non-zero exit utan stacktrace, aven
+  // med sys.exit(0) (som kor shutdown-hooks). halt(0) avslutar JVM:en OMEDELBART
+  // utan hooks -> hoppar over den kraschande native-staedningen. Sakert har: alla
+  // DuckDB-kopplingar ar redan stangda (withConn finally) och filer skrivna.
+  // runTests har redan sys.exit(1) vid testfel, sa det maskeras inte.
+  System.out.flush()
+  Runtime.getRuntime.halt(0)
