@@ -74,16 +74,24 @@ object Main:
     val rs = byZone(zone)
     val pris = js.Array(rs.map(o => js.Array[js.Any](o.t, o.price))*)
     val vind = js.Array(rs.map(o => js.Array[js.Any](o.t, math.round(o.shares(0) * 1000) / 10.0))*)
+    // Smal skärm: droppa parentes-hinten så titeln ryms på EN rad (annars bryts
+    // den till två och krockar med legenden). Slidern syns ändå under grafen.
+    val narrow = dom.window.innerWidth < 620
+    val titleText =
+      if narrow then s"Pris & vindandel – ${zone.replace("_", "")}"
+      else s"Pris & vindandel – ${zone.replace("_", "")} (dra i reglaget för att välja PCA-period)"
     obj(
       title = obj(
-        text =
-          s"Pris & vindandel – ${zone.replace("_", "")} (dra i reglaget för att välja PCA-period)",
+        text = titleText,
         left = "center",
+        top = 6,
         textStyle = obj(fontSize = 13)
       ),
-      legend = obj(top = 28),
+      legend = obj(top = if narrow then 30 else 28),
       tooltip = obj(trigger = "axis"),
-      grid = obj(top = 70, bottom = 70, left = 60, right = 60),
+      // Smal skärm: den centrerade legenden når ut i hörnen -> pressa ned griden så
+      // axelnamnen (EUR/MWh vänster, vind % höger) hamnar UNDER legendbandet.
+      grid = obj(top = if narrow then 88 else 70, bottom = 70, left = 60, right = 60),
       xAxis = obj(`type` = "time"),
       yAxis = js.Array(
         obj(`type` = "value", name = "EUR/MWh"),

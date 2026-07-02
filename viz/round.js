@@ -71,10 +71,14 @@
   const MONTHS = { sv: MNAME, en: MNAME_EN, fr: MNAME_FR, de: MNAME_DE }
   const mName = m => (MONTHS[LANG] || MNAME)[m]
 
-  // Delad layout: legend vertikalt till höger, stor cirkel nedflyttad under titeln.
-  const legendRight = data => ({ type: 'scroll', orient: 'vertical', right: 10, top: 'middle', itemGap: 10, data })
-  const POLAR = { center: ['44%', '56%'], radius: ['17%', '86%'] }
-  const titleTop = text => ({ text, left: '44%', top: 8, textAlign: 'center', textStyle: { fontSize: 14 } })
+  // Delad layout: titel överst, cirkeln centrerad, legend/färgskala ALLTID längst
+  // ner horisontellt (radbryter). Låg tidigare vertikalt till höger men klockan
+  // gick in i legenden – särskilt i flerklock-vyn där varje graf är smalare (då
+  // innerWidth är bred men själva grafen ~halva bredden).
+  const legendRight = data => ({ type: 'plain', orient: 'horizontal', bottom: 4, left: 'center', itemGap: 12, textStyle: { fontSize: 11 }, data })
+  const polar = () => ({ center: ['50%', '47%'], radius: ['15%', '77%'] })
+  const titleTop = text => ({ text, left: 'center', top: 6, textAlign: 'center', textStyle: { fontSize: 14 } })
+  const vmapPos = () => ({ orient: 'horizontal', left: 'center', bottom: 6, itemWidth: 14, itemHeight: 80 })
   const monthLabel = { interval: 0, fontSize: 11, color: '#555', formatter: v => { const mi = MSTART.indexOf(+v); return mi >= 0 ? mName(mi) : '' } }
 
   // ---- datahjälpare (rena) --------------------------------------------------
@@ -167,7 +171,7 @@
       title: titleTop(`${zone.replace('_', '')} ${year} – ${t('mix-andel över året', 'mix share over the year', 'part du mix sur l’année', 'Mix-Anteil übers Jahr')}`),
       legend: legendRight(fuels.map(fname).concat(t('Pris', 'Price', 'Prix', 'Preis'))),
       tooltip: { trigger: 'item' },
-      polar: POLAR,
+      polar: polar(),
       angleAxis: {
         type: 'category', data: rows.map(x => String(x.day)), startAngle: 90, clockwise: true,
         axisTick: { show: false }, splitLine: { show: false }, z: 5, axisLabel: monthLabel
@@ -182,7 +186,7 @@
       title: titleTop(`${zone.replace('_', '')} – ${isoDate(year, day)} (${t('dag', 'day', 'jour', 'Tag')} ${day}, ${rows.length > 24 ? rows.length + t(' kvart', ' quarters', ' quarts', ' Viertel') : '24 h'})`),
       legend: legendRight(fuels.map(fname).concat(t('Pris', 'Price', 'Prix', 'Preis'))),
       tooltip: { trigger: 'item' },
-      polar: POLAR,
+      polar: polar(),
       angleAxis: {
         type: 'category', data: rows.map(x => x.q === 0 ? x.h + ':00' : ''), startAngle: 90, clockwise: true,
         axisTick: { show: false }, splitLine: { show: false }, axisLabel: { interval: 0, fontSize: 11, color: '#555' }
@@ -232,10 +236,10 @@
       tooltip: { trigger: 'item', formatter: p => `${isoDate(year, p.value[3])} (${t('dag', 'day', 'jour', 'Tag')} ${p.value[3]}), ${t('kl', 'h', 'h', 'Uhr')} ${String(p.value[1]).padStart(2, '0')}<br/>${p.value[2]} ${t(hc.unit, hc.unitEn, hc.unitFr, hc.unitDe)}` },
       visualMap: {
         type: 'continuous', min: vmin, max: vmax, dimension: 2, calculable: true,
-        orient: 'vertical', right: 12, top: 'middle', text: ({ sv: hc.text, en: hc.textEn, fr: hc.textFr, de: hc.textDe })[LANG] || hc.text, itemHeight: 160,
+        ...vmapPos(), text: ({ sv: hc.text, en: hc.textEn, fr: hc.textFr, de: hc.textDe })[LANG] || hc.text,
         inRange: { color: hc.colors }
       },
-      polar: POLAR,
+      polar: polar(),
       angleAxis: {
         type: 'category', data: doys.map(String), startAngle: 90, clockwise: true,
         axisTick: { show: false }, splitLine: { show: false }, axisLine: { show: false }, axisLabel: monthLabel
@@ -289,12 +293,12 @@
       title: titleTop(`${zone.replace('_', '')} – ${isoDate(year, day)} · CO₂ g/kWh`),
       tooltip: { trigger: 'item', formatter: p => `${t('kl', 'h', 'h', 'Uhr')} ${rows[p.dataIndex] ? String(rows[p.dataIndex].h).padStart(2, '0') + ':' + String(rows[p.dataIndex].q * 15).padStart(2, '0') : ''}<br/>${p.value} g/kWh` },
       visualMap: {
-        type: 'continuous', min: co2Heat.fixedMin, max: co2Heat.fixedMax, calculable: true, orient: 'vertical',
-        right: 10, top: 'middle', itemHeight: 150, seriesIndex: 9, // legend enbart
+        type: 'continuous', min: co2Heat.fixedMin, max: co2Heat.fixedMax, calculable: true,
+        ...vmapPos(), seriesIndex: 9, // legend enbart
         text: [t('smutsig', 'dirty', 'sale', 'schmutzig'), t('ren', 'clean', 'propre', 'sauber')],
         inRange: { color: co2Heat.colors }
       },
-      polar: POLAR,
+      polar: polar(),
       angleAxis: {
         type: 'category', data: rows.map(x => x.q === 0 ? x.h + ':00' : ''), startAngle: 90, clockwise: true,
         axisTick: { show: false }, splitLine: { show: false }, axisLabel: { interval: 0, fontSize: 11, color: '#555' }
