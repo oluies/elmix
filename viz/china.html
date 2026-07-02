@@ -2,10 +2,9 @@
 <html lang="sv" data-lang="sv">
 <head>
   <meta charset="utf-8">
-  <title>Elmix – volym & spotkostnad per elområde</title>
+  <title>Elmix – Kina vs världen: produktionsmix &amp; CO₂</title>
   <script src="vendor/echarts.min.js"></script>
-  <script src="data/consumption-data.js"></script>
-  <script src="data/consumption-eu-data.js"></script>
+  <script src="data/ember-data.js"></script>
   <style>
     body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;
            max-width: 1180px; padding: 0 16px 48px; color: #222; }
@@ -14,7 +13,7 @@
     .controls { margin: 14px 0 6px; font-size: 14px; display: flex; gap: 26px; flex-wrap: wrap; align-items: center; }
     .controls fieldset { border: 1px solid #e3e8ef; border-radius: 8px; padding: 4px 12px 8px; margin: 0; }
     .controls legend { font-size: 12px; color: #777; padding: 0 4px; }
-    .chart { width: 100%; height: 440px; margin-top: 12px;
+    .chart { width: 100%; height: 430px; margin-top: 12px;
              background: #fafbfd; border: 1px solid #e3e8ef; border-radius: 10px; }
     footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
     footer a { color: #36c; }
@@ -43,22 +42,23 @@
     <a href="consumption.html">Förbrukningsmix SE</a>
     <a href="consumption-se.html">SE alla zoner</a>
     <a href="consumption-eu.html">DE vs FR</a>
-    <a class="current" href="energi.html">Volym &amp; kostnad</a>
-    <a href="china.html">Kina vs världen</a>
+    <a href="energi.html">Volym &amp; kostnad</a>
+    <a class="current" href="china.html">Kina vs världen</a>
     <span id="lang-switch" class="langswitch"></span>
   </nav>
 
   <main>
-    <h1 id="en-title">Energivolym & spotkostnad per elområde</h1>
-    <p class="lead" id="en-lead"></p>
+    <h1 id="cn-title">Kina vs världen – produktionsmix &amp; CO₂-intensitet</h1>
+    <p class="lead" id="cn-lead"></p>
 
     <div class="controls">
-      <fieldset id="year-picker"><legend>År (FBMC)</legend></fieldset>
+      <fieldset id="year-picker"><legend>År</legend></fieldset>
     </div>
 
     <p id="chart-status" class="visually-hidden" aria-live="polite"></p>
-    <div id="vol" class="chart" role="img" aria-label="Energivolym per elområde"></div>
-    <div id="cost" class="chart" role="img" aria-label="Aggregerad spotkostnad per elområde"></div>
+    <div id="mix" class="chart" role="img" aria-label="Produktionsmix per land"></div>
+    <div id="tot" class="chart" role="img" aria-label="Total elproduktion per land"></div>
+    <div id="co2" class="chart" role="img" aria-label="CO2-intensitet per land"></div>
     <div id="chart-data" class="visually-hidden"></div>
   </main>
 
@@ -66,9 +66,9 @@
     <a href="https://github.com/oluies">GitHub</a> ·
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
     Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
-    Data ENTSO-E · DuckDB &amp; ECharts</footer>
+    Data <a href="https://ember-energy.org/">Ember</a> via <a href="https://ourworldindata.org/electricity-mix">Our World in Data</a> · ECharts</footer>
 
-  <script src="energi.js?v=20260702b"></script>
+  <script src="china.js?v=20260702c"></script>
   <script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
