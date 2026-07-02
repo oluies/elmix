@@ -1,0 +1,28 @@
+window.emberMix = {
+  years: [2015, 2020, 2025],
+  data: [
+  {"name":"Kina","nameEn":"China","y":2015,"kol":4046,"gas":167,"olja":36,"k":171,"va":1115,"v":186,"s":39,"bio":54,"ov":0},
+  {"name":"Kina","nameEn":"China","y":2020,"kol":4922,"gas":252,"olja":53,"k":366,"va":1322,"v":466,"s":261,"bio":136,"ov":0},
+  {"name":"Kina","nameEn":"China","y":2025,"kol":5752,"gas":334,"olja":90,"k":488,"va":1397,"v":1135,"s":1175,"bio":213,"ov":0},
+  {"name":"Indien","nameEn":"India","y":2015,"kol":1007,"gas":65,"olja":9,"k":38,"va":133,"v":33,"s":7,"bio":18,"ov":0},
+  {"name":"Indien","nameEn":"India","y":2020,"kol":1144,"gas":75,"olja":3,"k":45,"va":164,"v":60,"s":53,"bio":20,"ov":0},
+  {"name":"Indien","nameEn":"India","y":2025,"kol":1474,"gas":49,"olja":4,"k":54,"va":178,"v":104,"s":196,"bio":23,"ov":0},
+  {"name":"USA","nameEn":"United States","y":2015,"kol":1352,"gas":1333,"olja":44,"k":797,"va":244,"v":191,"s":39,"bio":64,"ov":19},
+  {"name":"USA","nameEn":"United States","y":2020,"kol":773,"gas":1624,"olja":34,"k":790,"va":280,"v":338,"s":131,"bio":55,"ov":18},
+  {"name":"USA","nameEn":"United States","y":2025,"kol":737,"gas":1807,"olja":32,"k":785,"va":242,"v":464,"s":389,"bio":46,"ov":18},
+  {"name":"EU","nameEn":"EU","y":2015,"kol":705,"gas":395,"olja":128,"k":787,"va":336,"v":263,"s":100,"bio":149,"ov":7},
+  {"name":"EU","nameEn":"EU","y":2020,"kol":352,"gas":560,"olja":98,"k":684,"va":347,"v":398,"s":145,"bio":163,"ov":7},
+  {"name":"EU","nameEn":"EU","y":2025,"kol":257,"gas":466,"olja":86,"k":652,"va":326,"v":479,"s":367,"bio":156,"ov":7},
+  {"name":"Tyskland","nameEn":"Germany","y":2015,"kol":272,"gas":61,"olja":26,"k":92,"va":19,"v":81,"s":38,"bio":50,"ov":0},
+  {"name":"Tyskland","nameEn":"Germany","y":2020,"kol":135,"gas":95,"olja":21,"k":64,"va":19,"v":132,"s":50,"bio":51,"ov":0},
+  {"name":"Tyskland","nameEn":"Germany","y":2025,"kol":103,"gas":83,"olja":19,"k":0,"va":20,"v":136,"s":90,"bio":51,"ov":0},
+  {"name":"Frankrike","nameEn":"France","y":2015,"kol":12,"gas":21,"olja":12,"k":437,"va":56,"v":21,"s":8,"bio":7,"ov":1},
+  {"name":"Frankrike","nameEn":"France","y":2020,"kol":3,"gas":35,"olja":10,"k":354,"va":63,"v":40,"s":13,"bio":9,"ov":1},
+  {"name":"Frankrike","nameEn":"France","y":2025,"kol":2,"gas":17,"olja":10,"k":392,"va":59,"v":46,"s":32,"bio":10,"ov":1},
+  {"name":"Sverige","nameEn":"Sweden","y":2015,"kol":0,"gas":0,"olja":2,"k":56,"va":75,"v":16,"s":0,"bio":11,"ov":0},
+  {"name":"Sverige","nameEn":"Sweden","y":2020,"kol":0,"gas":0,"olja":2,"k":49,"va":72,"v":28,"s":1,"bio":11,"ov":0},
+  {"name":"Sverige","nameEn":"Sweden","y":2025,"kol":0,"gas":0,"olja":2,"k":47,"va":68,"v":39,"s":4,"bio":10,"ov":0},
+  {"name":"Världen","nameEn":"World","y":2015,"kol":9284,"gas":5540,"olja":1133,"k":2533,"va":3882,"v":830,"s":256,"bio":472,"ov":73},
+  {"name":"Världen","nameEn":"World","y":2020,"kol":9437,"gas":6383,"olja":776,"k":2648,"va":4347,"v":1591,"s":853,"bio":601,"ov":86},
+  {"name":"Världen","nameEn":"World","y":2025,"kol":10472,"gas":6921,"olja":842,"k":2812,"va":4435,"v":2713,"s":2779,"bio":710,"ov":89}
+]};
