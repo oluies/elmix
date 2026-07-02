@@ -9,6 +9,8 @@ cd "$(dirname "$0")/.."
 ./viz/export-consumption.sh
 # DE/FR-förbrukningsmix (fetcheu-data) – bygg bara om rådatan finns.
 if ls data/raw/eu/generation/*.parquet >/dev/null 2>&1; then ./viz/export-consumption-eu.sh; fi
+# Kina vs världen (statisk OWID-årsdata) – icke-fatal om OWID inte svarar.
+./viz/export-china.sh || echo "VARNING: export-china misslyckades – Kina-sidan ej uppdaterad" >&2
 (cd viz && ../mill app.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
 (cd viz/ssr && node render.mjs)
 
@@ -28,6 +30,11 @@ cp viz/multiclock.js viz/consumption-se.html viz/energi.html viz/energi.js docs/
 if [ -f viz/data/consumption-eu-data.js ]; then
   cp viz/consumption-eu.html docs/
   cp viz/data/consumption-eu-data.js docs/data/
+fi
+# Kina vs världen – bara om OWID-datan byggts.
+if [ -f viz/data/ember-data.js ]; then
+  cp viz/china.html viz/china.js docs/
+  cp viz/data/ember-data.js docs/data/
 fi
 
 echo "docs/ klar:"
