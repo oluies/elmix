@@ -35,6 +35,7 @@
     avg: ['Snittpris (baslast)', 'Average price (baseload)'],
     rate: ['capture-rate', 'capture rate'],
     yr: ['År', 'Year'], zn: ['Elområde', 'Bidding zone'], showing: ['Visar', 'Showing'],
+    gridconn: ['med statlig anslutning ≈100', 'with state grid link ≈100'],
     none: ['ingen produktion i zonen', 'no generation in the zone'],
     proxy: ['baslast-proxy: ingen kärnkraft i zonen', 'baseload proxy: no nuclear in this zone']
   }
@@ -76,6 +77,7 @@
 
   function option(a) {
     const nar = isNarrow()
+    const havsCat = iname(ITEMS[1]) // havsvind – nivåmarkör "med statlig anslutning"
     return {
       title: {
         text: `${TXT.title[li()]} · ${zl(zone)} ${year}`,
@@ -107,6 +109,18 @@
             symbol: 'none', silent: true, lineStyle: { color: AVGLINE, type: 'dashed', width: 2 },
             label: { formatter: `${TXT.avg[li()]} ${Math.round(a.avg)}`, position: 'insideStartTop', color: AVGLINE, fontSize: 11 },
             data: [{ yAxis: Math.round(a.avg) }]
+          },
+          // Nivåmarkör på havsvind: LCOE ~100 om staten bekostar nätanslutningen
+          // (svensk plan 2022, avbruten 2023). Röd tunn "linje" + etikett på stapeln.
+          markPoint: {
+            symbol: 'rect', symbolSize: [nar ? 22 : 42, 3], symbolKeepAspect: false, silent: true,
+            itemStyle: { color: '#c0392b' },
+            label: {
+              show: true, position: 'top', formatter: TXT.gridconn[li()], color: '#c0392b',
+              fontSize: nar ? 8 : 10, fontWeight: 600,
+              backgroundColor: 'rgba(255,255,255,0.88)', padding: [2, 3], borderRadius: 3
+            },
+            data: [{ coord: [havsCat, 100] }]
           }
         },
         {
