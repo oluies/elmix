@@ -27,6 +27,8 @@ cp viz/data/round-data.js viz/data/consumption-data.js docs/data/
 # Multi-klock-sidor (delar multiclock.js + round.js). SE-alla-zoner alltid;
 # DE/FR bara om fetcheu-datan byggts.
 cp viz/multiclock.js viz/consumption-se.html viz/energi.html viz/energi.js docs/
+# Investeringssignal (LCOE vs capture) – läser consumption-data.js, alltid byggd.
+cp viz/investering.html viz/investering.js docs/
 if [ -f viz/data/consumption-eu-data.js ]; then
   cp viz/consumption-eu.html docs/
   cp viz/data/consumption-eu-data.js docs/data/
