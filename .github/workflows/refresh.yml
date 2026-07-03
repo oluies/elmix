@@ -67,17 +67,27 @@ jobs:
           fi
           ./viz/refresh.sh
 
-      - name: Committa ombyggd docs
+      # Committa docs. Jobbet tar ~1h, så main kan hinna flyttas (PR-merge) under
+      # tiden -> push avvisas eller krockar. Vid avslag: synka till senaste main och
+      # BYGG OM docs mot den (rådatan är redan hämtad, så ombygget är snabbt och
+      # deterministiskt) -> aldrig innehållskonflikt, alltid ovanpå senaste källa.
+      - name: Committa ombyggd docs (rebasa + bygg om vid krock)
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- docs; then
-            echo "Inga ändringar i docs/ – hoppar commit."
-          else
+          for attempt in 1 2 3; do
+            if git diff --quiet -- docs; then
+              echo "Inga ändringar i docs/ – hoppar commit."; exit 0
+            fi
             git add docs
             git commit -m "data refresh $(date -u +%Y-%m-%d) [skip ci]"
-            git push
-          fi
+            if git push; then echo "pushad"; exit 0; fi
+            echo "push avvisad (main har flyttats) – synkar och bygger om (försök $attempt/3)"
+            git fetch origin main
+            git reset --hard origin/main
+            ./viz/publish-pages.sh
+          done
+          echo "FEL: kunde inte pusha docs efter 3 försök"; exit 1
 
       # Spara även vid fel (annars tvingas full hämtning nästa körning).
       - name: Spara rådata-cache
