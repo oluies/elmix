@@ -38,6 +38,13 @@
     .refs li { margin-bottom: 5px; }
     .refs a { color: #36c; }
     .refnote { color: #777; font-size: 12px; margin-top: 10px; }
+    .note { margin-top: 22px; max-width: 940px; font-size: 13px; color: #333;
+            background: #f4f8f5; border: 1px solid #d5e6db; border-left: 4px solid #1a6b54;
+            border-radius: 8px; padding: 12px 16px; line-height: 1.5; }
+    .note h2 { font-size: 15px; margin: 0 0 6px; }
+    .note ul { padding-left: 18px; margin: 6px 0; }
+    .note li { margin-bottom: 5px; }
+    .note a { color: #36c; }
   </style>
 </head>
 <body>
@@ -87,6 +94,11 @@
         <li><strong>Capture-pris &amp; spotpriser</strong> – ENTSO-E Transparency Platform:
           timvis/kvartsvis produktion per kraftslag + day-ahead-pris, SE1–SE4.
           <a href="https://transparency.entsoe.eu">transparency.entsoe.eu</a></li>
+        <li><strong>Kalkylränta (WACC)</strong> – LCOE-siffrorna applicerar ingen enhetlig
+          kalkylränta; källorna anger den sällan. Kärnkrafts-LCOE är extremt WACC-känslig, så
+          spannet Kina ~60 vs väst 150–200 speglar främst finansieringskostnad och byggrisk, inte
+          reaktortekniken. IEA/NEA standardiserar ofta på 7 % (och 3 %) real diskonteringsränta.
+          <a href="https://www.iea.org/reports/projected-costs-of-generating-electricity-2020">IEA/NEA, Projected Costs of Generating Electricity</a></li>
       </ul>
       <p class="refnote">SMR-siffror (*) är utvecklarmål/estimat – first-of-a-kind blir sannolikt högre.
         Capture-pris = Σ(produktion × spotpris) / Σ produktion; snittpris = tidsviktat baslastpris.
@@ -96,6 +108,28 @@
         finns ingen kärnkraft att mäta på – då används snittpriset som baslast-proxy (kärnkraft går
         jämnt och fångar ≈ snittpriset); markeras † i datatabellen.</p>
     </section>
+
+    <aside class="note">
+      <h2>Varför staplarna är riktvärden – och svenska stödmodellen</h2>
+      <p>På ren marknad ligger kärnkraftens capture (~80 €/MWh i SE3) långt under dess LCOE
+        (150–200) → ingen bygger ny kärnkraft merchant. Sverige överbryggar gapet med
+        <strong>Lag (2025:587) om statligt stöd för investeringar i ny kärnkraft</strong>
+        (riksdagsbeslut maj 2025). De två stödformerna motsvarar grafens två axlar:</p>
+      <ul>
+        <li><strong>Statliga lån</strong> (ram ~220 mdr kr över 12 år) – staten lånar ut
+          merparten av kapitalet till låg ränta → sänker WACC:en och därmed <em>LCOE-stapeln</em>
+          (drar en västlig kostnad mot "Kina-liknande" finansieringskostnad).</li>
+        <li><strong>Dubbelriktat differenskontrakt (två-vägs CfD)</strong> (~1–3 mdr kr/år i
+          snitt, 40 år) – garanterar ett riktpris: spot under → staten fyller på, spot över →
+          övervinsten till staten. Låser <em>den uppnådda prisdiamanten</em> och tar bort
+          kannibaliseringsrisken.</li>
+      </ul>
+      <p class="refnote">Riktpriset (CfD-nivån) är ännu inte offentligt satt – avtal tecknas
+        2026–2027 – så ingen streckad riktpris-nivå ritas i grafen. Fortums slide anger att
+        kärnkraften "assumes risk sharing and/or support mechanisms". Källor:
+        <a href="https://www.regeringen.se/regeringens-politik/karnkraftsfinansiering/sa-fungerar-stodmodellen-for-finansiering-av-ny-karnkraft/">Regeringen – stödmodellen</a>,
+        <a href="https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2025587-om-statligt-stod-for-investeringar_sfs-2025-587/">Lag (2025:587)</a>.</p>
+    </aside>
   </main>
 
   <footer>© 2026 Örjan Lundberg ·
