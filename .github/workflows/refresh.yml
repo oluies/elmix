@@ -76,10 +76,10 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3; do
-            if git diff --quiet -- docs; then
+            git add docs   # add före diff-koll: annars missas NYA (untracked) filer
+            if git diff --cached --quiet -- docs; then
               echo "Inga ändringar i docs/ – hoppar commit."; exit 0
             fi
-            git add docs
             git commit -m "data refresh $(date -u +%Y-%m-%d) [skip ci]"
             if git push; then echo "pushad"; exit 0; fi
             echo "push avvisad (main har flyttats) – synkar och bygger om (försök $attempt/3)"

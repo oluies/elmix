@@ -10,7 +10,10 @@ cd "$(dirname "$0")/.."
 # DE/FR-förbrukningsmix (fetcheu-data) – bygg bara om rådatan finns.
 if ls data/raw/eu/generation/*.parquet >/dev/null 2>&1; then ./viz/export-consumption-eu.sh; fi
 # Kina vs världen (statisk OWID-årsdata) – icke-fatal om OWID inte svarar.
+# Fallback: återanvänd redan publicerad data så sidan inte raderas ur docs/
+# (viz/data är gitignored och cachas inte i CI -> varje körning hämtar färskt).
 ./viz/export-china.sh || echo "VARNING: export-china misslyckades – Kina-sidan ej uppdaterad" >&2
+[ -f viz/data/ember-data.js ] || cp docs/data/ember-data.js viz/data/ 2>/dev/null || true
 (cd viz && ../mill app.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
 (cd viz/ssr && node render.mjs)
 
