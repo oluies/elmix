@@ -251,6 +251,7 @@ const html = `<!doctype html>
   <a href="consumption-se.html">SE alla zoner</a>
   <a href="consumption-eu.html">DE vs FR</a>
   <a href="energi.html">Volym &amp; kostnad</a>
+  <a href="euprices.html">Elpris EU+Norge</a>
 </nav>
 <h1>Elmix – SE1–SE4 (ENTSO-E, 15-min, från 2 dec 2025, prerenderad SVG)</h1>
 <p>Statisk variant. Den <a href="index.html">interaktiva rapporten</a> låter

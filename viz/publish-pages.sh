@@ -14,6 +14,10 @@ if ls data/raw/eu/generation/*.parquet >/dev/null 2>&1; then ./viz/export-consum
 # (viz/data är gitignored och cachas inte i CI -> varje körning hämtar färskt).
 ./viz/export-china.sh || echo "VARNING: export-china misslyckades – Kina-sidan ej uppdaterad" >&2
 [ -f viz/data/ember-data.js ] || cp docs/data/ember-data.js viz/data/ 2>/dev/null || true
+# Elpris per elområde EU+Norge (Energy-Charts, ingen nyckel) – icke-fatal.
+# Fallback: återanvänd redan publicerad data så sidan inte raderas ur docs/.
+./viz/export-euprices.sh || echo "VARNING: export-euprices misslyckades – elpris-sidan ej uppdaterad" >&2
+[ -f viz/data/euprices-data.js ] || cp docs/data/euprices-data.js viz/data/ 2>/dev/null || true
 (cd viz && ../mill app.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
 (cd viz/ssr && node render.mjs)
 
@@ -40,6 +44,11 @@ fi
 if [ -f viz/data/ember-data.js ]; then
   cp viz/china.html viz/china.js docs/
   cp viz/data/ember-data.js docs/data/
+fi
+# Elpris EU+Norge – bara om Energy-Charts-datan byggts.
+if [ -f viz/data/euprices-data.js ]; then
+  cp viz/euprices.html viz/euprices.js docs/
+  cp viz/data/euprices-data.js docs/data/
 fi
 
 echo "docs/ klar:"
