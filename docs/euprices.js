@@ -23,8 +23,8 @@
     barsSub: ['Fallande pris. Svenska zoner framhävda; streckad linje = snitt alla zoner.',
       'Descending price. Swedish zones highlighted; dashed line = all-zone average.'],
     heatH: ['Hela tidsserien (zon × månad)', 'Full time series (zone × month)'],
-    heatSub: ['Rader sorterade på totalmedel. Grön = billigt, röd = dyrt. ★ = svensk zon.',
-      'Rows sorted by overall mean. Green = cheap, red = dear. ★ = Swedish zone.'],
+    heatSub: ['Rader sorterade på totalmedel. Grön = billigt, röd = dyrt. ★ = svensk zon. Grå cell = data saknas hos källan (t.ex. IT-zonerna jan–aug 2025; IT-Calabria fanns ej före 2021).',
+      'Rows sorted by overall mean. Green = cheap, red = dear. ★ = Swedish zone. Grey cell = no data at source (e.g. the Italian zones Jan–Aug 2025; IT-Calabria did not exist before 2021).'],
     month: ['Månad', 'Month'],
     price: ['Pris', 'Price'], avg: ['snitt alla zoner', 'all-zone average'],
     rank: ['plats', 'rank'], showing: ['Visar', 'Showing'],
@@ -88,17 +88,20 @@
   function heatOption() {
     const nar = isNarrow()
     const zones = E.zones            // redan sorterade fallande på totalmedel
-    const data = []
+    const data = [], gaps = []
     let vmax = 0
     zones.forEach((z, yi) => z.v.forEach((val, xi) => {
       if (val != null) { data.push([xi, yi, val]); if (val > vmax) vmax = val }
+      else { gaps.push([xi, yi, 0]) }   // källan saknar data -> grå "ingen data"-cell
     }))
     return {
       grid: { top: 10, bottom: 70, left: nar ? 58 : 74, right: 14 },
       tooltip: {
         position: 'top',
-        formatter: p => { const z = zones[p.value[1]]
-          return `<b>${z.label}</b> · ${z.land}<br/>${fmtMonth(E.months[p.value[0]])}: <b>${p.value[2]}</b> ${E.unit}` }
+        formatter: p => { const z = zones[p.value[1]], m = fmtMonth(E.months[p.value[0]])
+          return p.seriesIndex === 1
+            ? `<b>${z.label}</b> · ${z.land}<br/>${m}: <i>${TXT.noData[li()]}</i>`
+            : `<b>${z.label}</b> · ${z.land}<br/>${m}: <b>${p.value[2]}</b> ${E.unit}` }
       },
       xAxis: {
         type: 'category', data: E.months, splitArea: { show: false },
@@ -114,15 +117,18 @@
         }
       },
       visualMap: {
+        seriesIndex: 0,   // färgskalan gäller bara pris-cellerna, ej grå-cellerna
         min: 0, max: Math.min(250, Math.round(vmax)), calculable: true,
         orient: 'horizontal', left: 'center', bottom: 12, itemWidth: 14, itemHeight: 160,
         text: [`${TXT.price[li()]} ${E.unit}`, ''],
         inRange: { color: ['#1a9850', '#a6d96a', '#ffffbf', '#fdae61', '#d73027'] }
       },
-      series: [{
-        type: 'heatmap', data, progressive: 2000,
-        emphasis: { itemStyle: { borderColor: '#222', borderWidth: 1 } }
-      }]
+      series: [
+        { type: 'heatmap', data, progressive: 3000,
+          emphasis: { itemStyle: { borderColor: '#222', borderWidth: 1 } } },
+        { type: 'heatmap', data: gaps, silent: true, progressive: 3000,
+          itemStyle: { color: '#e6e9ee' } }   // ingen data hos källan
+      ]
     }
   }
 
