@@ -28,11 +28,20 @@
     month: ['Månad', 'Month'],
     price: ['Pris', 'Price'], avg: ['snitt alla zoner', 'all-zone average'],
     rank: ['plats', 'rank'], showing: ['Visar', 'Showing'],
-    noData: ['ingen data denna månad', 'no data this month']
+    noData: ['ingen data denna månad', 'no data this month'],
+    elecH: ['Timmar under elektrifieringströskeln', 'Hours below the electrification threshold'],
+    elecSub: ['Andel av året då day-ahead-priset ligger under tröskeln – alltså hur ofta elektrifierad industriånga är billigare än gaseldad. 54 EUR/MWh är breakeven för elpanna mot gasånga enligt Hannula; 0 visar negativpristimmar. Tröskeln är ett antagande, inte en mätning: nätavgift och elskatt skiljer sig mellan länder, så jämför zoner med varandra snarare än mot en absolut nivå. Zoner utan minst 300 dygns data det året utelämnas (t.ex. IT-zonerna 2025).',
+      'Share of the year when the day-ahead price sits below the threshold, that is, how often electrified industrial steam beats gas-fired steam. 54 EUR/MWh is Hannula’s electric-boiler breakeven against gas steam; 0 shows negative-price hours. The threshold is an assumption rather than a measurement: grid fees and electricity tax differ by country, so compare zones against each other rather than against an absolute level. Zones with less than 300 days of data that year are omitted (e.g. the Italian zones in 2025).'],
+    thrL: ['Tröskel', 'Threshold'], yearL: ['År', 'Year'],
+    share: ['Andel av året', 'Share of year'],
+    negp: ['negativt pris', 'negative price']
   }
 
   let lang = 'sv'
   let mi = E.months.length - 1               // vald månadsindex (senaste)
+  const hasElec = !!(E.years && E.years.length && E.thresholds && E.thresholds.length)
+  let thr = hasElec ? String(E.thresholds.includes(54) ? 54 : E.thresholds[0]) : null
+  let yi = hasElec ? E.years.length - 1 : 0  // valt årsindex (senaste)
   const li = () => LANGS.indexOf(lang)
   const $ = id => document.getElementById(id)
   const isNarrow = () => window.innerWidth < 620
@@ -41,7 +50,11 @@
 
   const barsChart = echarts.init($('bars'))
   const heatChart = echarts.init($('heat'))
-  window.addEventListener('resize', () => { barsChart.resize(); heatChart.resize() })
+  if (hasElec) $('elec-section').hidden = false
+  const elecChart = hasElec ? echarts.init($('elec')) : null
+  window.addEventListener('resize', () => {
+    barsChart.resize(); heatChart.resize(); if (elecChart) elecChart.resize()
+  })
 
   // --- Rangordnade staplar för månad mi -------------------------------------
   function barsOption() {
@@ -132,6 +145,45 @@
     }
   }
 
+  // --- Andel av året under vald priströskel ---------------------------------
+  function elecRows() {
+    return E.zones
+      .map(z => ({ label: z.label, land: z.land, se: z.se, val: z.b && z.b[thr] ? z.b[thr][yi] : null }))
+      .filter(r => r.val != null)
+      .sort((a, b) => a.val - b.val)          // stigande -> störst andel överst
+  }
+
+  function elecOption() {
+    const nar = isNarrow()
+    const rows = elecRows()
+    const avg = rows.reduce((s, r) => s + r.val, 0) / (rows.length || 1)
+    const thrTxt = thr === '0' ? TXT.negp[li()] : `< ${thr} ${E.unit}`
+    return {
+      grid: { top: 12, bottom: nar ? 46 : 34, left: nar ? 58 : 70, right: 60 },
+      tooltip: {
+        trigger: 'axis', axisPointer: { type: 'shadow' },
+        formatter: p => { const r = rows[p[0].dataIndex]
+          return `<b>${r.label}</b> · ${r.land}<br/>${TXT.share[li()]}: <b>${r.val.toFixed(1)} %</b>` +
+            `<br/>≈ ${Math.round(r.val / 100 * 8760)} h ${thrTxt}` }
+      },
+      xAxis: { type: 'value', name: '%', nameGap: 22, max: 100, axisLabel: { fontSize: 11 } },
+      yAxis: {
+        type: 'category', data: rows.map(star),
+        axisLabel: { fontSize: nar ? 9 : 11, margin: 8, color: '#333' }
+      },
+      series: [{
+        type: 'bar',
+        data: rows.map(r => ({ value: +r.val.toFixed(1), itemStyle: { color: r.se ? SE : OTHER } })),
+        label: { show: true, position: 'right', fontSize: nar ? 9 : 11, formatter: p => p.value + ' %' },
+        markLine: {
+          symbol: 'none', silent: true, lineStyle: { color: AVG, type: 'dashed', width: 2 },
+          label: { formatter: `${TXT.avg[li()]} ${avg.toFixed(0)} %`, position: 'insideEndTop', color: AVG, fontSize: 11 },
+          data: [{ xAxis: +avg.toFixed(1) }]
+        }
+      }]
+    }
+  }
+
   function renderTable() {
     const ym = E.months[mi]
     const rows = E.zones.map(z => ({ label: z.label, land: z.land, se: z.se, val: z.v[mi], mean: z.mean }))
@@ -141,8 +193,20 @@
       '</th><th>' + (lang === 'en' ? 'overall mean' : 'totalmedel') + '</th></tr>'
     const body = rows.map((r, i) => '<tr><td>' + (i + 1) + '</td><th>' + (r.se ? '★ ' : '') + r.label +
       '</th><td>' + r.land + '</td><td>' + r.val + '</td><td>' + (r.mean ?? '–') + '</td></tr>').join('')
-    $('chart-data').innerHTML = '<table><caption>' + TXT.title[li()] + ' · ' + fmtMonth(ym) +
+    let html = '<table><caption>' + TXT.title[li()] + ' · ' + fmtMonth(ym) +
       '</caption><thead>' + head + '</thead><tbody>' + body + '</tbody></table>'
+    if (hasElec) {
+      const er = elecRows().slice().reverse()   // störst andel först
+      html += '<table><caption>' + TXT.elecH[li()] + ' · ' + E.years[yi] + ' · < ' + thr + ' ' +
+        E.unit + '</caption><thead><tr><th>#</th><th>' +
+        (lang === 'en' ? 'Zone' : 'Elområde') + '</th><th>' +
+        (lang === 'en' ? 'Country' : 'Land') + '</th><th>' + TXT.share[li()] +
+        ' %</th></tr></thead><tbody>' +
+        er.map((r, i) => '<tr><td>' + (i + 1) + '</td><th>' + (r.se ? '★ ' : '') + r.label +
+          '</th><td>' + r.land + '</td><td>' + r.val.toFixed(1) + '</td></tr>').join('') +
+        '</tbody></table>'
+    }
+    $('chart-data').innerHTML = html
     $('chart-status').textContent = TXT.showing[li()] + ' ' + fmtMonth(ym)
   }
 
@@ -157,7 +221,34 @@
     $('month-label').textContent = fmtMonth(E.months[mi])
     barsChart.setOption(barsOption(), true); barsChart.resize()
     heatChart.setOption(heatOption(), true); heatChart.resize()
+    if (hasElec) {
+      $('elec-h').textContent = TXT.elecH[li()]
+      $('elec-sub').textContent = TXT.elecSub[li()]
+      $('thr-legend').textContent = TXT.thrL[li()] + ' (' + E.unit + ')'
+      $('year-legend').textContent = TXT.yearL[li()]
+      elecChart.setOption(elecOption(), true); elecChart.resize()
+    }
     renderTable()
+  }
+
+  // Segmenterade knappar (tröskel + år) för elektrifieringspanelen.
+  function segment(host, values, current, onPick, fmt) {
+    host.innerHTML = ''
+    values.forEach(v => {
+      const b = document.createElement('button')
+      b.type = 'button'; b.textContent = fmt ? fmt(v) : String(v)
+      b.classList.toggle('active', String(v) === String(current()))
+      b.setAttribute('aria-pressed', String(String(v) === String(current())))
+      b.onclick = () => {
+        onPick(v)
+        for (const c of host.children) {
+          const on = c.textContent === (fmt ? fmt(v) : String(v))
+          c.classList.toggle('active', on); c.setAttribute('aria-pressed', String(on))
+        }
+        elecChart.setOption(elecOption(), true); renderTable()
+      }
+      host.appendChild(b)
+    })
   }
 
   // Reglage + stegknappar
@@ -182,5 +273,9 @@
   })
   document.documentElement.setAttribute('data-lang', lang)
   for (const c of sw.children) c.classList.toggle('active', c.textContent === lang.toUpperCase())
+  if (hasElec) {
+    segment($('thr-switch'), E.thresholds, () => thr, v => { thr = String(v) })
+    segment($('year-switch'), E.years.map((_, i) => i), () => yi, v => { yi = v }, i => E.years[i])
+  }
   render()
 })()

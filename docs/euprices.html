@@ -21,6 +21,13 @@
     .chart { width: 100%; background: #fafbfd; border: 1px solid #e3e8ef; border-radius: 10px; margin-top: 12px; }
     #bars { height: 760px; }
     #heat { height: 860px; }
+    #elec { height: 760px; }
+    .segswitch { display: inline-flex; flex-wrap: wrap; }
+    .segswitch button { font: inherit; font-size: 12px; padding: 3px 10px; border: 1px solid #c9d2e0;
+                        background: #fff; cursor: pointer; color: #36c; border-left: none; }
+    .segswitch button:first-child { border-left: 1px solid #c9d2e0; border-radius: 6px 0 0 6px; }
+    .segswitch button:last-child { border-radius: 0 6px 6px 0; }
+    .segswitch button.active { background: #36c; color: #fff; border-color: #36c; }
     h2 { font-size: 16px; margin: 30px 0 2px; }
     .sub { color: #666; font-size: 13px; margin: 0; }
     footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
@@ -79,6 +86,23 @@
     <h2 id="heat-h"></h2>
     <p class="sub" id="heat-sub"></p>
     <div id="heat" class="chart" role="img" aria-label="Värmekarta över elpris per elområde och månad"></div>
+
+    <section id="elec-section" hidden>
+      <h2 id="elec-h"></h2>
+      <p class="sub" id="elec-sub"></p>
+      <div class="controls">
+        <fieldset>
+          <legend id="thr-legend">Tröskel</legend>
+          <span id="thr-switch" class="segswitch"></span>
+        </fieldset>
+        <fieldset>
+          <legend id="year-legend">År</legend>
+          <span id="year-switch" class="segswitch"></span>
+        </fieldset>
+      </div>
+      <div id="elec" class="chart" role="img" aria-label="Andel av året med elpris under vald tröskel, per elområde"></div>
+    </section>
+
     <div id="chart-data" class="visually-hidden"></div>
   </main>
 
@@ -88,7 +112,7 @@
     Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
     Data <a href="https://energy-charts.info/">Energy-Charts</a> (ENTSO-E/SMARD, CC BY 4.0) · ECharts</footer>
 
-  <script src="euprices.js?v=20260717b"></script>
+  <script src="euprices.js?v=20260718a"></script>
   <script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
