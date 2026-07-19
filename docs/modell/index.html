@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elmix &#183; The cannibalization model</title></head>
+<body>
+<nav class="sitenav">
+  <a href="../index.html">&#8592; Elmix</a>
+  <a href="index.html">Modell</a>
+  <a href="gate.html">Grinden (v4)</a>
+  <a href="elpannor.html">Elpannor FI/SE</a>
+  <a href="../lagring.html">Lagring</a>
+  <a href="batterier.html">Batterier</a>
+  <a href="verifiering.html">Verifiering</a>
+</nav>
+<style>
+:root{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
+ --pos:#2f7d4f;--neg:#c0392b;--gate:#0f6b80;--flex:#1a7f6b;--pol:#6b4a9e;--ind:#94671c;--dc:#8a4fb5;--eco:#b8402e;}
+@media (prefers-color-scheme:dark){:root{--ground:#121716;--panel:#181f1e;--ink:#e9eeec;--ink2:#a8b4b1;--ink3:#7e8b88;--rule:#242d2b;
+ --pos:#5cba82;--neg:#e8795c;--gate:#4fc0d8;--flex:#48c5aa;--pol:#a98ede;--ind:#d1a252;--dc:#c08ae8;--eco:#e8795c;}}
+:root[data-theme="light"]{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
+ --pos:#2f7d4f;--neg:#c0392b;--gate:#0f6b80;--flex:#1a7f6b;--pol:#6b4a9e;--ind:#94671c;--dc:#8a4fb5;--eco:#b8402e;}
+:root[data-theme="dark"]{--ground:#121716;--panel:#181f1e;--ink:#e9eeec;--ink2:#a8b4b1;--ink3:#7e8b88;--rule:#242d2b;
+ --pos:#5cba82;--neg:#e8795c;--gate:#4fc0d8;--flex:#48c5aa;--pol:#a98ede;--ind:#d1a252;--dc:#c08ae8;--eco:#e8795c;}
+body{background:var(--ground);color:var(--ink);margin:0;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+.page{max-width:1300px;margin:0 auto;padding:44px 22px 72px;display:flex;flex-direction:column;gap:26px;}
+.eyebrow{font:600 11.5px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);}
+h1{font:700 34px/1.14 ui-sans-serif,system-ui,sans-serif;letter-spacing:-.021em;margin:8px 0 0;text-wrap:balance;max-width:24ch;}
+.deck{color:var(--ink2);font-size:16.5px;max-width:70ch;margin:12px 0 0;}
+.fig{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:22px 20px 12px;overflow-x:auto;}
+.fig svg{min-width:1080px;display:block;}
+.figh{font:600 12px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 0 12px;}
+text{fill:var(--ink);}
+.ntitle{font-size:13.5px;font-weight:700;}
+.nsub{font-size:11.5px;fill:var(--ink3);}
+.sgn{font-size:15px;font-weight:700;}
+.elab{font-size:11.5px;font-style:italic;}
+.loop{font-size:16px;font-weight:800;}
+.loopsub{font-size:9.5px;}
+.ax{font-size:12px;fill:var(--ink3);font-family:ui-monospace,Menlo,monospace;}
+.blab{font-size:14px;font-weight:700;}
+.bval{font-size:14px;font-weight:700;font-family:ui-monospace,Menlo,monospace;}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px 34px;}
+.note h3{font:600 12px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 0 7px;padding-bottom:7px;border-bottom:1px solid var(--rule);}
+.note p{margin:0 0 9px;font-size:14.6px;color:var(--ink2);}
+.chg{border-left:3px solid var(--ind);padding-left:14px;}
+.src{font-size:12.5px;color:var(--ink3);border-top:1px solid var(--rule);padding-top:16px;}
+a{color:var(--gate);}
+.sitenav{max-width:1300px;margin:0 auto;padding:12px 22px 0;display:flex;gap:16px;
+flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
+.sitenav a{color:var(--ink3);text-decoration:none;}
+.sitenav a:hover{color:var(--ink);text-decoration:underline;}
+
+.card{display:block;text-decoration:none;border:1px solid var(--rule);border-radius:5px;
+padding:20px 22px;background:var(--panel);transition:border-color .15s;}
+.card:hover{border-color:var(--gate);}
+.card h3{font:700 18px/1.3 ui-sans-serif,system-ui,sans-serif;margin:0 0 8px;color:var(--ink);}
+.card p{margin:0;font-size:14.6px;color:var(--ink2);}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:20px;}
+</style>
+<div class="page">
+<header>
+ <div class="eyebrow">Working material</div>
+ <h1>The cannibalization model</h1>
+ <p class="deck">Energy underpins growth, and the open question is how weather-dependent renewables create durable value when their output is free at the margin but arrives on the weather&#8217;s schedule. The model is four coupled feedback loops: the cannibalization trap, the flexibility exit, the demand fork over who fills the glut, and the deindustrialization spiral. These pages carry the diagrams and the evidence behind them.</p>
+ <p class="deck">The unifying claim is that cannibalization is a general-equilibrium property: any near-zero-marginal-cost or arbitrage resource competes away the price signal that justifies it as it scales. Each loop is balancing, and each resource builds until marginal value falls to marginal cost.</p>
+</header>
+<div class="cards"><a class="card" href="gate.html"><h3>The gate between the glut and the demand that drains it</h3><p>v4 of the model. Inserts a breakeven gate between the glut and B2, fed by electricity tax, network tariff and the carbon price on gas. Corrects v3&#8217;s claim that data centres absorb the glut equally: their load is flat, so it lifts the level rather than filling the trough that capture rate depends on.</p></a><a class="card" href="elpannor.html"><h3>Same hardware, different tax</h3><p>Finland against Sweden. Comparable district-heating infrastructure, opposite outcomes. Sweden&#8217;s 1.24 GW of electric boilers sits largely idle at 43.9 &#246;re/kWh while Finland&#8217;s ~2 GW delivered 2,580 GWh in 2025 at &#8364;0.63/MWh.</p></a><a class="card" href="../lagring.html"><h3>The storage merit order inverts with duration</h3><p>Installed cost per kWh at a four-hour duty against a hundred-hour duty. At four hours the field sits within a factor of 2.4; at a hundred hours the spread is a factor of 22 and lithium-ion falls from second-cheapest to dearest. The interactive bilingual version.</p></a><a class="card" href="batterier.html"><h3>Two markets, one direction, two different clocks</h3><p>CAISO and the NEM through mid-2026. CAISO falls 103 &#8594; 80 &#8594; 51 &#8594; ~38 USD/kW-year with January 2026 pacing toward 21. The NEM is shown at its own resolution, because the published figures do not aggregate to a calendar year.</p></a><a class="card" href="verifiering.html"><h3>Five figures, checked</h3><p>A verification pass on five numbers the model carried unchecked: German energy-intensive output, PJM capacity prices, Ireland&#8217;s 23%, the Brookings jobs-per-site figure and the Finnish boiler series. All five survive; three need amending.</p></a></div>
+<p class="src">Charts are built from IEA, PNNL, BloombergNEF, Ember, Destatis, Modo Energy, Energiateollisuus, Energif&#246;retagen and Energy-Charts. Sources are cited on each page. Zone-level price statistics are computed from the same Energy-Charts day-ahead data behind <a href="../euprices.html">Elpris EU+Norge</a>.</p>
+</div>
+<script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

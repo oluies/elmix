@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elmix &#183; Same hardware, different tax</title>
+</head>
+<body>
+<nav class="sitenav">
+  <a href="../index.html">&#8592; Elmix</a>
+  <a href="index.html">Modell</a>
+  <a href="gate.html">Grinden (v4)</a>
+  <a href="elpannor.html">Elpannor FI/SE</a>
+  <a href="../lagring.html">Lagring</a>
+  <a href="batterier.html">Batterier</a>
+  <a href="verifiering.html">Verifiering</a>
+</nav>
+<style>
+:root {
+  --ground:#f6f7f5; --panel:#fffffe; --ink:#161d1b; --ink2:#4a5754; --ink3:#7b8683;
+  --rule:#e2e6e2; --rule2:#c3ccc8;
+  --geo:#166079; --ech:#6b4a9e; --thm:#b8482e; --mec:#94671c; --fi:#166079; --se:#a8571f;
+}
+@media (prefers-color-scheme:dark) {
+  :root { --ground:#121716; --panel:#181f1e; --ink:#e9eeec; --ink2:#a8b4b1; --ink3:#7e8b88;
+           --rule:#242d2b; --rule2:#3a4644;
+           --geo:#4fb3d1; --ech:#a98ede; --thm:#e8795c; --mec:#d1a252; --fi:#4fb3d1; --se:#e0954a; }
+}
+:root[data-theme="light"] { --ground:#f6f7f5; --panel:#fffffe; --ink:#161d1b; --ink2:#4a5754; --ink3:#7b8683;
+  --rule:#e2e6e2; --rule2:#c3ccc8; --geo:#166079; --ech:#6b4a9e; --thm:#b8482e; --mec:#94671c; --fi:#166079; --se:#a8571f; }
+:root[data-theme="dark"] { --ground:#121716; --panel:#181f1e; --ink:#e9eeec; --ink2:#a8b4b1; --ink3:#7e8b88;
+  --rule:#242d2b; --rule2:#3a4644; --geo:#4fb3d1; --ech:#a98ede; --thm:#e8795c; --mec:#d1a252; --fi:#4fb3d1; --se:#e0954a; }
+
+body { background:var(--ground); color:var(--ink); margin:0;
+  font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased; }
+.page { max-width:1240px; margin:0 auto; padding:44px 22px 72px; display:flex; flex-direction:column; gap:26px; }
+.eyebrow { font:600 11.5px/1 ui-sans-serif,system-ui,sans-serif; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink3); }
+h1 { font:700 34px/1.14 ui-sans-serif,system-ui,-apple-system,sans-serif; letter-spacing:-.021em;
+  margin:8px 0 0; text-wrap:balance; max-width:20ch; }
+.deck { color:var(--ink2); font-size:16.5px; max-width:66ch; margin:12px 0 0; }
+.fig { background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:26px 22px 12px; overflow-x:auto; }
+.fig svg { min-width:1000px; display:block; }
+.num { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-variant-numeric:tabular-nums; font-weight:600; }
+text { fill:var(--ink); }
+.ax { font-size:13px; fill:var(--ink3); font-family:ui-monospace,"SF Mono",Menlo,monospace; }
+.colh { font-size:17px; font-weight:700; letter-spacing:-.012em; }
+.cols { font-size:12px; fill:var(--ink3); letter-spacing:.04em; }
+.lab { font-size:14px; fill:var(--ink2); }
+.lab .num { fill:var(--ink); }
+.band { font-size:13px; font-weight:600; fill:var(--thm); }
+.bandsub { font-size:12px; fill:var(--ink3); }
+.callo { font-size:13.5px; font-weight:700; fill:var(--ech); }
+.callos { font-size:12.5px; fill:var(--ink2); }
+.lgd { font-size:12.5px; fill:var(--ink2); }
+.lgds { font-size:12.5px; fill:var(--ink3); font-style:italic; }
+.notes { display:grid; grid-template-columns:repeat(auto-fit,minmax(310px,1fr)); gap:22px 34px; }
+.note h3 { font:600 12px/1 ui-sans-serif,system-ui,sans-serif; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink3); margin:0 0 7px; padding-bottom:7px; border-bottom:1px solid var(--rule); }
+.note p { margin:0; font-size:14.6px; color:var(--ink2); }
+.src { font-size:12.5px; color:var(--ink3); border-top:1px solid var(--rule); padding-top:16px; max-width:88ch; }
+a { color:var(--geo); }
+a:focus-visible { outline:2px solid var(--ech); outline-offset:2px; }
+.labb{font-size:15px;font-weight:700;fill:var(--ink);}
+.figh{font:600 12px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 0 10px;}
+.sitenav{max-width:1300px;margin:0 auto;padding:12px 22px 0;display:flex;gap:16px;
+flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
+.sitenav a{color:var(--ink3);text-decoration:none;}
+.sitenav a:hover{color:var(--ink);text-decoration:underline;}
+</style>
+<div class="page">
+ <header>
+  <div class="eyebrow">Flexibility policy &#183; Finland and Sweden</div>
+  <h1>Same hardware, different tax</h1>
+  <p class="deck">Two neighbouring district-heating systems with comparable infrastructure and comparable access to cheap surplus wind. One moved electric boilers into its lower electricity-tax band in July 2022. The other did not. The capital exists on both sides, so what separates them is the price floor rather than the fleet.</p>
+ </header>
+ <div class="fig"><p class="figh">The floor &#183; electricity tax on district-heat boilers</p><svg viewBox="0 0 1140 330" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Electricity tax on district-heating electric boilers, Sweden versus Finland, euros per megawatt hour">
+<line x1="300.0" y1="46" x2="300.0" y2="248" stroke="var(--rule)"/>
+<text x="300.0" y="270" class="ax" text-anchor="middle">0</text>
+<line x1="452.4" y1="46" x2="452.4" y2="248" stroke="var(--rule)"/>
+<text x="452.4" y="270" class="ax" text-anchor="middle">10</text>
+<line x1="604.8" y1="46" x2="604.8" y2="248" stroke="var(--rule)"/>
+<text x="604.8" y="270" class="ax" text-anchor="middle">20</text>
+<line x1="757.1" y1="46" x2="757.1" y2="248" stroke="var(--rule)"/>
+<text x="757.1" y="270" class="ax" text-anchor="middle">30</text>
+<line x1="909.5" y1="46" x2="909.5" y2="248" stroke="var(--rule)"/>
+<text x="909.5" y="270" class="ax" text-anchor="middle">40</text>
+<text x="620" y="294" class="cols" text-anchor="middle">euros per MWh of electricity consumed</text>
+<rect x="300" y="58" width="594.3" height="26" fill="var(--se)" rx="1.5"/>
+<text x="284" y="76" class="lab" text-anchor="end">Sweden, today</text>
+<text x="906.3" y="76" class="lab"><tspan class="num">&#8364;39</tspan> <tspan class="cols">43.9 &#246;re/kWh</tspan></text>
+<rect x="300" y="106" width="342.9" height="26" fill="var(--fi)" rx="1.5"/>
+<text x="284" y="124" class="lab" text-anchor="end">Finland, before Jul 2022</text>
+<text x="654.9" y="124" class="lab"><tspan class="num">&#8364;22.50</tspan></text>
+<rect x="300" y="154" width="9.6" height="26" fill="var(--fi)" rx="1.5"/>
+<text x="284" y="172" class="lab" text-anchor="end">Finland, since Jul 2022</text>
+<text x="321.6" y="172" class="lab"><tspan class="num">&#8364;0.63</tspan></text>
+<rect x="300" y="202" width="8.2" height="26" fill="none" stroke="var(--ink3)" stroke-dasharray="4 3"/>
+<text x="284" y="220" class="lab" text-anchor="end">Sweden, industry proposal</text>
+<text x="320.2" y="220" class="lab"><tspan class="num">&#8364;0.54</tspan> <tspan class="cols">0.6 &#246;re/kWh</tspan></text>
+<line x1="457.4" y1="146" x2="457.4" y2="188" stroke="var(--fi)" stroke-width="1.4" stroke-dasharray="3 3"/>
+<text x="467.4" y="202" class="callos">&#8364;10.3 effective floor once the heating-season transmission fee is added</text>
+</svg></div>
+ <div class="fig"><p class="figh">The fleet &#183; and whether it runs</p><svg viewBox="0 0 1140 250" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Electric boiler capacity in district heating, Finland versus Sweden, gigawatts">
+<line x1="300.0" y1="34" x2="300.0" y2="168" stroke="var(--rule)"/>
+<text x="300.0" y="190" class="ax" text-anchor="middle">0</text>
+<line x1="409.1" y1="34" x2="409.1" y2="168" stroke="var(--rule)"/>
+<text x="409.1" y="190" class="ax" text-anchor="middle">0.5</text>
+<line x1="518.2" y1="34" x2="518.2" y2="168" stroke="var(--rule)"/>
+<text x="518.2" y="190" class="ax" text-anchor="middle">1</text>
+<line x1="627.3" y1="34" x2="627.3" y2="168" stroke="var(--rule)"/>
+<text x="627.3" y="190" class="ax" text-anchor="middle">1.5</text>
+<line x1="736.4" y1="34" x2="736.4" y2="168" stroke="var(--rule)"/>
+<text x="736.4" y="190" class="ax" text-anchor="middle">2</text>
+<text x="540" y="214" class="cols" text-anchor="middle">gigawatts of installed electric-boiler capacity</text>
+<defs><pattern id="idle" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="var(--panel)"/><line x1="0" y1="0" x2="0" y2="7" stroke="var(--se)" stroke-width="3"/></pattern></defs>
+<rect x="300" y="46" width="436.4" height="34" fill="var(--fi)" stroke="var(--fi)" stroke-width="1" rx="1.5"/>
+<text x="284" y="62" class="labb" text-anchor="end">Finland</text>
+<text x="284" y="78" class="cols" text-anchor="end">runs</text>
+<text x="750.4" y="61" class="lab"><tspan class="num">~2 GW</tspan></text>
+<text x="750.4" y="77" class="callos">2,580 GWh delivered in 2025, about 8% of district heat</text>
+<rect x="300" y="108" width="270.5" height="34" fill="url(#idle)" stroke="var(--se)" stroke-width="1" rx="1.5"/>
+<text x="284" y="124" class="labb" text-anchor="end">Sweden</text>
+<text x="284" y="140" class="cols" text-anchor="end">idle</text>
+<text x="584.5" y="123" class="lab"><tspan class="num">~1.24 GW</tspan></text>
+<text x="584.5" y="139" class="callos">largely unused; a further 1.23 GW of heat pumps sits alongside it</text>
+</svg></div>
+ <div class="notes">
+  <div class="note"><h3>Why this identifies the effect</h3><p>Sweden's 1.24 GW is not a counterfactual, it is idle hardware. Because the capital is already built on both sides, the usual objection that Finland's result reflects investment appetite or capital cost rather than tax does not apply. What differs is the marginal cost of running the boilers for one more hour.</p></div>
+  <div class="note"><h3>The floor is tax plus tariff</h3><p>Cutting the tax does not take the floor to zero. Finland's remaining charge is the heating-season transmission fee of about &#8364;9.7/MWh, so the effective floor is near &#8364;10.3 rather than &#8364;0.63. That is still low enough to beat fuel-fired heat across far more hours than before, which is the point: the gain on the loop is set by tax and tariff together.</p></div>
+  <div class="note"><h3>Sweden's own proposal</h3><p>Energif&#246;retagen has asked for a temporary cut to 0.6 &#246;re/kWh, which is Finland's rate to within a rounding error, and estimates it would release about 1.6 GW of existing flexibility into hours of low or negative prices. A parliamentary question on the reduction is live, so this is pending policy rather than a thought experiment.</p></div>
+  <div class="note"><h3>Read with care</h3><p>The Finnish capacity figure is cumulative to 2025 while the output is the 2025 flow, so dividing them understates the running fleet's load factor. The claim that Sweden's boilers run below a 5% load factor comes from Ilkka Hannula rather than from Energif&#246;retagen, which describes the fleet as barely used without publishing a utilisation figure. Currency conversions from &#246;re are approximate.</p></div>
+ </div>
+ <p class="src">Finnish output, capacity and tax rates: <a href="https://energia.fi/en/statistics/district-heating-statistics/">Finnish Energy district heating statistics</a> and <a href="https://energia.fi/wp-content/uploads/2025/09/the-impact-of-electric-boilers-to-the-finnish-energy-system.pdf">The impact of electric boilers to the Finnish energy system</a>; tax instrument via <a href="https://www.eumonitor.eu/9353000/1/j4nvhdfdk3hydzq_j9vvik7m1c3gyxp/vlt3gmeuhiuo">COM(2022)219</a>. Swedish capacity, tax rate and the 1.6 GW estimate: <a href="https://www.energiforetagen.se/energifakta/elsystemet/energibranschen-viktig-for-svensk-ekonomi/skatter-avgifter/">Energif&#246;retagen</a> and <a href="https://www.energi.se/artiklar/2025/juni-2025/sankt-elskatt-pa-fjarrvarmeproduktion-kan-starka-energisystemet/">Energi.se</a>; pending measure at <a href="https://www.riksdagen.se/sv/dokument-och-lagar/dokument/skriftlig-fraga/tillfallig-skattenedsattning-pa-elpannor-och_hc111231/">Sveriges riksdag</a>. Series framing and the Swedish load-factor figure from <a href="https://abated.substack.com/p/the-electric-boiler-boom">Ilkka Hannula</a>.</p>
+</div>
+<script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
