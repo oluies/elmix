@@ -38,6 +38,9 @@ cp viz/multiclock.js viz/consumption-se.html viz/energi.html viz/energi.js docs/
 cp viz/investering.html viz/investering.js docs/
 # Lagring & varaktighet – statisk referensdata i lagring.js, ingen hämtning.
 cp viz/lagring.html viz/lagring.js docs/
+# Modellsektionen – fristående sidor, ingen data och inga byggberoenden.
+mkdir -p docs/modell
+cp viz/modell/*.html docs/modell/
 if [ -f viz/data/consumption-eu-data.js ]; then
   cp viz/consumption-eu.html docs/
   cp viz/data/consumption-eu-data.js docs/data/

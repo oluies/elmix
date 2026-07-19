@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elmix &#183; Five figures, checked</title>
+</head>
+<body>
+<nav class="sitenav">
+  <a href="../index.html">&#8592; Elmix</a>
+  <a href="index.html">Modell</a>
+  <a href="gate.html">Grinden (v4)</a>
+  <a href="elpannor.html">Elpannor FI/SE</a>
+  <a href="../lagring.html">Lagring</a>
+  <a href="batterier.html">Batterier</a>
+  <a href="verifiering.html">Verifiering</a>
+</nav>
+<style>
+:root{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
+ --pos:#2f7d4f;--neg:#c0392b;--gate:#0f6b80;--flex:#1a7f6b;--pol:#6b4a9e;--ind:#94671c;--dc:#8a4fb5;--eco:#b8402e;}
+@media (prefers-color-scheme:dark){:root{--ground:#121716;--panel:#181f1e;--ink:#e9eeec;--ink2:#a8b4b1;--ink3:#7e8b88;--rule:#242d2b;
+ --pos:#5cba82;--neg:#e8795c;--gate:#4fc0d8;--flex:#48c5aa;--pol:#a98ede;--ind:#d1a252;--dc:#c08ae8;--eco:#e8795c;}}
+:root[data-theme="light"]{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
+ --pos:#2f7d4f;--neg:#c0392b;--gate:#0f6b80;--flex:#1a7f6b;--pol:#6b4a9e;--ind:#94671c;--dc:#8a4fb5;--eco:#b8402e;}
+:root[data-theme="dark"]{--ground:#121716;--panel:#181f1e;--ink:#e9eeec;--ink2:#a8b4b1;--ink3:#7e8b88;--rule:#242d2b;
+ --pos:#5cba82;--neg:#e8795c;--gate:#4fc0d8;--flex:#48c5aa;--pol:#a98ede;--ind:#d1a252;--dc:#c08ae8;--eco:#e8795c;}
+body{background:var(--ground);color:var(--ink);margin:0;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+.page{max-width:1300px;margin:0 auto;padding:44px 22px 72px;display:flex;flex-direction:column;gap:26px;}
+.eyebrow{font:600 11.5px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);}
+h1{font:700 34px/1.14 ui-sans-serif,system-ui,sans-serif;letter-spacing:-.021em;margin:8px 0 0;text-wrap:balance;max-width:24ch;}
+.deck{color:var(--ink2);font-size:16.5px;max-width:70ch;margin:12px 0 0;}
+.fig{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:22px 20px 12px;overflow-x:auto;}
+.fig svg{min-width:1080px;display:block;}
+.figh{font:600 12px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 0 12px;}
+text{fill:var(--ink);}
+.ntitle{font-size:13.5px;font-weight:700;}
+.nsub{font-size:11.5px;fill:var(--ink3);}
+.sgn{font-size:15px;font-weight:700;}
+.elab{font-size:11.5px;font-style:italic;}
+.loop{font-size:16px;font-weight:800;}
+.loopsub{font-size:9.5px;}
+.ax{font-size:12px;fill:var(--ink3);font-family:ui-monospace,Menlo,monospace;}
+.blab{font-size:14px;font-weight:700;}
+.bval{font-size:14px;font-weight:700;font-family:ui-monospace,Menlo,monospace;}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px 34px;}
+.note h3{font:600 12px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 0 7px;padding-bottom:7px;border-bottom:1px solid var(--rule);}
+.note p{margin:0 0 9px;font-size:14.6px;color:var(--ink2);}
+.chg{border-left:3px solid var(--ind);padding-left:14px;}
+.src{font-size:12.5px;color:var(--ink3);border-top:1px solid var(--rule);padding-top:16px;}
+a{color:var(--gate);}
+.vd{display:inline-block;font:600 10.5px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.09em;
+text-transform:uppercase;padding:4px 9px;border-radius:3px;margin-bottom:9px;}
+.ok{background:rgba(47,125,79,.14);color:var(--pos);border:1px solid var(--pos);}
+.amend{background:rgba(148,103,28,.14);color:var(--ind);border:1px solid var(--ind);}
+.card{border:1px solid var(--rule);border-radius:5px;padding:18px 20px;background:var(--panel);}
+.card h3{font:700 16px/1.3 ui-sans-serif,system-ui,sans-serif;margin:0 0 8px;color:var(--ink);}
+.card p{margin:0 0 10px;font-size:14.6px;color:var(--ink2);}
+.card p:last-child{margin:0;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;}
+.num{font-family:ui-monospace,Menlo,monospace;font-weight:600;color:var(--ink);}
+.sitenav{max-width:1300px;margin:0 auto;padding:12px 22px 0;display:flex;gap:16px;
+flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
+.sitenav a{color:var(--ink3);text-decoration:none;}
+.sitenav a:hover{color:var(--ink);text-decoration:underline;}
+</style>
+<div class="page">
+<header>
+ <div class="eyebrow">Cannibalization model &#183; verification pass</div>
+ <h1>Five figures, checked</h1>
+ <p class="deck">The numbers carried in the model that I had never verified myself. All five survive. Three need an amendment, and two of those change what the model claims rather than just its precision.</p>
+</header>
+<div class="grid"><div class="card"><span class="vd ok">confirmed</span><h3>Germany &#183; energy-intensive output</h3><p><i>Model said 80&#8211;85% of pre-crisis.</i></p><p>Confirmed and now precise. Destatis puts production in energy-intensive branches <span class="num">17.8%</span> below 2021 in 2025, which is <span class="num">82.2%</span> &#8212; inside the model's range. Chemicals fell <span class="num">18.1%</span> from February 2022 to March 2026, the index going from 99.4 to 78.7.</p>
+ <p><b>Amend the duration.</b> The model calls this a roughly two-year episode. It is now four years and still depressed, which makes it structural rather than a shock being absorbed. That strengthens R1 rather than qualifying it.</p></div><div class="card"><span class="vd ok">confirmed</span><h3>PJM &#183; capacity prices</h3><p><i>Model said roughly 10&#215; on data-centre demand.</i></p><p>Confirmed almost exactly. The 2024/25 delivery year cleared at <span class="num">$28.92</span>/MW-day against <span class="num">$269.92</span> for 2025/26, a factor of 9.3. Constrained zones went further: BGE at <span class="num">$466.35</span> and Dominion at <span class="num">$444.26</span>.</p>
+ <p><b>New and useful.</b> The attribution is now quantified. Data centres drove <span class="num">63%</span> of the 2025/26 increase, about $9.3bn, and accounted for <span class="num">40%</span> of the $16.4bn cost in the December auction for 2027/28. The crowding-out arrow in v4 now has a price tag.</p></div><div class="card"><span class="vd amend">confirmed &#183; amend</span><h3>Ireland &#183; 23% of power</h3><p><i>Model said 23%, with a 2022&#8211;25 moratorium.</i></p><p>The share is confirmed and rising: <span class="num">7,663 GWh</span> in 2025, <span class="num">23%</span> of metered consumption, up from about 21% in 2024.</p>
+ <p><b>Two corrections.</b> The moratorium began with a CRU direction in <span class="num">November 2021</span>, not 2022. More importantly it was <b>lifted in December 2025</b>, so the model's past tense is now right for the wrong reason.</p>
+ <p>The replacement condition matters more than the lift: new connections must install on-site generation or storage covering their full demand. That converts data centres from firm-demand free riders into loads that bring their own capacity, which is a different node in the diagram.</p></div><div class="card"><span class="vd amend">confirmed &#183; amend</span><h3>Brookings &#183; jobs per site</h3><p><i>Model said dozens to a few hundred per site.</i></p><p>The quotation is confirmed, and the detail is sharper: colocation runs <span class="num">20&#8211;30</span> permanent staff per 100 MW, and a large site is roughly <span class="num">1,500</span> construction jobs against <span class="num">100</span> operational.</p>
+ <p><b>But the framing needs softening.</b> Brookings also finds counties receiving their first large data centre see total private employment rise <span class="num">4&#8211;5%</span> over five to six years. The effect is small and easily overstated &#8212; naive estimates inflate it threefold &#8212; but it is not zero, and the model currently reads as if it were.</p></div><div class="card"><span class="vd ok">confirmed</span><h3>Finland &#183; electric boiler output</h3><p><i>Model said 16 &#8594; 2,580 GWh, about 8% of district heat.</i></p><p>Confirmed at the primary source rather than via the Substack. Energiateollisuus reports electric boilers doubling to <span class="num">8%</span> of produced district heat in 2025, on district heating consumption of just over <span class="num">31 TWh</span>. Eight per cent of 31 TWh is about 2.5 TWh, which reproduces the 2,580 GWh independently.</p>
+ <p><b>One extra point for the series.</b> E-boilers produced <span class="num">750 GWh</span> in 2023, so the path is 16 &#8594; 750 &#8594; 2,580 GWh. The curve is convex, which is what a policy step looks like when capital takes two years to arrive.</p></div></div>
+<div class="notes" style="margin-top:8px">
+ <div class="note"><h3>What actually changes</h3><p>Germany's decline is persistent rather than episodic, so R1 should be drawn as a completed transition rather than an ongoing shock. Ireland's self-firming condition is a genuinely new instrument and belongs in v5 as a modifier on the crowding-out arrow. And the data-centre jobs claim should carry the 4&#8211;5% county effect, because omitting it is the kind of overstatement that gets a piece attacked on its weakest sentence.</p></div>
+ <div class="note"><h3>What does not</h3><p>PJM and Finland come through clean and both are now anchored to primary or near-primary sources. The German range and the Brookings quotation were accurate as written; only their surrounding framing needed work.</p></div>
+</div>
+<p class="src">Germany: <a href="https://www.destatis.de/EN/Themes/Economic-Sectors-Enterprises/Industry-Manufacturing/_Graphic/_Interactive/production-index.html">Destatis</a> and <a href="https://www.cleanenergywire.org/news/energy-intensive-industries-germany-see-15-percent-production-fall-start-ukraine-war">Clean Energy Wire</a>. PJM: <a href="https://ieefa.org/resources/projected-data-center-growth-spurs-pjm-capacity-prices-factor-10">IEEFA</a> and <a href="https://www.utilitydive.com/news/data-centers-pjm-capacity-auction/808951/">Utility Dive</a>. Ireland: <a href="https://www.irishtimes.com/business/2026/07/07/data-centres-account-for-almost-one-quarter-of-irish-electricity-usage-in-2025/">Irish Times</a> and <a href="https://www.energyconnects.com/news/utilities/2025/december/ireland-ends-moratorium-on-new-power-links-to-data-centers/">Energy Connects</a>. Jobs: <a href="https://www.brookings.edu/articles/new-evidence-on-data-center-employment-effects/">Brookings</a>. Finland: <a href="https://energia.fi/tiedotteet/energiatilastot-2025-kaukolammon-paastot-putosivat-kolmanneksella-sahko-lahes-fossiilitonta-ja-euroopan-edullisinta/">Energiateollisuus</a>.</p>
+</div>
+<script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
