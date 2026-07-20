@@ -30,11 +30,15 @@
     rank: ['plats', 'rank'], showing: ['Visar', 'Showing'],
     noData: ['ingen data denna månad', 'no data this month'],
     elecH: ['Timmar under elektrifieringströskeln', 'Hours below the electrification threshold'],
-    elecSub: ['Andel av året då day-ahead-priset ligger under tröskeln – alltså hur ofta elektrifierad industriånga är billigare än gaseldad. 54 EUR/MWh är breakeven för elpanna mot gasånga enligt Hannula; 0 visar negativpristimmar. Tröskeln är ett antagande, inte en mätning: nätavgift och elskatt skiljer sig mellan länder, så jämför zoner med varandra snarare än mot en absolut nivå. Zoner utan minst 300 dygns data det året utelämnas (t.ex. IT-zonerna 2025).',
-      'Share of the year when the day-ahead price sits below the threshold, that is, how often electrified industrial steam beats gas-fired steam. 54 EUR/MWh is Hannula’s electric-boiler breakeven against gas steam; 0 shows negative-price hours. The threshold is an assumption rather than a measurement: grid fees and electricity tax differ by country, so compare zones against each other rather than against an absolute level. Zones with less than 300 days of data that year are omitted (e.g. the Italian zones in 2025).'],
+    elecSub: ['Andel av året då day-ahead-priset ligger under tröskeln – alltså hur ofta elektrifierad industriånga är billigare än gaseldad. 54 EUR/MWh är breakeven för elpanna mot gasånga enligt Hannula; 0 visar negativpristimmar. Tröskeln är ett antagande, inte en mätning: nätavgift och elskatt skiljer sig mellan länder, så jämför zoner med varandra snarare än mot en absolut nivå. Zoner som täcker mindre än 80 % av det bästa dataunderlaget för året utelämnas (t.ex. IT-zonerna 2025). Pågående år märks med *.',
+      'Share of the year when the day-ahead price sits below the threshold, that is, how often electrified industrial steam beats gas-fired steam. 54 EUR/MWh is Hannula’s electric-boiler breakeven against gas steam; 0 shows negative-price hours. The threshold is an assumption rather than a measurement: grid fees and electricity tax differ by country, so compare zones against each other rather than against an absolute level. Zones covering less than 80 % of the best available data for that year are omitted (e.g. the Italian zones in 2025). A year still in progress is marked with *.'],
     thrL: ['Tröskel', 'Threshold'], yearL: ['År', 'Year'],
     share: ['Andel av året', 'Share of year'],
-    negp: ['negativt pris', 'negative price']
+    shareP: ['Andel av perioden', 'Share of period'],
+    ofSoFar: ['av året hittills, inte ett helår', 'of the year so far, not a full year'],
+    negp: ['negativt pris', 'negative price'],
+    partialNote: [(yr, mo) => `* ${yr} är ett pågående år: andelarna gäller januari–${mo} och är inte jämförbara med helåren. Vinterns dyra timmar och vårflodens billiga väger inte lika förrän året är slut.`,
+      (yr, mo) => `* ${yr} is a year in progress: the shares cover January–${mo} and are not comparable with the full years. Winter’s dear hours and the spring melt’s cheap ones do not carry equal weight until the year is complete.`]
   }
 
   let lang = 'sv'
@@ -42,6 +46,17 @@
   const hasElec = !!(E.years && E.years.length && E.thresholds && E.thresholds.length)
   let thr = hasElec ? String(E.thresholds.includes(54) ? 54 : E.thresholds[0]) : null
   let yi = hasElec ? E.years.length - 1 : 0  // valt årsindex (senaste)
+  // Ett partiellt år (innevarande, eller år med källgap hos alla zoner) är
+  // korrekt för sin period men inte jämförbart med ett helt år - säsongerna
+  // väger olika. Märks med * i knappen och en not under diagrammet.
+  const isPartial = () => !!(E.partial && E.partial[yi])
+  // Sista månaden som finns för året, t.ex. "2026-07" -> "jul".
+  const lastMonthOf = y => {
+    const ms = E.months.filter(m => m.slice(0, 4) === y)
+    return ms.length ? MON[lang][+ms[ms.length - 1].slice(5) - 1] : ''
+  }
+  const yearLabel = i => E.years[i] + (E.partial && E.partial[i] ? '*' : '')
+  const shareLabel = () => (isPartial() ? TXT.shareP : TXT.share)[li()]
   const li = () => LANGS.indexOf(lang)
   const $ = id => document.getElementById(id)
   const isNarrow = () => window.innerWidth < 620
@@ -148,7 +163,8 @@
   // --- Andel av året under vald priströskel ---------------------------------
   function elecRows() {
     return E.zones
-      .map(z => ({ label: z.label, land: z.land, se: z.se, val: z.b && z.b[thr] ? z.b[thr][yi] : null }))
+      .map(z => ({ label: z.label, land: z.land, se: z.se, hrs: z.h ? z.h[yi] : null,
+                   val: z.b && z.b[thr] ? z.b[thr][yi] : null }))
       .filter(r => r.val != null)
       .sort((a, b) => a.val - b.val)          // stigande -> störst andel överst
   }
@@ -163,8 +179,12 @@
       tooltip: {
         trigger: 'axis', axisPointer: { type: 'shadow' },
         formatter: p => { const r = rows[p[0].dataIndex]
-          return `<b>${r.label}</b> · ${r.land}<br/>${TXT.share[li()]}: <b>${r.val.toFixed(1)} %</b>` +
-            `<br/>≈ ${Math.round(r.val / 100 * 8760)} h ${thrTxt}` }
+          // Timmarna räknas mot zonens faktiskt täckta timmar, inte mot 8760 -
+          // annars skulle ett pågående år få ett påhittat helårstal.
+          const base = r.hrs || 8760
+          return `<b>${r.label}</b> · ${r.land}<br/>${shareLabel()}: <b>${r.val.toFixed(1)} %</b>` +
+            `<br/>≈ ${Math.round(r.val / 100 * base)} h ${thrTxt}` +
+            (isPartial() ? `<br/><i>${TXT.ofSoFar[li()]}</i>` : '') }
       },
       xAxis: { type: 'value', name: '%', nameGap: 22, max: 100, axisLabel: { fontSize: 11 } },
       yAxis: {
@@ -184,6 +204,14 @@
     }
   }
 
+  // Not under diagrammet, bara när det valda året är pågående.
+  function syncPartial() {
+    const el = $('elec-partial')
+    if (!el) return
+    el.hidden = !isPartial()
+    if (isPartial()) el.textContent = TXT.partialNote[li()](E.years[yi], lastMonthOf(E.years[yi]))
+  }
+
   function renderTable() {
     const ym = E.months[mi]
     const rows = E.zones.map(z => ({ label: z.label, land: z.land, se: z.se, val: z.v[mi], mean: z.mean }))
@@ -197,10 +225,10 @@
       '</caption><thead>' + head + '</thead><tbody>' + body + '</tbody></table>'
     if (hasElec) {
       const er = elecRows().slice().reverse()   // störst andel först
-      html += '<table><caption>' + TXT.elecH[li()] + ' · ' + E.years[yi] + ' · < ' + thr + ' ' +
+      html += '<table><caption>' + TXT.elecH[li()] + ' · ' + yearLabel(yi) + ' · < ' + thr + ' ' +
         E.unit + '</caption><thead><tr><th>#</th><th>' +
         (lang === 'en' ? 'Zone' : 'Elområde') + '</th><th>' +
-        (lang === 'en' ? 'Country' : 'Land') + '</th><th>' + TXT.share[li()] +
+        (lang === 'en' ? 'Country' : 'Land') + '</th><th>' + shareLabel() +
         ' %</th></tr></thead><tbody>' +
         er.map((r, i) => '<tr><td>' + (i + 1) + '</td><th>' + (r.se ? '★ ' : '') + r.label +
           '</th><td>' + r.land + '</td><td>' + r.val.toFixed(1) + '</td></tr>').join('') +
@@ -227,6 +255,7 @@
       $('thr-legend').textContent = TXT.thrL[li()] + ' (' + E.unit + ')'
       $('year-legend').textContent = TXT.yearL[li()]
       elecChart.setOption(elecOption(), true); elecChart.resize()
+      syncPartial()
     }
     renderTable()
   }
@@ -245,7 +274,7 @@
           const on = c.textContent === (fmt ? fmt(v) : String(v))
           c.classList.toggle('active', on); c.setAttribute('aria-pressed', String(on))
         }
-        elecChart.setOption(elecOption(), true); renderTable()
+        elecChart.setOption(elecOption(), true); syncPartial(); renderTable()
       }
       host.appendChild(b)
     })
@@ -275,7 +304,7 @@
   for (const c of sw.children) c.classList.toggle('active', c.textContent === lang.toUpperCase())
   if (hasElec) {
     segment($('thr-switch'), E.thresholds, () => thr, v => { thr = String(v) })
-    segment($('year-switch'), E.years.map((_, i) => i), () => yi, v => { yi = v }, i => E.years[i])
+    segment($('year-switch'), E.years.map((_, i) => i), () => yi, v => { yi = v }, yearLabel)
   }
   render()
 })()
