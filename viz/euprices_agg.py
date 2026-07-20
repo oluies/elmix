@@ -50,15 +50,21 @@ for i, (t, p) in enumerate(zip(secs, price)):
 # Kräv minst tre dygns punkter så partiella randmånader inte förvränger snittet.
 months = {ym: round(sums[ym] / cnts[ym], 2) for ym in sums if cnts[ym] >= 72}
 
-# Kräv minst 300 dygn täckning innan ett år får en andel - annars blir
-# randåren (och år med källgap) missvisande låga/höga.
-MIN_YEAR_SEC = 300 * 24 * 3600
+# Ett år måste ha minst 60 dygn för att få en andel alls - därunder är
+# urvalet för litet för att säga något. Mellan 60 och 300 dygn räknas året
+# som partiellt: andelen är korrekt för den tid som faktiskt täcks, men den
+# är inte jämförbar med ett helt år eftersom säsongerna väger olika (vinterns
+# dyra timmar och vårflodens billiga hamnar inte i samma proportion).
+# Innevarande år är alltid partiellt fram till årsskiftet.
+MIN_YEAR_SEC = 60 * 24 * 3600
+FULL_YEAR_SEC = 300 * 24 * 3600
 hours = {}
 for y, tot in year_tot.items():
     if tot < MIN_YEAR_SEC:
         continue
     hours[y] = {
         "h": round(tot / 3600),
+        "full": tot >= FULL_YEAR_SEC,
         "b": {str(thr): round(year_below[y][thr] / tot * 100, 2) for thr in THRESHOLDS},
     }
 
