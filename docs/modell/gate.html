@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Elmix &#183; The cannibalization system v4</title>
+<title>Elmix &#183; The cannibalization system v5</title>
 </head>
 <body>
 <nav class="sitenav">
   <a href="../index.html">&#8592; Elmix</a>
   <a href="index.html">Modell</a>
-  <a href="gate.html">Grinden (v4)</a>
+  <a href="gate.html">Grinden (v5)</a>
   <a href="elpannor.html">Elpannor FI/SE</a>
   <a href="../lagring.html">Lagring</a>
   <a href="batterier.html">Batterier</a>
@@ -55,20 +55,20 @@ flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
 </style>
 <div class="page">
 <header>
- <div class="eyebrow">Cannibalization model &#183; version 4</div>
- <h1>The gate between the glut and the demand that drains it</h1>
- <p class="deck">Version 3 drew flexible demand as responding directly to the glut. It does not. It responds to the glut <em>relative to a breakeven</em>, and that breakeven is set by three policy terms: electricity tax, network tariff, and the carbon price on the fossil alternative. Making the gate explicit is what changed in this version, and it is where the July 2026 EU package acts.</p>
+ <div class="eyebrow">Cannibalization model &#183; version 5</div>
+ <h1>Two gates stand between the glut and the demand that drains it</h1>
+ <p class="deck">Version 4 made the breakeven explicit and treated it as the condition flexible demand must satisfy. It is only one of two. A load can clear the price gate by a wide margin and still never be built, because grid capacity is rationed by queue and permit rather than sold at a price. Sweden supplies the clean case: the cheapest bidding zone in Europe, and a refused connection.</p>
 </header>
 
-<div class="fig"><p class="figh">The four loops, with the breakeven gate made explicit</p><svg viewBox="0 0 1680 800" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Causal loop diagram of electricity market cannibalization, version 4">
+<div class="fig"><p class="figh">The four loops, with both gates made explicit</p><svg viewBox="0 -90 1980 890" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Causal loop diagram of electricity market cannibalization, version 5, showing a price gate and a grid connection gate in parallel before flexible electrified demand">
 <defs>
 <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink2)"/></marker>
 <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--flex)"/></marker>
 <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--eco)"/></marker>
 <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--dc)"/></marker>
 <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--gate)"/></marker>
-<marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--pol)"/></marker>
 </defs>
+
 <path d="M152.4,266.0 Q219.0,215.0 285.6,164.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
 <circle cx="219.0" cy="215.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
 <text x="219.0" y="220.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
@@ -81,42 +81,54 @@ flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
 <path d="M285.6,436.0 Q219.0,385.0 152.4,334.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
 <circle cx="219.0" cy="385.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
 <text x="219.0" y="390.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
+
 <path d="M667.7,266.0 Q746.5,203.3 778.0,198.5" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
 <circle cx="734.7" cy="217.8" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
 <text x="734.7" y="222.8" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
 <path d="M900.0,316.0 Q900.0,265.0 900.0,214.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
 <circle cx="900.0" cy="265.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
 <text x="900.0" y="270.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
-<path d="M773.6,486.0 Q821.0,435.0 868.4,384.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
-<circle cx="821.0" cy="435.0" r="11" fill="var(--panel)" stroke="var(--neg)" stroke-width="1.6"/>
-<text x="821.0" y="440.0" class="sgn" fill="var(--neg)" text-anchor="middle">-</text>
-<path d="M1018.4,486.0 Q974.0,435.0 929.6,384.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
-<circle cx="974.0" cy="435.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
-<text x="974.0" y="440.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
-<path d="M1022.0,176.8 Q1090.0,175.0 1156.0,173.3" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
-<circle cx="1089.5" cy="175.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
-<text x="1089.5" y="180.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
-<path d="M1212.3,136.0 Q901.9,-20.0 654.4,266.0" fill="none" stroke="var(--flex)" stroke-width="2.2" opacity=".85" marker-end="url(#a2)"/>
-<circle cx="851.6" cy="112.5" r="11" fill="var(--panel)" stroke="var(--neg)" stroke-width="1.6"/>
-<text x="851.6" y="117.5" class="sgn" fill="var(--neg)" text-anchor="middle">-</text>
-<path d="M1280.0,204.0 Q1280.0,310.0 1280.0,416.0" fill="none" stroke="var(--flex)" stroke-width="1.8" opacity=".85" marker-end="url(#a2)"/>
-<circle cx="1280.0" cy="310.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
-<text x="1280.0" y="315.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
-<text x="1412.0" y="320.0" class="elab" fill="var(--flex)" text-anchor="middle">electrified heat keeps</text>
-<text x="1412.0" y="335.0" class="elab" fill="var(--flex)" text-anchor="middle">industry viable</text>
-<path d="M1280.0,484.0 Q1280.0,575.0 1280.0,666.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
-<circle cx="1280.0" cy="575.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
-<text x="1280.0" y="580.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
-<path d="M1328.8,666.0 Q1660.0,435.0 1328.8,204.0" fill="none" stroke="var(--eco)" stroke-width="1.8" opacity=".85" marker-end="url(#a3)"/>
-<circle cx="1494.4" cy="435.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
-<text x="1494.4" y="440.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
-<text x="1590.4" y="445.0" class="elab" fill="var(--eco)" text-anchor="middle">funds grid</text>
-<text x="1590.4" y="460.0" class="elab" fill="var(--eco)" text-anchor="middle">+ flexibility</text>
-<path d="M1043.3,666.0 Q1155.6,605.7 1252.8,484.0" fill="none" stroke="var(--dc)" stroke-width="3.2" opacity=".85" marker-end="url(#a4)"/>
-<circle cx="1151.8" cy="590.4" r="11" fill="var(--panel)" stroke="var(--neg)" stroke-width="1.6"/>
-<text x="1151.8" y="595.4" class="sgn" fill="var(--neg)" text-anchor="middle">-</text>
-<text x="1111.8" y="634.4" class="elab" fill="var(--dc)" text-anchor="middle">crowds out firm power</text>
-<text x="1111.8" y="649.4" class="elab" fill="var(--dc)" text-anchor="middle">and grid-queue slots</text>
+<path d="M698.6,486.0 Q780.0,435.0 856.0,386.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
+<circle cx="780.0" cy="437.0" r="11" fill="var(--panel)" stroke="var(--neg)" stroke-width="1.6"/>
+<text x="780.0" y="442.0" class="sgn" fill="var(--neg)" text-anchor="middle">-</text>
+<path d="M985.0,486.0 Q952.0,435.0 932.0,386.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
+<circle cx="954.0" cy="437.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
+<text x="954.0" y="442.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
+
+<path d="M1222.0,466.0 Q1222.0,400.0 1222.0,334.0" fill="none" stroke="var(--gate)" stroke-width="2.2" opacity=".9" marker-end="url(#a5)"/>
+<circle cx="1222.0" cy="400.0" r="11" fill="var(--panel)" stroke="var(--neg)" stroke-width="1.6"/>
+<text x="1222.0" y="405.0" class="sgn" fill="var(--neg)" text-anchor="middle">-</text>
+<path d="M1222.0,666.0 Q1222.0,600.0 1222.0,534.0" fill="none" stroke="var(--dc)" stroke-width="3.2" opacity=".9" marker-end="url(#a4)"/>
+<circle cx="1222.0" cy="600.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
+<text x="1222.0" y="605.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
+<text x="1390.0" y="597.0" class="elab" fill="var(--dc)" text-anchor="middle">takes queue slots, not</text>
+<text x="1390.0" y="612.0" class="elab" fill="var(--dc)" text-anchor="middle">surplus hours</text>
+
+<path d="M1022.0,180.0 Q1214.0,148.0 1406.0,166.0" fill="none" stroke="var(--gate)" stroke-width="1.8" opacity=".85" marker-end="url(#a5)"/>
+<circle cx="1214.0" cy="164.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
+<text x="1214.0" y="169.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
+<path d="M1348.0,292.0 Q1404.0,252.0 1432.0,206.0" fill="none" stroke="var(--gate)" stroke-width="2.2" opacity=".9" marker-end="url(#a5)"/>
+<circle cx="1404.0" cy="252.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
+<text x="1404.0" y="257.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
+
+<path d="M1462.0,136.0 Q1050.0,-280.0 654.4,266.0" fill="none" stroke="var(--flex)" stroke-width="2.2" opacity=".85" marker-end="url(#a2)"/>
+<circle cx="1027.0" cy="-44.0" r="11" fill="var(--panel)" stroke="var(--neg)" stroke-width="1.6"/>
+<text x="1027.0" y="-39.0" class="sgn" fill="var(--neg)" text-anchor="middle">-</text>
+
+<path d="M1530.0,204.0 Q1530.0,310.0 1530.0,416.0" fill="none" stroke="var(--flex)" stroke-width="1.8" opacity=".85" marker-end="url(#a2)"/>
+<circle cx="1530.0" cy="310.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
+<text x="1530.0" y="315.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
+<text x="1435.0" y="362.0" class="elab" fill="var(--flex)" text-anchor="middle">electrified heat keeps</text>
+<text x="1435.0" y="377.0" class="elab" fill="var(--flex)" text-anchor="middle">industry viable</text>
+<path d="M1530.0,484.0 Q1530.0,575.0 1530.0,666.0" fill="none" stroke="var(--ink2)" stroke-width="1.8" opacity=".85" marker-end="url(#a1)"/>
+<circle cx="1530.0" cy="575.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
+<text x="1530.0" y="580.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
+<path d="M1578.0,666.0 Q1910.0,435.0 1578.0,204.0" fill="none" stroke="var(--eco)" stroke-width="1.8" opacity=".85" marker-end="url(#a3)"/>
+<circle cx="1744.0" cy="435.0" r="11" fill="var(--panel)" stroke="var(--pos)" stroke-width="1.6"/>
+<text x="1744.0" y="440.0" class="sgn" fill="var(--pos)" text-anchor="middle">+</text>
+<text x="1840.0" y="445.0" class="elab" fill="var(--eco)" text-anchor="middle">funds grid</text>
+<text x="1840.0" y="460.0" class="elab" fill="var(--eco)" text-anchor="middle">+ flexibility</text>
+
 <rect x="223" y="102" width="214" height="56" rx="7" fill="var(--panel)" stroke="var(--ink2)" stroke-width="1.7"/>
 <text x="330" y="127" class="ntitle" text-anchor="middle">Weather-dependent capacity</text>
 <text x="330" y="145" class="nsub" text-anchor="middle">solar + wind</text>
@@ -128,39 +140,49 @@ flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
 <rect x="223" y="442" width="214" height="56" rx="7" fill="var(--panel)" stroke="var(--ink2)" stroke-width="1.7"/>
 <text x="330" y="467" class="ntitle" text-anchor="middle">Capture price</text>
 <text x="330" y="485" class="nsub" text-anchor="middle">value per MWh</text>
+
 <rect x="784" y="152" width="232" height="56" rx="7" fill="var(--panel)" stroke="var(--gate)" stroke-width="1.7"/>
 <text x="900" y="177" class="ntitle" text-anchor="middle">Hours below breakeven</text>
-<text x="900" y="195" class="nsub" text-anchor="middle">the gate B2 must pass</text>
+<text x="900" y="195" class="nsub" text-anchor="middle">gate 1 &#183; the price test</text>
 <rect x="784" y="322" width="232" height="56" rx="7" fill="var(--panel)" stroke="var(--gate)" stroke-width="1.7"/>
 <text x="900" y="347" class="ntitle" text-anchor="middle">Breakeven price</text>
 <text x="900" y="365" class="nsub" text-anchor="middle">electric heat vs gas heat</text>
-<rect x="635" y="492" width="214" height="56" rx="7" fill="var(--panel)" stroke="var(--pol)" stroke-width="1.7"/>
-<text x="742" y="517" class="ntitle" text-anchor="middle">Electricity tax + tariff</text>
-<text x="742" y="535" class="nsub" text-anchor="middle">the lever Finland pulled</text>
-<rect x="941" y="492" width="214" height="56" rx="7" fill="var(--panel)" stroke="var(--pol)" stroke-width="1.7"/>
-<text x="1048" y="517" class="ntitle" text-anchor="middle">Carbon price on gas</text>
-<text x="1048" y="535" class="nsub" text-anchor="middle">ETS, weakened Jul 2026</text>
-<rect x="1162" y="142" width="236" height="56" rx="7" fill="var(--panel)" stroke="var(--flex)" stroke-width="1.7"/>
-<text x="1280" y="167" class="ntitle" text-anchor="middle">Flexible electrified demand</text>
-<text x="1280" y="185" class="nsub" text-anchor="middle">steam &#183; boilers &#183; heat pumps</text>
-<rect x="1164" y="422" width="232" height="56" rx="7" fill="var(--panel)" stroke="var(--eco)" stroke-width="1.7"/>
-<text x="1280" y="447" class="ntitle" text-anchor="middle">Energy-intensive industry</text>
-<text x="1280" y="465" class="nsub" text-anchor="middle">smelters &#183; chemicals</text>
-<rect x="1157" y="672" width="246" height="56" rx="7" fill="var(--panel)" stroke="var(--eco)" stroke-width="1.7"/>
-<text x="1280" y="697" class="ntitle" text-anchor="middle">GDP &#183; tax &#183; exports &#183; jobs</text>
-<text x="1280" y="715" class="nsub" text-anchor="middle">value-added</text>
-<rect x="873" y="672" width="214" height="56" rx="7" fill="var(--panel)" stroke="var(--dc)" stroke-width="1.7"/>
-<text x="980" y="697" class="ntitle" text-anchor="middle">Data centres</text>
-<text x="980" y="715" class="nsub" text-anchor="middle">firm 24/7 &#183; low work / kWh</text>
+<rect x="560" y="492" width="214" height="56" rx="7" fill="var(--panel)" stroke="var(--pol)" stroke-width="1.7"/>
+<text x="667" y="517" class="ntitle" text-anchor="middle">Electricity tax + tariff</text>
+<text x="667" y="535" class="nsub" text-anchor="middle">the lever Finland pulled</text>
+<rect x="838" y="492" width="214" height="56" rx="7" fill="var(--panel)" stroke="var(--pol)" stroke-width="1.7"/>
+<text x="945" y="517" class="ntitle" text-anchor="middle">Carbon price on gas</text>
+<text x="945" y="535" class="nsub" text-anchor="middle">ETS, weakened Jul 2026</text>
+
+<rect x="1096" y="272" width="252" height="56" rx="7" fill="var(--panel)" stroke="var(--gate)" stroke-width="2.4"/>
+<text x="1222" y="297" class="ntitle" text-anchor="middle">Grid connection granted</text>
+<text x="1222" y="315" class="nsub" text-anchor="middle">gate 2 &#183; the physical test</text>
+<rect x="1096" y="472" width="252" height="56" rx="7" fill="var(--panel)" stroke="var(--gate)" stroke-width="1.7"/>
+<text x="1222" y="497" class="ntitle" text-anchor="middle">Connection queue</text>
+<text x="1222" y="515" class="nsub" text-anchor="middle">local grid + Svenska kraftn&#228;t</text>
+<rect x="1105" y="672" width="234" height="56" rx="7" fill="var(--panel)" stroke="var(--dc)" stroke-width="1.7"/>
+<text x="1222" y="697" class="ntitle" text-anchor="middle">Data centres</text>
+<text x="1222" y="715" class="nsub" text-anchor="middle">firm 24/7 &#183; low work / kWh</text>
+
+<rect x="1412" y="142" width="236" height="56" rx="7" fill="var(--panel)" stroke="var(--flex)" stroke-width="1.7"/>
+<text x="1530" y="167" class="ntitle" text-anchor="middle">Flexible electrified demand</text>
+<text x="1530" y="185" class="nsub" text-anchor="middle">steam &#183; boilers &#183; heat pumps</text>
+<rect x="1414" y="422" width="232" height="56" rx="7" fill="var(--panel)" stroke="var(--eco)" stroke-width="1.7"/>
+<text x="1530" y="447" class="ntitle" text-anchor="middle">Energy-intensive industry</text>
+<text x="1530" y="465" class="nsub" text-anchor="middle">smelters &#183; chemicals</text>
+<rect x="1407" y="672" width="246" height="56" rx="7" fill="var(--panel)" stroke="var(--eco)" stroke-width="1.7"/>
+<text x="1530" y="697" class="ntitle" text-anchor="middle">GDP &#183; tax &#183; exports &#183; jobs</text>
+<text x="1530" y="715" class="nsub" text-anchor="middle">value-added</text>
+
 <circle cx="368" cy="252" r="27" fill="var(--panel)" stroke="var(--neg)" stroke-width="2"/>
 <text x="368" y="251" class="loop" fill="var(--neg)" text-anchor="middle">B1</text>
 <text x="368" y="265" class="loopsub" fill="var(--neg)" text-anchor="middle">the trap</text>
-<circle cx="929" cy="107" r="27" fill="var(--panel)" stroke="var(--flex)" stroke-width="2"/>
-<text x="929" y="106" class="loop" fill="var(--flex)" text-anchor="middle">B2</text>
-<text x="929" y="120" class="loopsub" fill="var(--flex)" text-anchor="middle">the exit</text>
-<circle cx="1435" cy="435" r="27" fill="var(--panel)" stroke="var(--eco)" stroke-width="2"/>
-<text x="1435" y="434" class="loop" fill="var(--eco)" text-anchor="middle">R1</text>
-<text x="1435" y="448" class="loopsub" fill="var(--eco)" text-anchor="middle">the spiral</text>
+<circle cx="1221" cy="30" r="27" fill="var(--panel)" stroke="var(--flex)" stroke-width="2"/>
+<text x="1221" y="29" class="loop" fill="var(--flex)" text-anchor="middle">B2</text>
+<text x="1221" y="43" class="loopsub" fill="var(--flex)" text-anchor="middle">the exit</text>
+<circle cx="1685" cy="435" r="27" fill="var(--panel)" stroke="var(--eco)" stroke-width="2"/>
+<text x="1685" y="434" class="loop" fill="var(--eco)" text-anchor="middle">R1</text>
+<text x="1685" y="448" class="loopsub" fill="var(--eco)" text-anchor="middle">the spiral</text>
 </svg></div>
 
 <div class="fig"><p class="figh">The demand fork is not symmetric</p><svg viewBox="0 0 1180 260" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Annual electricity demand: industrial heat potential versus data centres">
@@ -188,20 +210,20 @@ flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
 </svg></div>
 
 <div class="notes">
- <div class="note chg"><h3>Change 1 &#183; the fork is not symmetric</h3><p>Electrified industrial heat carries roughly 600 TWh a year of EU technical potential against data centres at about 70 TWh today and 115 TWh by 2030. The two arms differ by a factor of five in size before any argument about jobs per kWh.</p><p>For scale at the other end: Finland's entire electric-boiler district-heat output, the result that proves the mechanism, is 2.6 TWh. That is 0.4% of the industrial heat prize.</p></div>
+ <div class="note chg"><h3>Change 1 &#183; the second gate</h3><p>The price gate rations by cost and clears continuously. The connection gate rations by permit and clears discretely, at zero or one. A project that passes the first can fail the second, and no amount of surplus power changes that, because the binding resource is transmission capacity rather than energy.</p><p>The clean case is Swedish. Power2Earth, the Lantm&#228;nnen, Fertiberia and Nordion fossil-free fertiliser plant, was shelved in autumn 2025 after Svenska kraftn&#228;t refused the 4 to 5 TWh it needed. Per Arfvidsson of Lantm&#228;nnen described the refusal as concerning "inkopplingen och kapaciteten i det svenska eln&#228;tet, allts&#229; tr&#228;ngsel i infrastrukturen".</p></div>
 
- <div class="note chg"><h3>Change 2 &#183; flat load is not flexible load</h3><p>This revises the v3 claim that data centres absorb the glut equally. They do not, because their load is close to flat. Flat demand raises the price level in all hours roughly alike; it does not fill the midday trough. Capture rate depends on the trough, so per MWh a flexible load shaped to surplus hours does far more for B1 than a firm load of the same size.</p><p>Data centres therefore enter this diagram mainly through the crowding-out arrow, drawn heavy, rather than as a co-equal claimant on the glut.</p></div>
+ <div class="note chg"><h3>Change 2 &#183; where the glut is deepest</h3><p>Luleå sits in SE1, which spent 65.6% of 2026 so far below the &#8364;54 electric-boiler breakeven, the highest share of any bidding zone in the EU and Norway. SE2 follows at 64.3%. On the price gate these are the most favourable conditions in Europe.</p><p>That is what makes the case structural rather than anecdotal. If abundant cheap power were sufficient, this plant would be under construction. The constraint the model needs to represent is therefore not scarcity of energy but scarcity of the right to draw it.</p></div>
 
- <div class="note chg"><h3>Change 3 &#183; the gate, and what July 2026 did to it</h3><p>The breakeven near &#8364;54/MWh assumes an installation paying close to the full carbon price: a gas boiler emits about 0.22 tCO2 per MWh of heat, which at &#8364;70 a tonne is the &#8364;16/MWh in the gas-side cost. An installation on free allocation faces an effective price nearer &#8364;10, so its gas steam costs about &#8364;46 and the electric breakeven no longer clears.</p><p>The 17 July package cuts the tax-and-tariff term and weakens the carbon term at once, substituting an Industrial Decarbonisation Bank and &#8364;4bn of allowances for the price signal.</p></div>
+ <div class="note chg"><h3>Change 3 &#183; data centres act on the queue</h3><p>Version 4 drew data centres crowding out firm power in general. The mechanism is more specific: they consume connection-queue capacity, which is the input to gate 2. Svenska kraftn&#228;t received about 9,000 MW of withdrawal applications during 2025 and data centres were somewhat over half, concentrated in M&#228;lardalen, Stockholm, Uppsala and G&#228;vleborg.</p><p>The arrow now lands on the queue rather than on industry directly. A second channel operates through price, visible in PJM, where data centres drove 63% of the 2025/26 capacity-price increase.</p></div>
 
- <div class="note"><h3>Where the carbon price actually bites</h3><p>Moving the threshold from &#8364;54 to &#8364;40 costs SE1 and SE2 about 3 points of qualifying hours and costs SE3 thirteen and SE4 twelve. Where power is already very cheap the carbon price is nearly irrelevant; where it is marginal the carbon price is close to decisive.</p><p>Weakening it does not cancel electrification, it strips out the middle of the distribution, which is where most of Europe's industry sits.</p></div>
+ <div class="note chg"><h3>Change 4 &#183; Germany is a completed transition</h3><p>Energy-intensive production ran 17.8% below 2021 in 2025 and has stayed there for four years. Version 3 and version 4 described this as an ongoing shock being absorbed, which understates it. R1 should be read as having already run once to completion in one large economy, not as a risk under discussion.</p><p>Ireland shows the policy response converging on the same instrument from the other side. The moratorium that began in November 2021 was lifted in December 2025 and replaced by a requirement that new connections self-firm with on-site generation or storage, which is a connection gate with a price attached rather than a refusal.</p></div>
 
- <div class="note"><h3>What did not change</h3><p>B1, B2 and R1 keep their v3 structure and signs. The capture-rate mechanism, the flexibility exit and the deindustrialization spiral are unaltered; the gate is inserted between the glut and the exit rather than replacing anything.</p><p>The battery case remains B2 seen from the arbitrageur's revenue, with the addition that value migrates to duration: doubling NSW duration to 3.2 hours turned a 74% fall in $/MWh into a 49% fall in $/MW, while Queensland's flat duration lost 73% on both.</p></div>
+ <div class="note"><h3>Where the carbon price actually bites</h3><p>Moving the threshold from &#8364;54 to &#8364;40 costs SE1 and SE2 about 3 points of qualifying hours and costs SE3 thirteen and SE4 twelve. Where power is already very cheap the carbon price is nearly irrelevant; where it is marginal the carbon price is close to decisive.</p><p>The two gates are therefore not independent in their incidence. Gate 1 binds hardest in the middle of the price distribution, where most of Europe's industry sits. Gate 2 binds hardest at the cheap end, which is exactly where the model would otherwise predict electrification to be easiest.</p></div>
 
- <div class="note"><h3>Read with care</h3><p>The 600 TWh is technical potential, not a forecast, and the economically viable share today is far smaller and concentrated in the zones on the left of the price distribution. The data centre figures are demand projections on current policy and carry their own wide range, up to 287 TWh in the most aggressive published estimate.</p><p>The &#8364;10 effective carbon price is a reported average across freely-allocated operators, not a rate any single installation faces.</p></div>
+ <div class="note"><h3>Read with care</h3><p>In Norrbotten the load competing for capacity is steel and hydrogen rather than data centres, and no source names a data centre as the specific cause of the Power2Earth refusal. The queue mechanism is well evidenced; the data centre attribution belongs to the M&#228;lardalen and Stockholm cases, where the applications actually concentrate. Queues cut both ways, and Microsoft's own Sandviken build was paused in spring 2025 for the same reason.</p><p>The 600 TWh is technical potential rather than a forecast. On jobs, Brookings finds counties receiving a first large data centre see private employment rise 4 to 5% over five to six years, small and easily overstated but not zero.</p></div>
 </div>
 
-<p class="src">Industrial heat potential: <a href="https://www.iea.org/reports/renewables-for-industry">IEA, Renewables for Industry</a>. Data centre demand: <a href="https://www.iea.org/commentaries/overcoming-energy-constraints-is-key-to-delivering-on-europe-s-data-centre-goals">IEA</a>. Breakeven arithmetic and the hours-below-breakeven framing: <a href="https://abated.substack.com/p/electrified-industrial-steam-is-low">Ilkka Hannula</a>. ETS revision of 17 July 2026: <a href="https://icapcarbonaction.com/en/news/eu-commission-publishes-eu-ets-review-proposal">ICAP</a>, <a href="https://eeb.org/en_gb/commission-caves-to-industrial-laggards-weakening-eu-carbon-market">EEB</a>, <a href="https://www.opis.com/blog/eu-ets-revision-2026-what-the-july-proposal-will-look-like/">OPIS</a>. Electrification Action Plan: <a href="https://www.edie.net/eu-targets-46-electricity-share-by-2040-under-new-electrification-action-plan/">edie</a>. Zone-level hours below threshold computed from Energy-Charts day-ahead prices.</p>
+<p class="src">Power2Earth refusal: <a href="https://www.ja.se/artikel/2238897/stopp-fr-tillverkning-av-fossilfri-gdsel-i-norr.html">Jordbruksaktuellt</a>. Connection applications and regional concentration: <a href="https://www.dagensinfrastruktur.se/2026/06/17/miljardinvesteringarna-bakom-molnet-sveriges-datacenterboom-och-vad-den-kostar-elnatet/">Dagens Infrastruktur</a>. Industrial heat potential: <a href="https://www.iea.org/reports/renewables-for-industry">IEA, Renewables for Industry</a>. Data centre demand: <a href="https://www.iea.org/commentaries/overcoming-energy-constraints-is-key-to-delivering-on-europe-s-data-centre-goals">IEA</a>. Breakeven arithmetic: <a href="https://abated.substack.com/p/electrified-industrial-steam-is-low">Ilkka Hannula</a>. PJM capacity prices: <a href="https://ieefa.org/resources/projected-data-center-growth-spurs-pjm-capacity-prices-factor-10">IEEFA</a>. German production: <a href="https://www.destatis.de/EN/Themes/Economic-Sectors-Enterprises/Industry-Manufacturing/_Graphic/_Interactive/production-index.html">Destatis</a>. Ireland: <a href="https://www.energyconnects.com/news/utilities/2025/december/ireland-ends-moratorium-on-new-power-links-to-data-centers/">Energy Connects</a>. Jobs: <a href="https://www.brookings.edu/articles/new-evidence-on-data-center-employment-effects/">Brookings</a>. ETS revision of 17 July 2026: <a href="https://icapcarbonaction.com/en/news/eu-commission-publishes-eu-ets-review-proposal">ICAP</a>. Zone-level hours below threshold computed from Energy-Charts day-ahead prices, January to July 2026.</p>
 </div>
 <script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
