@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elmix &#183; The system, described in words</title>
+</head>
+<body>
+<nav class="sitenav">
+  <a href="../index.html">&#8592; Elmix</a>
+  <a href="index.html">Modell</a>
+  <a href="system.html">Systemet</a>
+  <a href="gate.html">Grinden (v5)</a>
+  <a href="elpannor.html">Elpannor FI/SE</a>
+  <a href="../lagring.html">Lagring</a>
+  <a href="batterier.html">Batterier</a>
+  <a href="verifiering.html">Verifiering</a>
+  <a href="referenser.html">Referenser</a>
+</nav>
+<style>
+:root{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
+ --pos:#2f7d4f;--neg:#c0392b;--gate:#0f6b80;--flex:#1a7f6b;--pol:#6b4a9e;--ind:#94671c;--dc:#8a4fb5;--eco:#b8402e;}
+@media (prefers-color-scheme:dark){:root{--ground:#121716;--panel:#181f1e;--ink:#e9eeec;--ink2:#a8b4b1;--ink3:#7e8b88;--rule:#242d2b;
+ --pos:#5cba82;--neg:#e8795c;--gate:#4fc0d8;--flex:#48c5aa;--pol:#a98ede;--ind:#d1a252;--dc:#c08ae8;--eco:#e8795c;}}
+:root[data-theme="light"]{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
+ --pos:#2f7d4f;--neg:#c0392b;--gate:#0f6b80;--flex:#1a7f6b;--pol:#6b4a9e;--ind:#94671c;--dc:#8a4fb5;--eco:#b8402e;}
+:root[data-theme="dark"]{--ground:#121716;--panel:#181f1e;--ink:#e9eeec;--ink2:#a8b4b1;--ink3:#7e8b88;--rule:#242d2b;
+ --pos:#5cba82;--neg:#e8795c;--gate:#4fc0d8;--flex:#48c5aa;--pol:#a98ede;--ind:#d1a252;--dc:#c08ae8;--eco:#e8795c;}
+body{background:var(--ground);color:var(--ink);margin:0;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+.page{max-width:1300px;margin:0 auto;padding:44px 22px 72px;display:flex;flex-direction:column;gap:30px;}
+.eyebrow{font:600 11.5px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);}
+h1{font:700 34px/1.14 ui-sans-serif,system-ui,sans-serif;letter-spacing:-.021em;margin:8px 0 0;text-wrap:balance;max-width:24ch;}
+.deck{color:var(--ink2);font-size:16.5px;max-width:70ch;margin:12px 0 0;}
+.prose{max-width:70ch;display:flex;flex-direction:column;gap:22px;}
+.prose h2{font:700 21px/1.25 ui-sans-serif,system-ui,sans-serif;letter-spacing:-.012em;
+ margin:14px 0 0;padding-top:20px;border-top:1px solid var(--rule);text-wrap:balance;}
+.prose h2:first-child{border-top:0;padding-top:0;margin-top:0;}
+.prose p{margin:0;font-size:16.2px;color:var(--ink2);}
+.prose p.lead{color:var(--ink);}
+.loopmark{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:.86em;letter-spacing:.02em;}
+.b1{color:var(--neg);} .b2{color:var(--flex);} .r1{color:var(--eco);} .g{color:var(--gate);}
+.node{font-family:ui-monospace,Menlo,monospace;font-size:.88em;color:var(--ink);
+ background:rgba(127,140,136,.13);border-radius:3px;padding:1px 5px;white-space:nowrap;}
+.num{font-family:ui-monospace,Menlo,monospace;font-weight:600;color:var(--ink);}
+.inv{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:20px 20px 8px;overflow-x:auto;}
+.invh{font:600 12px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 0 4px;}
+.invd{font-size:14.4px;color:var(--ink2);margin:0 0 16px;max-width:70ch;}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px;}
+th{text-align:left;font:600 11px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.09em;
+ text-transform:uppercase;color:var(--ink3);padding:0 14px 9px 0;border-bottom:1px solid var(--rule);}
+td{padding:9px 14px 9px 0;border-bottom:1px solid var(--rule);color:var(--ink2);vertical-align:top;}
+td.mono{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--ink);white-space:nowrap;}
+td.sign{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:15px;text-align:center;width:1.5em;}
+td.lp{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:12.5px;white-space:nowrap;}
+tr:last-child td{border-bottom:0;}
+.src{font-size:12.5px;color:var(--ink3);border-top:1px solid var(--rule);padding-top:16px;max-width:none;}
+a{color:var(--gate);}
+.sitenav{max-width:1300px;margin:0 auto;padding:12px 22px 0;display:flex;gap:16px;
+flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
+.sitenav a{color:var(--ink3);text-decoration:none;}
+.sitenav a:hover{color:var(--ink);text-decoration:underline;}
+</style>
+<div class="page">
+<header>
+ <div class="eyebrow">Cannibalization model &#183; version 5</div>
+ <h1>The system, described in words</h1>
+ <p class="deck">The <a href="gate.html">diagram</a> is the compact form of the model, and a diagram can only be argued with by someone who is looking at it. This page is the same system written out: fifteen quantities and seventeen links between them, each link with its sign and the reason for it. It is meant to be read on its own, checked against the sources, and disagreed with in specific places.</p>
+</header>
+
+<div class="prose">
+
+<h2>What the model claims</h2>
+<p class="lead">A generating technology with no fuel cost bids into the market at close to zero and sets the price whenever it is running. Every additional unit of that technology therefore lowers the price in exactly the hours its own output arrives. The revenue a wind farm earns per MWh falls as wind capacity grows, not because the market has failed but because it is working, and the same holds for solar against sunny hours and for batteries against the spread they exist to arbitrage.</p>
+<p>The claim the model makes is that this is a general property rather than a fault of any one technology. Any resource whose value comes from a price signal will compete that signal away as it scales, and it will stop expanding when the signal has fallen to its own marginal cost. What follows from that is not an argument against building the technology. It is an argument that the useful question is what absorbs the surplus, because the surplus is what carries the revenue away, and whatever drains it decides where the value lands.</p>
+<p>The system is drawn as four coupled loops. Two of them are balancing, meaning they resist the change that sets them off. One is reinforcing, meaning it accelerates it. The fourth structure is not a loop at all but a fork, a point where the same surplus can be taken up by two different kinds of demand with very different consequences downstream.</p>
+
+<h2>How to read a sign</h2>
+<p>Each link carries a plus or a minus. A plus means the two quantities move in the same direction: raise the first and the second rises. A minus means they move in opposite directions. Signs multiply around a loop, so a loop containing an odd number of minus links is balancing and one containing an even number, including none, is reinforcing.</p>
+<p>Nothing in the notation carries a timescale, which is the standard weakness of this kind of diagram. Capacity takes years to build, prices move within the hour, and a connection queue clears over a decade. Where the delay matters to the argument it is stated in the text rather than encoded in the picture.</p>
+
+<h2><span class="loopmark b1">B1</span> &#8194;The cannibalization trap</h2>
+<p>The first loop has four links and closes on itself. A favourable investment incentive adds <span class="node">weather-dependent capacity</span>, solar and wind, which is a plus. More capacity deepens the <span class="node">supply glut</span> in the hours when the weather cooperates, another plus, since output is correlated across every plant of the same type in the same region. The glut pushes down the <span class="node">capture price</span>, the average value actually realised per MWh produced, which is the loop's one negative link. A lower capture price weakens the <span class="node">investment incentive</span>, a plus, and the loop is closed.</p>
+<p>One negative link makes B1 balancing. It does not stop deployment; it sets the level at which deployment stops being worth doing under a given cost structure, and it moves that level down as costs fall. Germany is the clearest illustration in the evidence base, and the reason the loop is drawn first is that everything else in the model is a response to its output, which is a quantity of cheap energy arriving at times nobody chose.</p>
+
+<h2>The glut, and what stands between it and the demand that would drain it</h2>
+<p>If flexible demand appeared wherever power was cheap, B1 would be self-limiting in a benign way: the glut would be consumed, the capture price would recover, and the loop would settle. That is the case the model exists to complicate. Version 4 held that the obstacle was economic, a breakeven the surplus must clear before anyone switches fuel. Version 5 holds that there are two obstacles in parallel, and that a project can clear either one and still be stopped by the other.</p>
+<p>The distinction matters because the two gates fail in different ways. A price gate rations by cost, clears continuously, and tells an applicant immediately whether the answer is yes. A connection gate rations by permit and by waiting time, and can leave a project that is economic on every hour of the year waiting several years for an answer that may be no.</p>
+
+<h2><span class="loopmark g">Gate 1</span> &#8194;The price test</h2>
+<p>The quantity that matters is not the average price but the number of <span class="node">hours below breakeven</span>, where breakeven is the electricity price at which an electric boiler beats the gas boiler it would replace. A deeper glut raises that count, a plus. So does a higher <span class="node">breakeven price</span>, since raising the threshold puts more hours underneath it.</p>
+<p>The breakeven itself has two policy inputs pulling against each other. The <span class="node">electricity tax and network tariff</span> enter negatively: every öre added to the delivered cost of electricity means the spot price has to fall further before the switch pays, so the threshold drops. The <span class="node">carbon price on gas</span> enters positively, because a more expensive fossil alternative means a higher electricity price can still be tolerated.</p>
+<p>Finland and Sweden run the cleanest natural experiment on this link, since the hardware is comparable and the tax treatment is not. Finnish electric boilers went from <span class="num">16</span> GWh in the early series to <span class="num">750</span> GWh in 2023 and <span class="num">2,580</span> GWh in 2025, about <span class="num">8%</span> of district heat produced, on a levy near €0.63/MWh. Sweden's roughly <span class="num">1.24</span> GW of boilers sits largely idle at 43.9 öre/kWh. The convex shape of the Finnish curve is what a policy step looks like when the capital takes about two years to arrive, which is the delay the diagram cannot show.</p>
+<p>The incidence of this gate is uneven, and in a way that matters for the rest of the model. Moving the threshold from €54 to €40 costs SE1 and SE2 about three points of qualifying hours and costs SE3 thirteen points and SE4 twelve. Where power is already very cheap the carbon price is close to irrelevant. Where it is marginal, which describes most of the European industrial base, the carbon price is close to decisive.</p>
+
+<h2><span class="loopmark g">Gate 2</span> &#8194;The physical test</h2>
+<p>The second gate is the amendment that defines version 5. Passing the price test earns the right to want a connection, not the connection itself. Whether <span class="node">grid connection is granted</span> depends on the state of the <span class="node">connection queue</span>, and the link is negative: a longer queue means a lower probability, and a longer wait, for any individual applicant.</p>
+<p>Outright refusal is the rare form. Energimarknadsinspektionen examined Svenska kraftnät and six regional network companies on 11 June 2026 and found connection times routinely exceeding the two-year statutory limit, especially for large projects. What it documented was delay rather than denial. Delay still functions as a filter, because it selects for whoever can hold capital idle the longest, which is a selection on balance sheet rather than on value created per MWh.</p>
+<p>The clean binary case is Swedish. Power2Earth, the fossil-free fertiliser venture of Lantmännen, Fertiberia and Nordion Energi, was shelved in autumn 2025 after Svenska kraftnät refused the 4 to 5 TWh it needed. Per Arfvidsson of Lantmännen described the refusal as concerning "inkopplingen och kapaciteten i det svenska elnätet, alltså trängsel i infrastrukturen".</p>
+<p>What makes that case structural rather than anecdotal is where it happened. Luleå sits in SE1, which spent <span class="num">65.8%</span> of 2026 so far below the €54 breakeven, the highest share of any bidding zone in the EU and Norway, with SE2 next at <span class="num">64.5%</span>. On the price gate these are the most favourable conditions in Europe. If cheap power were sufficient the plant would be under construction. The scarce resource is the right to draw power, not the power.</p>
+
+<h2><span class="loopmark g">The lever on gate 2</span></h2>
+<p>Gate 1 has policy inputs, so gate 2 needed one as well, and it is the <span class="node">maturity and allocation rule</span> that governs the queue. Its link to the queue is negative, since a stricter rule shortens it.</p>
+<p>Sweden allocated connections first come, first served until 2024. Under that rule the queue ranks applicants by how early they applied and by nothing else, so a category of new load with committed capital is structurally near the front. The maturity requirements introduced in 2024 replaced it and cut the queue by <span class="num">14,300</span> MW on their own, with roughly <span class="num">20,000</span> MW of speculative bookings cleared since. Svenska kraftnät announced capacity zones and business matching on 4 May 2026, which goes further.</p>
+<p>Whether this removes the capital bias or formalises it is an open question rather than a finding, and the model should be read as posing it. Documented milestones, permit progress and a detailed energy analysis are easier to produce for a financed hyperscaler than for a municipal heat utility or a farmer-owned joint venture. The rule now selects for project maturity, and maturity is partly a function of access to capital.</p>
+
+<h2>The demand fork</h2>
+<p>Two kinds of load can take up the surplus, and the model treats them as different nodes because they behave differently in every link that follows.</p>
+<p><span class="node">Flexible electrified demand</span>, meaning industrial steam, electric boilers and heat pumps, consumes when power is cheap and stops when it is not. That is what lets it fill the trough rather than lift the whole curve, and filling the trough is what the capture price responds to. <span class="node">Data centres</span> run flat, close to 24 hours a day, so their load raises consumption in every hour more or less equally. A flat load does raise the average price, but it does not selectively remove the cheap hours that cannibalization is made of. This is a correction to version 3, which drew both kinds of demand as absorbing the glut equally.</p>
+<p>The asymmetry in size is larger than the asymmetry in behaviour. The IEA puts the technical potential for electrified industrial heat in the EU at around <span class="num">600</span> TWh a year, against a projection of about <span class="num">115</span> TWh for European data centres in 2030, up from roughly <span class="num">70</span> TWh in 2024. The 600 TWh is technical potential rather than a forecast, and should not be read as demand that is going to appear.</p>
+<p>Data centres therefore enter the diagram mainly through the queue rather than through the glut. Their link to the <span class="node">connection queue</span> is positive: they take slots. Svenska kraftnät received 43 applications in 2025 covering over <span class="num">9,000</span> MW of withdrawal, about half of it data centres, and granted <span class="num">3,695</span> MW of consumption across 22 positive decisions. Roughly two applied megawatts in five got through. Data centres hold 5,000 to 6,000 MW in the queue with about <span class="num">80%</span> of it in SE3, set against roughly <span class="num">7,000</span> MW of new industrial demand expected across the whole of 2026 to 2030.</p>
+
+<h2>The second channel, and why it points somewhere else</h2>
+<p>The queue is not the only route by which one kind of load displaces another. Because a data centre is capital-intensive, electricity is a small share of its total cost, so it can pay a price that would close an industrial plant and still earn its return. Pär Holmberg of IFN makes the point directly: the build-out continues even as it raises the price, and the pressure falls on southern Sweden, where broadband and latency draw the halls and there is no local surplus to absorb them. The same channel is visible in PJM, where data centres drove <span class="num">63%</span> of the 2025/26 capacity-price increase, about $9.3bn.</p>
+<p>The two channels have two geographies, which is the part of the model most easily missed. The connection gate bound in the north, at Luleå, where the glut is deepest and the queue is the constraint. The price channel binds in the south, where the data centres want to sit and the surplus that would blunt them does not exist. A version of the model drawing only one of them would describe half the map.</p>
+<p>The strength of the two claims is also different, and blurring them would be the easiest way to make the model wrong. The concentration of applications is documented. The displacement is inference. A systematic search of Swedish sources covering 2024 to 2026 found no named non-data-centre load refused, queued or shelved in Mälardalen, Stockholm, Uppsala, Gävleborg or Västmanland with a data centre identified as the competing load. Counter-evidence points the other way as well: Uppsala's position is that connection is available but slow, Ellevio reported Stockholm's shortage easing in 2025 after 2.42bn SEK of investment, and the only capacity-paused facility found in those counties is itself a data centre, Microsoft's Sandviken build. Connection negotiations are commercially confidential, so absence of public cases is not proof of absence, but it is not evidence either.</p>
+
+<h2><span class="loopmark b2">B2</span> &#8194;The flexibility exit</h2>
+<p>The second balancing loop is the one that would resolve B1 if it were allowed to operate. The glut raises the count of hours below breakeven, a plus. Those hours, if the connection is also granted, bring <span class="node">flexible electrified demand</span> into existence, another plus. That demand consumes precisely in the surplus hours, which reduces the <span class="node">supply glut</span>, and this is the negative link that closes the loop and makes it balancing.</p>
+<p>The single most important property of B2 is that its gain is set by policy rather than by physics. Both gates sit inside the loop. Tax and tariff decide how many hours qualify; the queue and its allocation rule decide how much of the qualifying demand is ever built. A jurisdiction can leave B1 running at full strength and hold B2 near zero without deciding to do so, simply by taxing electricity heavily at the meter and rationing connections slowly. Finland and Sweden differ on the first of those, and the boiler output series is the result.</p>
+
+<h2><span class="loopmark r1">R1</span> &#8194;The deindustrialization spiral</h2>
+<p>The third loop is reinforcing, with three positive links and no negative one. Flexible electrified demand keeps <span class="node">energy-intensive industry</span> viable, because electrified heat is what lets a smelter or a chemical plant survive a fuel price it could not otherwise carry. Industry sustains <span class="node">GDP, tax revenue, exports and jobs</span>. Value-added funds the grid investment and the flexibility that would let more electrified demand connect, which closes the loop.</p>
+<p>Reinforcing loops run in both directions, which is the whole of the concern. Run forward it compounds; run backward it also compounds, and the backward direction is the one with a completed example. German production in energy-intensive branches ran <span class="num">17.8%</span> below 2021 in 2025 and has stayed at roughly that level for four years, with chemicals down <span class="num">18.1%</span> between February 2022 and March 2026. Earlier versions of the model described this as an ongoing shock being absorbed. Four years of flat depression is a transition that has already run once to completion in a large economy, and R1 should be read that way rather than as a risk under discussion.</p>
+<p>The employment asymmetry at the fork feeds this loop and should be stated with its correction attached. A colocation site runs 20 to 30 permanent staff per 100 MW, and a large build is roughly 1,500 construction jobs against about 100 operational ones. Brookings also finds that counties receiving their first large data centre see total private employment rise 4 to 5% over five or six years. The effect is small, and naive estimates inflate it about threefold, but it is not zero, and a version of the argument that treats it as zero is attackable on that sentence alone.</p>
+
+<h2>Where the system is heading</h2>
+<p>The instrument that several jurisdictions have converged on addresses the fork and both gates at once, without any of them appearing to have coordinated. Ireland's moratorium, in force from November 2021, was lifted in December 2025 and replaced by a requirement that new connections self-firm, installing on-site generation or storage covering their full demand. Holmberg proposes that southern Swedish data centres be required to sign long-term contracts for new unsubsidised generation. The US administration is encouraging data centres to fund their own supply.</p>
+<p>Each of these converts a load that competes for existing firm capacity into a load that brings its own. If new supply arrives in step with new demand, the price channel closes on its own and the queue pressure falls with it. Whether the instrument survives contact with the projects it is aimed at is not yet answerable from public evidence.</p>
+
+<h2>What would falsify this</h2>
+<p>The B1 link is the most exposed to counter-evidence, and the honest test is a market where weather-dependent share rose substantially over several years while capture rates held flat, with no offsetting change in fuel prices or storage. The German solar series is the model's main support here and a single market is thin support.</p>
+<p>The gate 2 mechanism rests on one clean refusal. Power2Earth is a single case, and in Norrbotten the load competing for capacity is steel and hydrogen, named as Hybrit, Stegra and LKAB, rather than data centres. No source names a data centre as the cause of that refusal. A records request under offentlighetsprincipen to Energimarknadsinspektionen's dispute register or to Svenska kraftnät's list of connection cases is the only route the search identified to settle whether contested cases exist, and it has not been made.</p>
+<p>The NEM battery revenue series is excluded from the model for now rather than published with a caveat. A figure of A$148k/MW for 2024 could not be reconciled against published six-month windows, one source puts that year at A$50 to 70k/MW, and it is ambiguous whether the published numbers are gross or net and in which currency. The CAISO series is clean by comparison, falling 103, 80, 51 and about 38 USD/kW-year with January 2026 pacing toward 21.</p>
+
+</div>
+
+<div class="inv">
+<p class="invh">The complete link inventory</p>
+<p class="invd">Every causal link in version 5 of the diagram, with its sign and the loop it belongs to. Signs multiply around a loop: an odd count of minus links makes it balancing, an even count makes it reinforcing. Reading this table is equivalent to reading the picture.</p>
+<table>
+<thead><tr><th>From</th><th>To</th><th style="text-align:center">Sign</th><th>Loop</th><th>Because</th></tr></thead>
+<tbody>
+<tr><td class="mono">Investment incentive</td><td class="mono">Weather-dependent capacity</td><td class="sign" style="color:var(--pos)">+</td><td class="lp b1">B1</td><td>Returns attract build-out.</td></tr>
+<tr><td class="mono">Weather-dependent capacity</td><td class="mono">Supply glut</td><td class="sign" style="color:var(--pos)">+</td><td class="lp b1">B1</td><td>Output is correlated across plants of the same type in the same region.</td></tr>
+<tr><td class="mono">Supply glut</td><td class="mono">Capture price</td><td class="sign" style="color:var(--neg)">&#8722;</td><td class="lp b1">B1</td><td>Zero-marginal-cost bids set the price in exactly the hours the plant runs.</td></tr>
+<tr><td class="mono">Capture price</td><td class="mono">Investment incentive</td><td class="sign" style="color:var(--pos)">+</td><td class="lp b1">B1</td><td>Realised value per MWh is what the investment case is made on.</td></tr>
+<tr><td class="mono">Supply glut</td><td class="mono">Hours below breakeven</td><td class="sign" style="color:var(--pos)">+</td><td class="lp b2">B2</td><td>A deeper trough puts more hours under any fixed threshold.</td></tr>
+<tr><td class="mono">Breakeven price</td><td class="mono">Hours below breakeven</td><td class="sign" style="color:var(--pos)">+</td><td class="lp g">gate 1</td><td>Raising the threshold puts more hours underneath it.</td></tr>
+<tr><td class="mono">Electricity tax + tariff</td><td class="mono">Breakeven price</td><td class="sign" style="color:var(--neg)">&#8722;</td><td class="lp g">gate 1</td><td>Charges at the meter mean the spot price must fall further before the switch pays.</td></tr>
+<tr><td class="mono">Carbon price on gas</td><td class="mono">Breakeven price</td><td class="sign" style="color:var(--pos)">+</td><td class="lp g">gate 1</td><td>A dearer fossil alternative lets a higher electricity price still compete.</td></tr>
+<tr><td class="mono">Hours below breakeven</td><td class="mono">Flexible electrified demand</td><td class="sign" style="color:var(--pos)">+</td><td class="lp b2">B2</td><td>More qualifying hours improve the payback on the equipment.</td></tr>
+<tr><td class="mono">Data centres</td><td class="mono">Connection queue</td><td class="sign" style="color:var(--pos)">+</td><td class="lp" style="color:var(--dc)">fork</td><td>They take queue slots rather than surplus hours.</td></tr>
+<tr><td class="mono">Maturity + allocation rule</td><td class="mono">Connection queue</td><td class="sign" style="color:var(--neg)">&#8722;</td><td class="lp" style="color:var(--pol)">lever</td><td>Milestone requirements clear speculative bookings.</td></tr>
+<tr><td class="mono">Connection queue</td><td class="mono">Grid connection granted</td><td class="sign" style="color:var(--neg)">&#8722;</td><td class="lp g">gate 2</td><td>A longer queue lowers the odds, and lengthens the wait, for any applicant.</td></tr>
+<tr><td class="mono">Grid connection granted</td><td class="mono">Flexible electrified demand</td><td class="sign" style="color:var(--pos)">+</td><td class="lp b2">B2</td><td>Nothing is built without the right to draw power.</td></tr>
+<tr><td class="mono">Flexible electrified demand</td><td class="mono">Supply glut</td><td class="sign" style="color:var(--neg)">&#8722;</td><td class="lp b2">B2</td><td>Load that follows price fills the trough instead of lifting every hour.</td></tr>
+<tr><td class="mono">Flexible electrified demand</td><td class="mono">Energy-intensive industry</td><td class="sign" style="color:var(--pos)">+</td><td class="lp r1">R1</td><td>Electrified heat keeps plants viable at fuel prices they could not otherwise carry.</td></tr>
+<tr><td class="mono">Energy-intensive industry</td><td class="mono">GDP &#183; tax &#183; exports &#183; jobs</td><td class="sign" style="color:var(--pos)">+</td><td class="lp r1">R1</td><td>Value-added, directly.</td></tr>
+<tr><td class="mono">GDP &#183; tax &#183; exports &#183; jobs</td><td class="mono">Flexible electrified demand</td><td class="sign" style="color:var(--pos)">+</td><td class="lp r1">R1</td><td>Value-added funds the grid and the flexibility that let more demand connect.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">Sources for every figure on this page are listed with headline, publisher and date on the <a href="referenser.html">references page</a>. The zone-level shares below threshold are computed from the same Energy-Charts day-ahead data behind <a href="../euprices.html">Elpris EU+Norge</a>, covering January to July 2026. The five figures marked as verified were checked in the <a href="verifiering.html">verification pass</a>. The diagram this page describes is <a href="gate.html">version 5 of the model</a>.</p>
+</div>
+<script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
