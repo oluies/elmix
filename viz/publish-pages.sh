@@ -13,7 +13,12 @@ if ls data/raw/eu/generation/*.parquet >/dev/null 2>&1; then ./viz/export-consum
 # Fallback: återanvänd redan publicerad data så sidan inte raderas ur docs/
 # (viz/data är gitignored och cachas inte i CI -> varje körning hämtar färskt).
 ./viz/export-china.sh || echo "VARNING: export-china misslyckades – Kina-sidan ej uppdaterad" >&2
-[ -f viz/data/ember-data.js ] || cp docs/data/ember-data.js viz/data/ 2>/dev/null || true
+# Fallbacken får inte nöja sig med att filen finns. En tidigare körning skrev
+# en giltig men tom payload som passerade -f och skrev över den fungerande
+# datan i docs/; sidan såg publicerad ut men visade tre tomma diagram.
+china_ok() { [ -f "$1" ] && grep -q '"nameEn":"China"' "$1"; }
+china_ok viz/data/ember-data.js || cp docs/data/ember-data.js viz/data/ 2>/dev/null || true
+china_ok viz/data/ember-data.js || echo "VARNING: ingen användbar ember-data.js – Kina-sidan blir tom" >&2
 # Elpris per elområde EU+Norge (Energy-Charts, ingen nyckel) – icke-fatal.
 # Fallback: återanvänd redan publicerad data så sidan inte raderas ur docs/.
 ./viz/export-euprices.sh || echo "VARNING: export-euprices misslyckades – elpris-sidan ej uppdaterad" >&2

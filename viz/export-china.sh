@@ -19,7 +19,7 @@ done
 [ -n "$ok" ] || { echo "FEL: kunde inte hämta OWID-data" >&2; exit 1; }
 
 python3 - "$CSV" <<'PY'
-import csv, json, sys
+import csv, json, os, sys
 rows = list(csv.DictReader(open(sys.argv[1])))
 # OWID-kolumn -> projektnyckel
 M = [('Coal','kol'),('Gas','gas'),('Oil','olja'),('Nuclear','k'),
@@ -29,19 +29,37 @@ countries = [('China','Kina','China'),('India','Indien','India'),
              ('Germany','Tyskland','Germany'),('France','Frankrike','France'),
              ('Sweden','Sverige','Sweden'),('World','Världen','World')]
 years = [2015, 2020, 2025]
+missing = [c for c in M if c[0] not in (rows[0].keys() if rows else [])]
+if missing:
+    sys.exit('FEL: OWID-kolumner saknas: %s. Kolumnnamnen har troligen ändrats.'
+             % ', '.join(c[0] for c in missing))
 idx = {(r['Entity'], r['Year']): r for r in rows}
-data = []
+data, gaps = [], []
 for ename, sv, en in countries:
     for y in years:
         r = idx.get((ename, str(y)))
         if not r:
+            gaps.append('%s %d' % (ename, y))
             continue
         rec = {'name': sv, 'nameEn': en, 'y': y}
         for owid, key in M:
             rec[key] = round(float(r[owid])) if r[owid] else 0
         data.append(rec)
+
+# En tom eller halvtom fil får aldrig skrivas. Sidan renderar tre tomma
+# diagram utan att klaga, så ett misslyckat uttag såg tidigare ut som en
+# lyckad publicering. Skriv till temp och flytta först när datan håller.
+need = len(countries) * len(years)
+if len(data) < need:
+    sys.exit('FEL: %d av %d poster – saknas: %s' % (len(data), need, ', '.join(gaps)))
+for rec in data:
+    if sum(rec[k] for _, k in M) <= 0:
+        sys.exit('FEL: %s %d har noll total produktion' % (rec['nameEn'], rec['y']))
+
 lines = ',\n  '.join(json.dumps(d, ensure_ascii=False, separators=(',', ':')) for d in data)
 out = 'window.emberMix = {\n  years: [2015, 2020, 2025],\n  data: [\n  ' + lines + '\n]};\n'
-open('viz/data/ember-data.js', 'w').write(out)
+tmp = 'viz/data/ember-data.js.tmp'
+open(tmp, 'w').write(out)
+os.replace(tmp, 'viz/data/ember-data.js')
 print(f'skrev viz/data/ember-data.js ({len(out)} byte, {len(data)} poster)')
 PY
