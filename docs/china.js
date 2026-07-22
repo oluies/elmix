@@ -4,7 +4,23 @@
 (function () {
   'use strict'
   const E = window.emberMix
-  if (!E) return
+  // Tom data får inte se ut som lyckad rendering. Utan det här ritas tre
+  // tomma diagramrutor och sidan ser trasig ut utan att säga varför.
+  if (!E || !Array.isArray(E.data) || !E.data.length) {
+    const sv = (document.documentElement.getAttribute('data-lang') || 'sv') !== 'en'
+    const msg = sv
+      ? 'Datan för den här sidan kunde inte hämtas vid senaste publiceringen. Diagrammen är därför tomma. Källa: Our World in Data (Ember).'
+      : 'The data for this page could not be fetched at the last publish, so the charts are empty. Source: Our World in Data (Ember).'
+    const p = document.getElementById('cn-lead')
+    if (p) { p.textContent = msg; p.style.color = '#b3261e' }
+    for (const id of ['mix', 'tot', 'co2']) {
+      const el = document.getElementById(id)
+      if (el) { el.style.display = 'none' }
+    }
+    const st = document.getElementById('chart-status')
+    if (st) st.textContent = msg
+    return
+  }
   // Stapelordning: fossilt först, sedan kärnkraft + förnybart.
   const FUELS = [
     { key: 'kol',  name: 'Kol',              nameEn: 'Coal',         c: '#333' },
