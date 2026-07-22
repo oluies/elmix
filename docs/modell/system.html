@@ -53,6 +53,27 @@ td.mono{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--ink)
 td.sign{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:15px;text-align:center;width:1.5em;}
 td.lp{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:12.5px;white-space:nowrap;}
 tr:last-child td{border-bottom:0;}
+/* Under ~720px the reason column sits off-screen and drags every row to the
+   height of its own wrapped text, so the table reads as a column of gaps.
+   Stack each link into a labelled block instead and let the page scroll. */
+@media (max-width:720px){
+ .inv{overflow-x:visible;}
+ table{min-width:0;}
+ thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+ tbody tr{display:block;padding:14px 0;border-bottom:1px solid var(--rule);}
+ tbody tr:last-child{border-bottom:0;}
+ tbody td{display:block;border-bottom:0;padding:0 0 6px;white-space:normal;}
+ tbody td:last-child{padding-bottom:0;}
+ tbody td.mono,tbody td.lp{white-space:normal;}
+ tbody td.sign{text-align:left;width:auto;}
+ tbody td::before{display:block;margin-bottom:2px;color:var(--ink3);
+  font:600 10px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;}
+ tbody td:nth-child(1)::before{content:"From";}
+ tbody td:nth-child(2)::before{content:"To";}
+ tbody td:nth-child(3)::before{content:"Sign";}
+ tbody td:nth-child(4)::before{content:"Loop";}
+ tbody td:nth-child(5)::before{content:"Because";}
+}
 .src{font-size:12.5px;color:var(--ink3);border-top:1px solid var(--rule);padding-top:16px;max-width:none;}
 a{color:var(--gate);}
 .sitenav{max-width:1300px;margin:0 auto;padding:12px 22px 0;display:flex;gap:16px;
@@ -112,7 +133,7 @@ flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
 <h2>Rate against share, and what the queue is actually sampling</h2>
 <p>Data centres are the fastest-growing load in the system by a wide margin, and the IEA states the comparison directly: from 2024 to 2030 data centre electricity consumption grows by around <span class="num">15%</span> a year, "more than four times faster than the growth of total electricity consumption from all other sectors". Nothing else in the demand mix, including electrified heat, is expanding at that rate.</p>
 <p>How fast a load grows and how much of the growth it constitutes are separate questions, though, and the second one has a different answer in different places. Data centres account for under <span class="num">10%</span> of global electricity demand growth between 2024 and 2030 in the IEA's base case, and for about <span class="num">10%</span> of demand growth in the European Union on today's policy settings. In the United States they are close to half of it. The European figure is the relevant one for this model, and it means the bulk of the growth in European demand still comes from electrification of heating and transport, recovering manufacturing output, and cooling. A version of the argument claiming data centres are the main source of European load growth would be wrong by a factor of several.</p>
-<p>Sweden shows where the acceleration is actually visible. Applications to connect large data centres in SE3 went from roughly <span class="num">1,310</span> MW in 2024 to <span class="num">6,692</span> MW in 2025, close to five-fold in a single year. Consumption has not moved anything like that fast: Swedish data centres draw around <span class="num">4</span> TWh a year now, and the published projections for 2030 disagree by a factor of three. RISE puts it near <span class="num">5</span> TWh and Energimyndigheten at <span class="num">4.4 to 5.0</span> TWh, that estimate dating from 2023 and flagged by Svenskt Näringsliv as probably low because it predates the AI build-out, while scaling the Nordic system operators' forecast of 7 TWh in 2023 rising to 25 TWh in 2030 gives Sweden something like <span class="num">14 to 15</span> TWh. Nobody has narrowed that range, and the model should not pretend otherwise.</p>
+<p>Sweden shows where the acceleration is actually visible. Applications to connect large data centres in SE3 went from roughly <span class="num">1,310</span> MW in 2024 to <span class="num">6,692</span> MW in 2025, close to five-fold in a single year. Consumption has not moved anything like that fast: Swedish data centres draw around <span class="num">4</span> TWh a year now, and the published projections for 2030 disagree by a factor of three. RISE puts it near <span class="num">5</span> TWh and Energimyndigheten at <span class="num">4.4</span> to <span class="num">5.0</span> TWh, that estimate dating from 2023 and flagged by Svenskt Näringsliv as probably low because it predates the AI build-out, while scaling the Nordic system operators' forecast of 7 TWh in 2023 rising to 25 TWh in 2030 gives Sweden something like <span class="num">14</span> to <span class="num">15</span> TWh. Nobody has narrowed that range, and the model should not pretend otherwise.</p>
 <p>What accelerated, then, is the queue rather than the meter. That distinction resolves what otherwise looks like a contradiction in the model, since data centres are about half of Swedish connection applications and about a tenth of European demand growth, and both figures are correct. The queue is a biased sample of demand growth. It sees loads that arrive as large discrete blocks requiring new firm capacity, and it is close to blind to loads that arrive distributed and incrementally behind connections that already exist. A heat pump, a boiler retrofit or a depot charger mostly never appears in it. The same asymmetry applies to the fork chart: 600 TWh of technical potential against 115 TWh of projected data-centre demand is a comparison of stocks, while the queue is a flow, and a stock that arrives slowly can be much the larger of the two and still lose every contested slot.</p>
 <p>The consequence for gate 2 is that it selects for lumpiness on its own, before anyone has behaved strategically. A load that must be granted its capacity in one block competes in the queue; a load that can grow behind an existing connection does not have to. That sits alongside the selection on who can wait longest and the selection on who can document maturity, and unlike those two it requires no bias on anyone's part and cannot be removed by fixing the allocation rule.</p>
 <p>Nor is the queue a Swedish peculiarity. The IEA reports connection waits across the European Union ranging from two to ten years depending on the country, averaging seven to ten years in the FLAP-D hubs of Frankfurt, London, Amsterdam, Paris and Dublin. Gate 2 was drawn from one Swedish refusal, and it generalises.</p>
