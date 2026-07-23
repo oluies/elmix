@@ -28,12 +28,42 @@ countries = [('China','Kina','China'),('India','Indien','India'),
              ('United States','USA','United States'),('European Union (27)','EU','EU'),
              ('Germany','Tyskland','Germany'),('France','Frankrike','France'),
              ('Sweden','Sverige','Sweden'),('World','Världen','World')]
-years = [2015, 2020, 2025]
 missing = [c for c in M if c[0] not in (rows[0].keys() if rows else [])]
 if missing:
     sys.exit('FEL: OWID-kolumner saknas: %s. Kolumnnamnen har troligen ändrats.'
              % ', '.join(c[0] for c in missing))
 idx = {(r['Entity'], r['Year']): r for r in rows}
+
+# Åren härleds ur datan i stället för att stå hårdkodade. Basåren är fasta
+# femårssteg från 2015 så historiken förblir jämförbar mellan körningar;
+# därtill läggs det senaste kompletta året om det inte redan är ett femårssteg.
+# 2025 ger [2015, 2020, 2025], 2026 ger [2015, 2020, 2025, 2026].
+BASE, STEP, MIN_LATEST = 2015, 5, 2025
+
+def complete(y):
+    """Året duger bara om varje land har en rad med positiv totalproduktion.
+    OWID publicerar ofta ett halvfärdigt senaste år; utan det här testet
+    skulle sidan visa ett år där halva världen saknas."""
+    for ename, _, _ in countries:
+        r = idx.get((ename, str(y)))
+        if not r or sum(float(r[o]) if r[o] else 0 for o, _ in M) <= 0:
+            return False
+    return True
+
+seen = sorted({int(r['Year']) for r in rows if r['Year'].isdigit()})
+full = [y for y in seen if y >= BASE and complete(y)]
+if not full:
+    sys.exit('FEL: inget år från %d har fullständig data för alla %d länder'
+             % (BASE, len(countries)))
+latest = max(full)
+# Golv mot att ett trasigt flöde tyst rullar sidan bakåt i tiden.
+if latest < MIN_LATEST:
+    sys.exit('FEL: senaste kompletta år är %d, lägre än golvet %d – '
+             'flödet ser degraderat ut, behåller befintlig data' % (latest, MIN_LATEST))
+years = [y for y in range(BASE, latest + 1, STEP) if y in full]
+if latest not in years:
+    years.append(latest)
+print('år: %s (senaste kompletta: %d)' % (', '.join(map(str, years)), latest))
 data, gaps = [], []
 for ename, sv, en in countries:
     for y in years:
@@ -57,7 +87,8 @@ for rec in data:
         sys.exit('FEL: %s %d har noll total produktion' % (rec['nameEn'], rec['y']))
 
 lines = ',\n  '.join(json.dumps(d, ensure_ascii=False, separators=(',', ':')) for d in data)
-out = 'window.emberMix = {\n  years: [2015, 2020, 2025],\n  data: [\n  ' + lines + '\n]};\n'
+out = ('window.emberMix = {\n  years: [' + ', '.join(map(str, years)) + '],\n'
+       '  data: [\n  ' + lines + '\n]};\n')
 tmp = 'viz/data/ember-data.js.tmp'
 open(tmp, 'w').write(out)
 os.replace(tmp, 'viz/data/ember-data.js')
