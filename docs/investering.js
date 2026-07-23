@@ -14,7 +14,8 @@
   // spann). Stjärnmärkta = utvecklarmål/estimat, faktiskt utfall kan bli högre.
   const ITEMS = [
     { name: 'Landvind',         nameEn: 'Onshore wind',    capKey: 'v', lcoe: 51,  lcoeTxt: '51' },
-    { name: 'Havsvind',         nameEn: 'Offshore wind',   capKey: 'v', lcoe: 126, lcoeTxt: '126' },
+    { name: 'Havsvind botten',  nameEn: 'Offshore fixed',  capKey: 'v', lcoe: 126, lcoeTxt: '126' },
+    { name: 'Havsvind flytande', nameEn: 'Offshore floating', capKey: 'v', lcoe: 190, lcoeTxt: '~190' },
     { name: 'Sol',              nameEn: 'Solar',           capKey: 's', lcoe: 56,  lcoeTxt: '56' },
     { name: 'Vattenkraft',      nameEn: 'Hydro',           capKey: 'va', lcoe: 50, lcoeTxt: '~50' },
     { name: 'Kärnkraft Kina',   nameEn: 'Nuclear China',   capKey: 'k', lcoe: 60,  lcoeTxt: '~60' },
@@ -28,8 +29,8 @@
   const LANGS = ['sv', 'en']
   const TXT = {
     title: ['Betalar ny produktion sig? LCOE vs uppnått pris', 'Does new build pay? LCOE vs achieved price'],
-    lead: ['Staplarna är LCOE – kostnaden för att bygga ny produktion (extern benchmark). Vinden delas i land/hav och kärnkraften i kostnadsvarianter (kinesisk, svensk med 4 % statsränta, Rolls-Royce SMR, koreansk SMR, västlig konventionell merchant) – de skiljer sig kraftigt, mest pga kalkylränta och byggrisk. Diamanterna är det UPPNÅDDA priset (capture-pris) räknat på riktig timdata för valt elområde och år; capture är per resurs, så alla kärnkraftsvarianter delar SE-kärnkraftens capture och all vind SE-vindprofilen (≈landvind – Sverige har knappt havsvind). Streckad linje = marknadens snittpris (baslast). Diamant under linjen = kraftslaget kannibaliserar sitt pris; under stapeln = ny produktion betalar sig inte. SMR-siffror (*) är utvecklarmål/estimat.',
-      'Bars are LCOE – the cost of building new generation (external benchmark). Wind is split into onshore/offshore and nuclear into cost variants (Chinese, Swedish at 4% state rate, Rolls-Royce SMR, Korean SMR, Western conventional merchant) – they differ sharply, mostly due to discount rate and construction risk. Diamonds are the ACHIEVED (capture) price on real hourly data for the selected zone and year; capture is per resource, so all nuclear variants share the SE nuclear capture and all wind the SE wind profile (≈onshore – Sweden has almost no offshore). Dashed line = market average (baseload) price. Diamond below the line = the source cannibalises its price; below the bar = new build does not pay. SMR figures (*) are developer targets/estimates.'],
+    lead: ['Staplarna är LCOE – kostnaden för att bygga ny produktion (extern benchmark). Vinden delas i land, havsvind på botten (grunt, monopåle – typ SE4 Östersjön) och havsvind flytande (djupt vatten – typ SE3 Skagerrak/västkusten), och kärnkraften i kostnadsvarianter (kinesisk, svensk med 4 % statsränta, Rolls-Royce SMR, koreansk SMR, västlig konventionell merchant) – de skiljer sig kraftigt, mest pga kalkylränta och byggrisk. Flytande havsvind ligger ~1,5× över botten; efter regeringens avslag på 13 Östersjöparker (4 nov 2024, försvarsskäl) är det den flytande västkusten som är den levande pipelinen. Diamanterna är det UPPNÅDDA priset (capture-pris) räknat på riktig timdata för valt elområde och år; capture är per resurs, så alla kärnkraftsvarianter delar SE-kärnkraftens capture och all vind SE-vindprofilen (≈landvind – Sverige har knappt havsvind att mäta på). Streckad linje = marknadens snittpris (baslast). Diamant under linjen = kraftslaget kannibaliserar sitt pris; under stapeln = ny produktion betalar sig inte. SMR-siffror (*) är utvecklarmål/estimat.',
+      'Bars are LCOE – the cost of building new generation (external benchmark). Wind is split into onshore, bottom-fixed offshore (shallow, monopile – e.g. SE4 Baltic) and floating offshore (deep water – e.g. SE3 Skagerrak/west coast), and nuclear into cost variants (Chinese, Swedish at 4% state rate, Rolls-Royce SMR, Korean SMR, Western conventional merchant) – they differ sharply, mostly due to discount rate and construction risk. Floating offshore runs ~1.5× above bottom-fixed; after the government rejected 13 Baltic parks (4 Nov 2024, defence grounds) the floating west coast is the live pipeline. Diamonds are the ACHIEVED (capture) price on real hourly data for the selected zone and year; capture is per resource, so all nuclear variants share the SE nuclear capture and all wind the SE wind profile (≈onshore – Sweden has almost no offshore to measure). Dashed line = market average (baseload) price. Diamond below the line = the source cannibalises its price; below the bar = new build does not pay. SMR figures (*) are developer targets/estimates.'],
     lcoe: ['LCOE – ny produktion (€/MWh)', 'LCOE – new build (€/MWh)'],
     cap: ['Uppnått pris / capture (€/MWh)', 'Achieved / capture price (€/MWh)'],
     avg: ['Snittpris (baslast)', 'Average price (baseload)'],
@@ -77,7 +78,7 @@
 
   function option(a) {
     const nar = isNarrow()
-    const havsCat = iname(ITEMS[1]) // havsvind – nivåmarkör "med statlig anslutning"
+    const havsCat = iname(ITEMS[1]) // havsvind botten – nivåmarkör "med statlig anslutning"
     return {
       title: {
         text: `${TXT.title[li()]} · ${zl(zone)} ${year}`,
