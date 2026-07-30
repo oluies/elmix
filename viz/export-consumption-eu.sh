@@ -64,10 +64,17 @@ COPY (
 ) TO 'viz/data/consumption-eu.json' (FORMAT json, ARRAY true);
 SQL
 
+# Åren och zonerna härleds ur datan i stället för att hårdkodas (jfr export-china.sh).
+# Ett år som saknar rådata (t.ex. en misslyckad hämtning av innevarande år) fick
+# tidigare ändå stå i years:[] och sidan renderade ett tomt, trasigt år.
+YEARS=$(duckdb -noheader -list -c "SELECT string_agg(y::VARCHAR, ', ') FROM (SELECT DISTINCT y FROM read_json_auto('viz/data/consumption-eu.json') ORDER BY y)")
+ZONES=$(duckdb -noheader -list -c "SELECT string_agg('\"' || z || '\"', ',') FROM (SELECT DISTINCT z FROM read_json_auto('viz/data/consumption-eu.json') ORDER BY z)")
+[ -n "$YEARS" ] || { echo "FEL: ingen EU-förbrukningsdata – skriver inte tom fil" >&2; exit 1; }
 {
-  printf 'window.elmixEu = { years: [2025, 2026], zones: ["DE_LU","FR"], data: '
+  printf 'window.elmixEu = { years: [%s], zones: [%s], data: ' "$YEARS" "$ZONES"
   cat viz/data/consumption-eu.json
   printf ' };\n'
 } > viz/data/consumption-eu-data.js
+echo "  år: [$YEARS]  zoner: [$ZONES]"
 
 echo "skrev viz/data/consumption-eu-data.js ($(wc -c < viz/data/consumption-eu-data.js) byte)"
