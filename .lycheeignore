@@ -2,3 +2,6 @@
 # avvisas av servern). Exkluderas från länkkontrollen.
 mckinsey\.com
 linkedin\.com
+# Giltig men trög akademisk PDF-värd: 302 följt av >20 s nedladdning, så lychee
+# time-outar (docs/index.html + prerendered.html). Fungerar i webbläsare.
+diva-portal\.org
