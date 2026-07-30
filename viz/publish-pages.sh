@@ -41,6 +41,7 @@ cp viz/data/round-data.js viz/data/consumption-data.js docs/data/
 cp viz/multiclock.js viz/consumption-se.html viz/energi.html viz/energi.js docs/
 # Investeringssignal (LCOE vs capture) – läser consumption-data.js, alltid byggd.
 cp viz/investering.html viz/investering.js docs/
+cp viz/uk.html docs/
 # Lagring & varaktighet – statisk referensdata i lagring.js, ingen hämtning.
 cp viz/lagring.html viz/lagring.js docs/
 # Modellsektionen – fristående sidor, ingen data och inga byggberoenden.
