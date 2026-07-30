@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="sv" data-lang="sv">
+<head>
+  <meta charset="utf-8">
+  <title>Elmix – Storbritannien: CfD-riktpris mot uppnått pris</title>
+  <script src="vendor/echarts.min.js"></script>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;
+           max-width: 1180px; padding: 0 16px 48px; color: #222; }
+    h1 { font-size: 20px; margin-top: 24px; }
+    .lead { color: #555; font-size: 14px; line-height: 1.55; max-width: 940px; }
+    .chart { width: 100%; height: 460px; margin-top: 12px;
+             background: #fafbfd; border: 1px solid #e3e8ef; border-radius: 10px; }
+    footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
+    footer a { color: #36c; }
+    .topnav { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap;
+              padding: 10px 0 8px; margin-bottom: 4px; border-bottom: 1px solid #e3e8ef; font-size: 14px; }
+    .topnav .brand { font-weight: 600; color: #333; margin-right: 4px; }
+    .topnav a { color: #36c; text-decoration: none; }
+    .topnav a:hover { text-decoration: underline; }
+    .topnav a.current { color: #222; font-weight: 600; cursor: default; }
+    .refs { margin-top: 26px; font-size: 13px; color: #444; max-width: 940px; }
+    .refs h2 { font-size: 15px; margin: 0 0 6px; }
+    .refs ul { padding-left: 18px; line-height: 1.55; margin: 0; }
+    .refs li { margin-bottom: 5px; }
+    .refs a { color: #36c; }
+    .note { margin-top: 22px; max-width: 940px; font-size: 13px; color: #333;
+            background: #f4f8f5; border: 1px solid #d5e6db; border-left: 4px solid #1a6b54;
+            border-radius: 8px; padding: 12px 16px; line-height: 1.55; }
+    .note h2 { font-size: 15px; margin: 0 0 6px; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <span class="brand">Elmix · SE1–SE4</span>
+    <a href="index.html">Interaktiv</a>
+    <a href="consumption.html">Förbrukningsmix SE</a>
+    <a href="energi.html">Volym &amp; kostnad</a>
+    <a href="china.html">Kina vs världen</a>
+    <a href="investering.html">Investeringssignal</a>
+    <a class="current" href="uk.html">Storbritannien</a>
+    <a href="euprices.html">Elpris EU+Norge</a>
+    <a href="lagring.html">Lagring &amp; varaktighet</a>
+    <a href="modell/index.html">Modell</a>
+  </nav>
+
+  <main>
+    <h1>Storbritannien: garanterat CfD-riktpris mot uppnått marknadspris</h1>
+    <p class="lead">Samma fråga som på <a href="investering.html">Investeringssignal</a>, fast för
+      Storbritannien och med brittiska data. Staplarna visar vad varje kraftslag faktiskt tjänade per
+      MWh på grossistmarknaden 2025 – det <strong>uppnådda priset</strong> (capture) – räknat ur
+      Elexons timdata för produktion och marknadsprisindex (APXMIDP). Diamanterna visar det
+      <strong>garanterade CfD-riktpriset</strong> som staten låser för ny havsvind och ny kärnkraft;
+      ett dubbelriktat differenskontrakt tar bort kannibaliseringsrisken, så gapet mellan diamant och
+      stapel är i praktiken vad kontraktet är värt. Systemsnittet 2025 låg på 80 £/MWh (streckad linje).</p>
+
+    <div id="uk" class="chart" role="img" aria-label="GB capture-pris och CfD-riktpris per kraftslag"></div>
+
+    <aside class="note">
+      <h2>Vad grafen säger</h2>
+      <p>Vind och sol är de enda kraftslag som fångade <em>under</em> systemsnittet 2025 – vind 72 £/MWh
+        (0,90×), sol 66 (0,82×) – därför att de säljer samtidigt. Gas fångade en bristpremie (95, 1,19×)
+        genom att köra de dyra timmarna och kärnkraften låg på snittet som baslast (80, 1,01×). Havsvindens
+        AR6-riktpris (58,87 £/MWh i 2012 års pengar ≈ 82 i dagens) ligger drygt tio pund över vad vind
+        faktiskt fångar på marknaden – det är kannibaliseringsgapet som CfD:n täcker. Hinkley Point C:s
+        riktpris (92,50 £/MWh 2012, KPI-indexerat till ≈ 128 idag) ligger långt över kärnkraftens
+        baslast-capture på 80 – priset för fast fossilfri effekt.</p>
+    </aside>
+
+    <section class="refs">
+      <h2>Referenser</h2>
+      <ul>
+        <li><strong>Uppnått pris (capture) 2025</strong> – eget beräknat ur
+          <a href="https://bmrs.elexon.co.uk/">Elexon BMRS</a>: halvtimmesvis GB-produktion per bränsletyp
+          och marknadsprisindex (APXMIDP). Capture = Σ(produktion × pris)/Σ produktion; värdefaktor mot
+          det tidsviktade snittet 79,9 £/MWh. Gas 94,8 (1,19×), Biomassa 86,3 (1,08×), Kärnkraft 80,4
+          (1,01×), Vind 72,0 (0,90×), Sol 65,9 (0,82×). Skriptet (Mill Scala + DuckDB) ligger i
+          <a href="https://github.com/oluies/climate/blob/revision/value-of-renewables/Refresh.scala">Refresh.scala</a>.</li>
+        <li><strong>Havsvind CfD-riktpris ~82 £/MWh</strong> – Allocation Round 6 (sep 2024): ny havsvind
+          tilldelades vid 58,87 £/MWh i 2012 års pengar, ≈ 82 £/MWh KPI-indexerat till 2024.
+          <a href="https://ore.catapult.org.uk/resource-hub/blog/allocation-round-6-results-and-analysis">ORE Catapult, AR6</a>.</li>
+        <li><strong>Kärnkraft (Hinkley Point C) ~128 £/MWh</strong> – riktpris 92,50 £/MWh i 2012 års pengar
+          (89,50 om Sizewell C byggs), fullt KPI-indexerat över 35 år, uppe i ≈ 128 £/MWh.
+          <a href="https://www.world-nuclear-news.org/Articles/Strike-price-deal-for-Hinkley-Point-C">World Nuclear News</a>.</li>
+        <li><strong>Modellen</strong> – kannibaliseringsmekanismen och grindarna beskrivs i
+          <a href="modell/system.html">systemet i ord</a>; brittiska capture-siffror används även i
+          <a href="https://oluies.github.io/climate/chapters/chap-value-of-renewables.html">den reviderade upplagan av MacKays bok</a>.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>© 2026 Örjan Lundberg ·
+    <a href="https://github.com/oluies">GitHub</a> ·
+    <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
+    Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
+    Capture ur Elexon BMRS · CfD: gov.uk/ORE Catapult · Hinkley: WNN · ECharts</footer>
+
+  <script>
+    // GB, £/MWh. capture = 2025 merchant (Elexon); strike = guaranteed CfD (null where none).
+    var cats = ['Havsvind', 'Sol', 'Kärnkraft', 'Gas'];
+    var capture = [72.0, 65.9, 80.4, 94.8];
+    var strike  = [82, null, 128, null];
+    var avg = 79.9;
+    var el = document.getElementById('uk');
+    var chart = echarts.init(el);
+    chart.setOption({
+      grid: { left: 56, right: 24, top: 48, bottom: 40 },
+      legend: { top: 12, data: ['Uppnått pris 2025 (capture)', 'Garanterat CfD-riktpris'] },
+      tooltip: { trigger: 'axis', valueFormatter: function (v) { return v == null ? '–' : v + ' £/MWh'; } },
+      xAxis: { type: 'category', data: cats, axisTick: { alignWithLabel: true } },
+      yAxis: { type: 'value', name: '£/MWh', min: 0, max: 140 },
+      series: [
+        { name: 'Uppnått pris 2025 (capture)', type: 'bar', barWidth: '46%',
+          data: [
+            { value: capture[0], itemStyle: { color: '#1a7f6b' } },
+            { value: capture[1], itemStyle: { color: '#e1a731' } },
+            { value: capture[2], itemStyle: { color: '#8e44ad' } },
+            { value: capture[3], itemStyle: { color: '#c0392b' } }
+          ],
+          label: { show: true, position: 'inside', formatter: '{c}', color: '#fff', fontSize: 11 },
+          markLine: { silent: true, symbol: 'none',
+            data: [{ yAxis: avg, label: { formatter: 'systemsnitt ' + avg, position: 'insideEndTop' },
+                     lineStyle: { color: '#444', type: 'dashed' } }] }
+        },
+        { name: 'Garanterat CfD-riktpris', type: 'scatter', symbol: 'diamond', symbolSize: 16,
+          itemStyle: { color: '#222' },
+          data: strike.map(function (v) { return v == null ? '-' : v; }),
+          label: { show: true, position: 'right', formatter: function (p) { return p.value === '-' ? '' : p.value; }, fontSize: 11, color: '#222' } }
+      ]
+    });
+    window.addEventListener('resize', function () { chart.resize(); });
+  </script>
+</body>
+</html>
