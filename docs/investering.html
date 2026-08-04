@@ -154,6 +154,16 @@
           fast på systemnivå. Norges importbalanssiffror är författarens egna överslag.
           <a href="https://drive.google.com/file/d/1Fo89aydIhyf3_ONSN5aIKHZVoekUAtHo/view">Granskning (PDF)</a>,
           <a href="https://research.chalmers.se/publication/546563/file/546563_Fulltext.pdf">studien</a>.</li>
+        <li><strong>Vad LCOE mäter (kritisk genomgång)</strong> – Jan Emblemsvåg, "Rethinking the
+          'Levelized Cost of Energy': A critical review and evaluation of the concept",
+          Energy Research &amp; Social Science 119 (2025) 103897. Går igenom IEA:s, IRENA:s och
+          IPCC:s LCOE-praxis och fyra gränsdragningar som avgör vad måttet fångar: tillgångs- mot
+          systemnivå, gemensam kalkylränta och avkortad horisont, märkeffekt i nämnaren,
+          restkostnader. Fallstudie Bessakerfjellet (57,5 MW landvind, Norge, 7 % WACC,
+          gasbalansering): 19 % över tillgångs-LCOE deterministiskt, 34 % med Monte Carlo. Notera
+          att fallet belastar en enskild park med hela sin egen uppfastning – se förbehållen i rutan
+          nedan.
+          <a href="https://doi.org/10.1016/j.erss.2024.103897">doi.org/10.1016/j.erss.2024.103897</a></li>
       </ul>
       <p class="refnote">SMR-siffror (*) är utvecklarmål/estimat – first-of-a-kind blir sannolikt högre.
         Capture-pris = Σ(produktion × spotpris) / Σ produktion; snittpris = tidsviktat baslastpris.
@@ -163,6 +173,71 @@
         finns ingen kärnkraft att mäta på – då används snittpriset som baslast-proxy (kärnkraft går
         jämnt och fångar ≈ snittpriset); markeras † i datatabellen.</p>
     </section>
+
+    <aside class="note">
+      <h2>Vad LCOE mäter – och vad den inte mäter</h2>
+      <p>LCOE är nuvärdet av en anläggnings livstidskostnad delat på nuvärdet av dess produktion.
+        Formeln är enkel, men den bär inte den jämförelse mellan tekniker som den ständigt används
+        till. Emblemsvåg (2025) går igenom hur IEA, IRENA och IPCC räknar och pekar ut fyra
+        gränsdragningar som gör jobbet:</p>
+      <ul>
+        <li><strong>Tillgångsnivå eller systemnivå.</strong> En LCOE på tillgångsnivå räknar bara
+          det som händer innanför staketet. Utanför faller balanskraft och reservkapacitet,
+          bortkoppling (curtailment), och det kapacitetsutnyttjande som en variabel källa tar från
+          den planerbara anläggning som ändå måste stå redo för den. Hans första krav är därför att
+          man bestämmer vilket mått man räknar – och att man, om det är ett tillgångsmått, inte
+          jämför tekniker med det. Ingen av de tunga organisationerna i hans genomgång avstår från
+          just det.</li>
+        <li><strong>En gemensam kalkylränta och en horisont satt av den kortlivade tillgången.</strong>
+          Båda valen har riktning. En avkortad horisont belastar en långlivad anläggning med hela
+          dess kapital men räknar bara en del av dess produktion, så konventionen gynnar
+          systematiskt kortlivat framför långlivat – vind och sol framför kärnkraft och vattenkraft.
+          En enda kalkylränta bortser dessutom från att olika tekniker finansieras av olika
+          investerarkategorier till verkligt olika kapitalkostnad.</li>
+        <li><strong>Märkeffekt i stället för maximal praktisk kapacitet.</strong> Kapacitet som inte
+          kan användas har inget ekonomiskt värde, men ligger kvar i nämnaren och sänker kostnaden
+          per MWh.</li>
+        <li><strong>Restkostnader bortom horisonten</strong> – rivning och ersättningsinvesteringar.</li>
+      </ul>
+      <p>Fallstudien är Bessakerfjellet, 57,5 MW landvind i Norge, räknad på IEA:s kostnadsdata,
+        25 års livslängd enligt IRENA, 7 % nominell WACC och gasbalansering (gas är det som faktiskt
+        balanserar förnybart i 26 OECD-länder). Att minimera totalkostnaden under ett åtagande om
+        fast leverans innebar att bara <strong>45 % av installerad effekt</strong> kunde utlovas – i
+        praktiken en 25,9 MW-park av en 57,5 MW-park. Utfallet blev <strong>19 % över
+        tillgångs-LCOE</strong> deterministiskt, <strong>34 % över</strong> när osäkerheterna körs
+        genom en Monte Carlo-simulering, och upp till <strong>3,5×</strong> tillgångs-LCOE om
+        kapacitetsmodellen körs på märkeffekt.</p>
+      <p>Två förbehåll hör till, och de ska stå framme:</p>
+      <ul>
+        <li>Författaren har en genomgående publicerad ståndpunkt – bland annat "Wind energy is not
+          sustainable when balanced by fossil energy" (Applied Energy 305, 2021) – och översikten
+          ligger i linje med den. Den <em>strukturella</em> kritiken är ändå mainstream: skillnaden
+          mellan tillgångs- och systemnivå, liksom begreppet system-LCOE, är etablerade i
+          litteraturen oberoende av honom.</li>
+        <li>Fallstudien belastar en <em>enskild</em> vindpark med hela kostnaden för att fasta upp
+          <em>sig själv</em> till planerbar standard med dedikerad gas. Verkliga system balanserar
+          över hela flottan och fastar aldrig upp en enskild anläggning isolerat. 3,5× är därför en
+          <strong>övre gräns</strong> för den uppfastningskostnad som kan tillskrivas en enskild
+          anläggning, inte ett estimat av den – och ingen korrigering att lägga på siffrorna på den
+          här sidan.</li>
+      </ul>
+      <p>Grafen ovanför gör det försvarbara: den ställer LCOE mot capture-pris <em>per kraftslag</em>
+        och frågar om investeringen täcker sina kostnader. Det är en finansieringsfråga om en
+        enskild anläggning, och den är legitim. Det som inte är legitimt är att läsa LCOE-staplarna
+        på tvären, som en rangordning mellan tekniker.</p>
+      <p>Jämförelsen är dessutom asymmetrisk: capture-priset kommer ur hela systemets prisbildning
+        medan LCOE är ett tillgångsmått, och asymmetrin lutar åt ett håll – de variabla källornas
+        kostnader blir underskattade i förhållande till de planerbaras. Marginalerna i grafen ser
+        därmed för generösa ut för vind och sol, och för hårda mot planerbar kraft.</p>
+      <p>Sidans egna kärnkraftssiffror gör den andra gränsdragningen konkret: samma reaktor ligger
+        på ~150–200 €/MWh med kommersiell finansiering och ~72 €/MWh till statens 4 % enligt
+        Lag (2025:587). Spannet 60–200 €/MWh för kärnkraft är ett spann av finansieringsvillkor,
+        inte av reaktortekniker.</p>
+      <p><strong>LCOE jämför inte tekniker – den jämför en investering mot sin egen intäkt.</strong></p>
+      <p class="refnote">Källa: Jan Emblemsvåg, "Rethinking the 'Levelized Cost of Energy':
+        A critical review and evaluation of the concept", Energy Research &amp; Social Science 119
+        (2025) 103897. <a href="https://doi.org/10.1016/j.erss.2024.103897">doi.org/10.1016/j.erss.2024.103897</a></p>
+    </aside>
 
     <aside class="note">
       <h2>Varför staplarna är riktvärden – och svenska stödmodellen</h2>
