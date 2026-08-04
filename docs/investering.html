@@ -45,6 +45,10 @@
     .note ul { padding-left: 18px; margin: 6px 0; }
     .note li { margin-bottom: 5px; }
     .note a { color: #36c; }
+    /* Statisk text i rutorna: sv/en-syskon växlas av språkväljaren via
+       html[data-lang] (samma mönster som round.html/consumption.html). */
+    html[data-lang="en"] [lang="sv"] { display: none; }
+    html[data-lang="sv"] [lang="en"] { display: none; }
   </style>
 </head>
 <body>
@@ -175,12 +179,16 @@
     </section>
 
     <aside class="note">
-      <h2>Vad LCOE mäter – och vad den inte mäter</h2>
-      <p>LCOE är nuvärdet av en anläggnings livstidskostnad delat på nuvärdet av dess produktion.
+      <h2><span lang="sv">Vad LCOE mäter – och vad den inte mäter</span><span lang="en">What LCOE measures – and what it does not</span></h2>
+      <p lang="sv">LCOE är nuvärdet av en anläggnings livstidskostnad delat på nuvärdet av dess produktion.
         Formeln är enkel, men den bär inte den jämförelse mellan tekniker som den ständigt används
         till. Emblemsvåg (2025) går igenom hur IEA, IRENA och IPCC räknar och pekar ut fyra
         gränsdragningar som gör jobbet:</p>
-      <ul>
+      <p lang="en">LCOE is the present value of a plant's lifetime cost divided by the present value
+        of its output. The formula is simple, but it does not carry the cross-technology comparison
+        it is constantly used for. Emblemsvåg (2025) reviews how the IEA, IRENA and the IPCC compute
+        it, and singles out four boundary choices that do the work:</p>
+      <ul lang="sv">
         <li><strong>Tillgångsnivå eller systemnivå.</strong> En LCOE på tillgångsnivå räknar bara
           det som händer innanför staketet. Utanför faller balanskraft och reservkapacitet,
           bortkoppling (curtailment), och det kapacitetsutnyttjande som en variabel källa tar från
@@ -199,7 +207,26 @@
           per MWh.</li>
         <li><strong>Restkostnader bortom horisonten</strong> – rivning och ersättningsinvesteringar.</li>
       </ul>
-      <p>Fallstudien är Bessakerfjellet, 57,5 MW landvind i Norge, räknad på IEA:s kostnadsdata,
+      <ul lang="en">
+        <li><strong>Asset level or system level.</strong> An asset-level LCOE counts only what
+          happens inside the fence. Left outside are balancing and backup capacity, curtailment, and
+          the capacity utilisation a variable source takes away from the dispatchable plant that has
+          to stay available for it. His first requirement is therefore to decide which metric you are
+          computing – and, if it is an asset metric, not to compare technologies with it. Not one of
+          the reputable organisations in his survey resists doing exactly that.</li>
+        <li><strong>A single discount rate, and a horizon set by the short-lived asset.</strong>
+          Both choices have a direction. Truncating the horizon charges a long-lived plant its full
+          capital while counting only part of its output, so the convention systematically favours
+          short-lived assets over long-lived ones – wind and solar over nuclear and hydro. A single
+          discount rate also ignores that different technologies are funded by different investor
+          categories at genuinely different costs of capital.</li>
+        <li><strong>Nameplate capacity instead of maximum practical capacity.</strong> Capacity that
+          cannot be used has no economic value, yet it stays in the denominator and lowers the cost
+          per MWh.</li>
+        <li><strong>Residual costs beyond the horizon</strong> – decommissioning and replacement
+          investment.</li>
+      </ul>
+      <p lang="sv">Fallstudien är Bessakerfjellet, 57,5 MW landvind i Norge, räknad på IEA:s kostnadsdata,
         25 års livslängd enligt IRENA, 7 % nominell WACC och gasbalansering (gas är det som faktiskt
         balanserar förnybart i 26 OECD-länder). Att minimera totalkostnaden under ett åtagande om
         fast leverans innebar att bara <strong>45 % av installerad effekt</strong> kunde utlovas – i
@@ -207,8 +234,17 @@
         tillgångs-LCOE</strong> deterministiskt, <strong>34 % över</strong> när osäkerheterna körs
         genom en Monte Carlo-simulering, och upp till <strong>3,5×</strong> tillgångs-LCOE om
         kapacitetsmodellen körs på märkeffekt.</p>
-      <p>Två förbehåll hör till, och de ska stå framme:</p>
-      <ul>
+      <p lang="en">The case study is Bessakerfjellet, 57.5 MW of onshore wind in Norway, computed on
+        IEA cost data, a 25-year life per IRENA, a 7% nominal WACC and gas balancing (gas being what
+        actually balances renewables in 26 OECD countries). Minimising total cost under a
+        firm-delivery commitment meant that only <strong>45% of installed capacity</strong> could be
+        committed – in effect a 25.9 MW farm out of a 57.5 MW one. The outcome was <strong>19% above
+        asset LCOE</strong> deterministically, <strong>34% above</strong> once the uncertainties are
+        carried through a Monte Carlo simulation, and up to <strong>3.5×</strong> asset LCOE if the
+        capacity model is run at nameplate.</p>
+      <p lang="sv">Två förbehåll hör till, och de ska stå framme:</p>
+      <p lang="en">Two caveats belong with this, and they should be stated up front:</p>
+      <ul lang="sv">
         <li>Författaren har en genomgående publicerad ståndpunkt – bland annat "Wind energy is not
           sustainable when balanced by fossil energy" (Applied Energy 305, 2021) – och översikten
           ligger i linje med den. Den <em>strukturella</em> kritiken är ändå mainstream: skillnaden
@@ -221,31 +257,64 @@
           anläggning, inte ett estimat av den – och ingen korrigering att lägga på siffrorna på den
           här sidan.</li>
       </ul>
-      <p>Grafen ovanför gör det försvarbara: den ställer LCOE mot capture-pris <em>per kraftslag</em>
+      <ul lang="en">
+        <li>The author holds a consistent published position – among other things "Wind energy is
+          not sustainable when balanced by fossil energy" (Applied Energy 305, 2021) – and this
+          review is continuous with it. The <em>structural</em> critique is nevertheless mainstream:
+          the asset-versus-system distinction, and the concept of a system LCOE, are established in
+          the literature independently of him.</li>
+        <li>The case study charges a <em>single</em> wind farm the full cost of firming
+          <em>itself</em> to a dispatchable standard with dedicated gas. Real systems balance across
+          a whole fleet and never firm one asset in isolation. 3.5× is therefore an <strong>upper
+          bound</strong> on the firming cost attributable to a single asset, not an estimate of it –
+          and not a correction to apply to the figures on this page.</li>
+      </ul>
+      <p lang="sv">Grafen ovanför gör det försvarbara: den ställer LCOE mot capture-pris <em>per kraftslag</em>
         och frågar om investeringen täcker sina kostnader. Det är en finansieringsfråga om en
         enskild anläggning, och den är legitim. Det som inte är legitimt är att läsa LCOE-staplarna
         på tvären, som en rangordning mellan tekniker.</p>
-      <p>Jämförelsen är dessutom asymmetrisk: capture-priset kommer ur hela systemets prisbildning
+      <p lang="en">The chart above does the defensible thing: it sets LCOE against capture price
+        <em>per source</em> and asks whether the investment covers its costs. That is a financing
+        question about a single asset, and it is legitimate. What is not legitimate is reading the
+        LCOE bars across rows, as a ranking between technologies.</p>
+      <p lang="sv">Jämförelsen är dessutom asymmetrisk: capture-priset kommer ur hela systemets prisbildning
         medan LCOE är ett tillgångsmått, och asymmetrin lutar åt ett håll – de variabla källornas
         kostnader blir underskattade i förhållande till de planerbaras. Marginalerna i grafen ser
         därmed för generösa ut för vind och sol, och för hårda mot planerbar kraft.</p>
-      <p>Sidans egna kärnkraftssiffror gör den andra gränsdragningen konkret: samma reaktor ligger
+      <p lang="en">The comparison is asymmetric as well: the capture price comes out of the whole
+        system's price formation while LCOE is an asset metric, and the asymmetry runs one way –
+        variable sources' costs end up understated relative to dispatchable ones. The margins in the
+        chart therefore look too generous to wind and solar, and too harsh on dispatchable power.</p>
+      <p lang="sv">Sidans egna kärnkraftssiffror gör den andra gränsdragningen konkret: samma reaktor ligger
         på ~150–200 €/MWh med kommersiell finansiering och ~72 €/MWh till statens 4 % enligt
         Lag (2025:587). Spannet 60–200 €/MWh för kärnkraft är ett spann av finansieringsvillkor,
         inte av reaktortekniker.</p>
-      <p><strong>LCOE jämför inte tekniker – den jämför en investering mot sin egen intäkt.</strong></p>
-      <p class="refnote">Källa: Jan Emblemsvåg, "Rethinking the 'Levelized Cost of Energy':
+      <p lang="en">The page's own nuclear figures make the second boundary choice vivid: the same
+        reactor sits at ~150–200 €/MWh under commercial financing and ~72 €/MWh at the state's 4%
+        under Law (2025:587). The 60–200 €/MWh range quoted for nuclear is a range of financing
+        conditions, not of reactor technologies.</p>
+      <p lang="sv"><strong>LCOE jämför inte tekniker – den jämför en investering mot sin egen intäkt.</strong></p>
+      <p lang="en"><strong>LCOE does not compare technologies – it compares an investment against
+        its own revenue.</strong></p>
+      <p class="refnote" lang="sv">Källa: Jan Emblemsvåg, "Rethinking the 'Levelized Cost of Energy':
+        A critical review and evaluation of the concept", Energy Research &amp; Social Science 119
+        (2025) 103897. <a href="https://doi.org/10.1016/j.erss.2024.103897">doi.org/10.1016/j.erss.2024.103897</a></p>
+      <p class="refnote" lang="en">Source: Jan Emblemsvåg, "Rethinking the 'Levelized Cost of Energy':
         A critical review and evaluation of the concept", Energy Research &amp; Social Science 119
         (2025) 103897. <a href="https://doi.org/10.1016/j.erss.2024.103897">doi.org/10.1016/j.erss.2024.103897</a></p>
     </aside>
 
     <aside class="note">
-      <h2>Varför staplarna är riktvärden – och svenska stödmodellen</h2>
-      <p>På ren marknad ligger kärnkraftens capture (~80 €/MWh i SE3) långt under dess LCOE
+      <h2><span lang="sv">Varför staplarna är riktvärden – och svenska stödmodellen</span><span lang="en">Why the bars are benchmarks – and the Swedish support model</span></h2>
+      <p lang="sv">På ren marknad ligger kärnkraftens capture (~80 €/MWh i SE3) långt under dess LCOE
         (150–200) → ingen bygger ny kärnkraft merchant. Sverige överbryggar gapet med
         <strong>Lag (2025:587) om statligt stöd för investeringar i ny kärnkraft</strong>
         (riksdagsbeslut maj 2025). De två stödformerna motsvarar grafens två axlar:</p>
-      <ul>
+      <p lang="en">On a pure market, nuclear's capture price (~80 €/MWh in SE3) sits far below its
+        LCOE (150–200) → nobody builds new nuclear merchant. Sweden bridges the gap with
+        <strong>Law (2025:587) on state support for investment in new nuclear power</strong>
+        (Riksdag decision May 2025). The two forms of support correspond to the chart's two axes:</p>
+      <ul lang="sv">
         <li><strong>Statliga lån</strong> (ram ~220 mdr kr över 12 år) – staten lånar ut
           merparten av kapitalet till låg ränta → sänker WACC:en och därmed <em>LCOE-stapeln</em>.
           Henrekson &amp; Nilsson visar effekten: ny svensk kärnkraft ≈ 72 €/MWh vid 4 % statsränta
@@ -256,20 +325,43 @@
           övervinsten till staten. Låser <em>den uppnådda prisdiamanten</em> och tar bort
           kannibaliseringsrisken.</li>
       </ul>
-      <p>En oberoende granskning av Chalmers/Mistra-studiens systemkalkyl visar samma hävstång på
+      <ul lang="en">
+        <li><strong>State loans</strong> (a frame of ~220 bn SEK over 12 years) – the state lends
+          most of the capital at a low rate → lowering the WACC and with it the <em>LCOE bar</em>.
+          Henrekson &amp; Nilsson show the effect: new Swedish nuclear ≈ 72 €/MWh at a 4% state
+          lending rate (the bar "Swedish nucl. 4%") against Fortum's 150–200 at a high merchant
+          rate – same reactor, different financing.</li>
+        <li><strong>Two-way contract for difference (two-way CfD)</strong> (~1–3 bn SEK/year on
+          average, 40 years) – guarantees a strike price: spot below → the state tops up, spot above
+          → the surplus goes to the state. It locks in <em>the achieved-price diamond</em> and
+          removes the cannibalisation risk.</li>
+      </ul>
+      <p lang="sv">En oberoende granskning av Chalmers/Mistra-studiens systemkalkyl visar samma hävstång på
         systemnivå: byts kärnkraftens antagna byggkostnad mot Olkiluoto 3:s fakturerade pris, och
         prissätts det vätgaslager och insamlingsnät studien satt till noll, vänder studiens
         slutsats från 660–1490 MEUR/år dyrare till 444–1880 MEUR/år billigare (se referenslistan).</p>
-      <p class="refnote">Riktpriset (CfD-nivån) är ännu inte offentligt satt – avtal tecknas
+      <p lang="en">An independent review of the Chalmers/Mistra study's system calculation shows the
+        same leverage at system level: substitute Olkiluoto 3's invoiced construction price for the
+        one the study assumes for nuclear, and put a price on the hydrogen storage and collection
+        grid the study set to zero, and its conclusion flips from 660–1490 MEUR/year more expensive
+        to 444–1880 MEUR/year cheaper (see the reference list).</p>
+      <p class="refnote" lang="sv">Riktpriset (CfD-nivån) är ännu inte offentligt satt – avtal tecknas
         2026–2027 – så ingen streckad riktpris-nivå ritas i grafen. Fortums slide anger att
         kärnkraften "assumes risk sharing and/or support mechanisms". Källor:
         <a href="https://www.regeringen.se/regeringens-politik/karnkraftsfinansiering/sa-fungerar-stodmodellen-for-finansiering-av-ny-karnkraft/">Regeringen – stödmodellen</a>,
         <a href="https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2025587-om-statligt-stod-for-investeringar_sfs-2025-587/">Lag (2025:587)</a>.</p>
+      <p class="refnote" lang="en">The strike price (the CfD level) has not been publicly set –
+        contracts are signed 2026–2027 – so no dashed strike-price level is drawn in the chart.
+        Fortum's slide states that nuclear "assumes risk sharing and/or support mechanisms".
+        Sources:
+        <a href="https://www.regeringen.se/regeringens-politik/karnkraftsfinansiering/sa-fungerar-stodmodellen-for-finansiering-av-ny-karnkraft/">Regeringen – stödmodellen</a>,
+        <a href="https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2025587-om-statligt-stod-for-investeringar_sfs-2025-587/">Lag (2025:587)</a>
+        (both in Swedish).</p>
     </aside>
 
     <aside class="note">
-      <h2>Tysklands havsvind som spegelbild</h2>
-      <p>Tysk havsvind byggs utan intäktsstabilisering: budgivaren betalar för havsytan och bär
+      <h2><span lang="sv">Tysklands havsvind som spegelbild</span><span lang="en">German offshore wind as the mirror image</span></h2>
+      <p lang="sv">Tysk havsvind byggs utan intäktsstabilisering: budgivaren betalar för havsytan och bär
         sedan full marknadsprisrisk. När kapitalkostnaderna steg fick augustiauktionen 2025 noll
         bud på båda nordsjölägena (2,5 GW), och Total Energies och BP vill lämna tillbaka redan
         ersatta ytor och skriva av förskott i hundramiljonersklassen. Branschen kräver nu att
@@ -278,20 +370,41 @@
         målet är 30 GW till 2030, en tredubbling. Poängen för den här grafen: havsvind är extremt
         kapitalintensiv, så när räntan stiger och intäktssidan lämnas ren merchant uteblir
         kapitalet. Det är samma WACC-hävstång som staplarna visar, sedd från investerarens sida.</p>
-      <p class="refnote">Källa: Daniel Wetzel, "Unbezahlbare Windkraft, Gas-Engpass – Der deutsche
+      <p lang="en">German offshore wind is built without revenue stabilisation: the bidder pays for
+        the sea area and then carries full market price risk. When capital costs rose, the August
+        2025 auction drew zero bids on both North Sea sites (2.5 GW), and Total Energies and BP want
+        to hand back areas they have already paid for and write off advances in the hundreds of
+        millions. The industry now demands that the state take the loss risk via indexed contracts
+        for difference – the same CfD instrument Sweden uses for new nuclear – with the state
+        carrying the inflation risk as well. The statutory target is 30 GW by 2030, a tripling. The
+        point for this chart: offshore wind is extremely capital-intensive, so when rates rise and
+        the revenue side is left pure merchant, the capital does not turn up. It is the same WACC
+        leverage the bars show, seen from the investor's side.</p>
+      <p class="refnote" lang="sv">Källa: Daniel Wetzel, "Unbezahlbare Windkraft, Gas-Engpass – Der deutsche
         Winter wird teuer",
         <a href="https://www.welt.de/wirtschaft/plus6a634c30fe2765826e0fc132/energiewende-unbezahlbare-windkraft-gas-engpass-der-deutsche-winter-wird-teuer.html">Welt</a>,
         25 juli 2026 (betalvägg); auktionsutfallet även
         <a href="https://www.cleanenergywire.org/news/no-bids-german-offshore-wind-auction-first-time-industry-association">Clean Energy Wire</a>.</p>
+      <p class="refnote" lang="en">Source: Daniel Wetzel, "Unbezahlbare Windkraft, Gas-Engpass – Der
+        deutsche Winter wird teuer",
+        <a href="https://www.welt.de/wirtschaft/plus6a634c30fe2765826e0fc132/energiewende-unbezahlbare-windkraft-gas-engpass-der-deutsche-winter-wird-teuer.html">Welt</a>,
+        25 July 2026 (paywalled); the auction outcome also at
+        <a href="https://www.cleanenergywire.org/news/no-bids-german-offshore-wind-auction-first-time-industry-association">Clean Energy Wire</a>.</p>
     </aside>
 
     <aside class="note">
-      <h2>Var det här passar i modellen</h2>
-      <p>Capture-priset i grafen är producentsidans avläsning av överskottet, den låga siffra som
+      <h2><span lang="sv">Var det här passar i modellen</span><span lang="en">Where this fits in the model</span></h2>
+      <p lang="sv">Capture-priset i grafen är producentsidans avläsning av överskottet, den låga siffra som
         får investeringskalkylen att gå back när vinden kannibaliserar sig själv. Läst vid den andra
         mätaren, plus elskatt och nättariff, är samma billiga energi
         <a href="modell/gate.html">B3:s industripris</a> i kannibaliseringsmodellen, det som avgör om
         ett smältverk överlever. En storhet, två mätare; elskatten är kilen mellan dem.</p>
+      <p lang="en">The capture price in the chart is the producer side's reading of the surplus, the
+        low figure that pushes the investment case into the red when wind cannibalises itself. Read
+        at the other meter, plus electricity tax and grid tariff, that same cheap energy is
+        <a href="modell/gate.html">B3's industrial price</a> in the cannibalisation model, the one
+        that decides whether a smelter survives. One quantity, two meters; the electricity tax is
+        the wedge between them.</p>
     </aside>
   </main>
 
