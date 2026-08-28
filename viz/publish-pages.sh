@@ -23,7 +23,16 @@ china_ok viz/data/ember-data.js || echo "VARNING: ingen användbar ember-data.js
 # Fallback: återanvänd redan publicerad data så sidan inte raderas ur docs/.
 ./viz/export-euprices.sh || echo "VARNING: export-euprices misslyckades – elpris-sidan ej uppdaterad" >&2
 [ -f viz/data/euprices-data.js ] || cp docs/data/euprices-data.js viz/data/ 2>/dev/null || true
-(cd viz && ../mill app.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
+# Obalanspris mot day-ahead (eSett, ingen nyckel) – icke-fatal. Fallback:
+# återanvänd redan publicerad parquet så obalanssidans rullande vy inte dör.
+# Den statiska SVG:n ligger i modell/obalans.html och påverkas inte av utfallet.
+if ./viz/export-imbalance.sh; then
+  ./viz/render-obalans.py || echo "VARNING: render-obalans misslyckades – statisk bild oförändrad" >&2
+else
+  echo "VARNING: export-imbalance misslyckades – obalansdata ej uppdaterad" >&2
+  [ -f viz/data/imbalance.parquet ] || cp docs/data/imbalance.parquet viz/data/ 2>/dev/null || true
+fi
+(cd viz && ../mill app.fullLinkJS obalans.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
 (cd viz/ssr && node render.mjs)
 
 rm -rf docs
@@ -47,6 +56,11 @@ cp viz/lagring.html viz/lagring.js docs/
 # Modellsektionen – fristående sidor, ingen data och inga byggberoenden.
 mkdir -p docs/modell
 cp viz/modell/*.html docs/modell/
+# Obalanssidan är den enda modellsidan med ett bygge: Scala.js-modulen obalans
+# plus ES-modulen som bootar DuckDB-WASM, och parquetten den frågar mot.
+cp viz/out/obalans/fullLinkJS.dest/main.js docs/modell/obalans.js
+cp viz/modell/obalans-boot.mjs docs/modell/
+[ -f viz/data/imbalance.parquet ] && cp viz/data/imbalance.parquet docs/data/
 if [ -f viz/data/consumption-eu-data.js ]; then
   cp viz/consumption-eu.html docs/
   cp viz/data/consumption-eu-data.js docs/data/

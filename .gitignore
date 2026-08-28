@@ -4,6 +4,7 @@
 /out/
 viz/out/
 viz/data/
+viz/modell/obalans.js
 viz/prerendered.html
 viz/round-preview.html
 viz/ssr/node_modules/
