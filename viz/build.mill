@@ -8,3 +8,11 @@ object app extends ScalaJSModule {
     mvn"com.raquo::laminar::17.2.0"
   )
 }
+
+object obalans extends ScalaJSModule {
+  def scalaVersion = "3.3.4"
+  def scalaJSVersion = "1.19.0"
+  def mvnDeps = Seq(
+    mvn"com.raquo::laminar::17.2.0"
+  )
+}
