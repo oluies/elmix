@@ -9,8 +9,10 @@ DATA = os.path.join(HERE, "data", "imbalance-data.js")
 PAGE = os.path.join(HERE, "modell", "obalans.html")
 LIM, BIN, ZONE = 150.0, 2.0, "SE3"
 ZC = {"SE1": "var(--ind)", "SE2": "var(--flex)", "SE3": "var(--pol)", "SE4": "var(--eco)"}
-RES = {2022: "timme", 2023: "timme, sedan kvart från 22 maj",
-       2024: "kvart", 2025: "kvart", 2026: "kvart, till och med augusti"}
+RES = {2022: ("timme", "hourly"),
+       2023: ("timme, sedan kvart från 22 maj", "hourly, then quarter-hourly from 22 May"),
+       2024: ("kvart", "quarter-hourly"), 2025: ("kvart", "quarter-hourly"),
+       2026: ("kvart, till och med augusti", "quarter-hourly, through August")}
 
 raw = open(DATA, encoding="utf-8").read()
 agg = json.loads(raw[raw.index("=") + 1: raw.rstrip().rfind(";")])
@@ -30,6 +32,13 @@ def density(r):
     return [(b * BIN + BIN / 2, y) for b, y in zip(xs, out)]
 
 def esc(s): return s.replace("&", "&amp;").replace("<", "&lt;")
+
+def bi(x, y, cls, anchor, sv, en, extra=""):
+    """Sidan byter språk med html[data-lang]; CSS döljer den variant som inte gäller.
+    Samma trick fungerar på SVG-text, så båda språken ligger på samma koordinat."""
+    a = f' text-anchor="{anchor}"' if anchor else ""
+    return (f'<text x="{x}" y="{y}" class="{cls}"{a}{extra} lang="sv">{esc(sv)}</text>'
+            f'<text x="{x}" y="{y}" class="{cls}"{a}{extra} lang="en">{esc(en)}</text>')
 
 # ---------------------------------------------------------------- ridgeline
 W, X0, X1 = 1180, 250, 1120
@@ -53,18 +62,22 @@ for i, y in enumerate(years):
              f'fill="{ZC[ZONE]}" fill-opacity="0.15"/>')
     s.append(f'<polyline points="{path}" fill="none" stroke="{ZC[ZONE]}" stroke-width="2"/>')
     s.append(f'<text x="{X0-16}" y="{base-24:.0f}" class="ryear" text-anchor="end">{y}</text>')
-    s.append(f'<text x="{X0-16}" y="{base-8:.0f}" class="rsub" text-anchor="end">{esc(RES[y])}</text>')
-    s.append(f'<text x="{X1}" y="{base-40:.0f}" class="rstat" text-anchor="end" fill="{ZC[ZONE]}">'
-             f'{r["pct_near"]:.0f}% inom ±10 EUR/MWh</text>')
-    s.append(f'<text x="{X1}" y="{base-24:.0f}" class="rsub" text-anchor="end">'
-             f'{r["pct_zero"]:.0f}% exakt noll, ej ritad · {r["pct_out"]:.1f}% utanför skalan</text>')
+    s.append(bi(f"{X0-16}", f"{base-8:.0f}", "rsub", "end", RES[y][0], RES[y][1]))
+    s.append(bi(f"{X1}", f"{base-40:.0f}", "rstat", "end",
+                f'{r["pct_near"]:.0f}% inom ±10 EUR/MWh',
+                f'{r["pct_near"]:.0f}% within ±10 EUR/MWh',
+                extra=f' fill="{ZC[ZONE]}"'))
+    s.append(bi(f"{X1}", f"{base-24:.0f}", "rsub", "end",
+                f'{r["pct_zero"]:.0f}% exakt noll, ej ritad · {r["pct_out"]:.1f}% utanför skalan',
+                f'{r["pct_zero"]:.0f}% exactly zero, not drawn · {r["pct_out"]:.1f}% off the scale'))
 ay = TOP + ROW * len(years) + 6
 s.append(f'<line x1="{X0}" y1="{ay:.0f}" x2="{X1}" y2="{ay:.0f}" stroke="var(--rule)"/>')
 for t in (-150, -100, -50, 0, 50, 100, 150):
     s.append(f'<line x1="{sx(t):.1f}" y1="{ay:.0f}" x2="{sx(t):.1f}" y2="{ay+5:.0f}" stroke="var(--rule)"/>')
     s.append(f'<text x="{sx(t):.1f}" y="{ay+21:.0f}" class="ax" text-anchor="middle">{t}</text>')
-s.append(f'<text x="{X0}" y="{ay+44:.0f}" class="rsub" text-anchor="start">'
-         f'obalanspris minus day-ahead-pris, EUR/MWh</text>')
+s.append(bi(f"{X0}", f"{ay+44:.0f}", "rsub", "start",
+            "obalanspris minus day-ahead-pris, EUR/MWh",
+            "imbalance price minus day-ahead price, EUR/MWh"))
 s.append("</svg>")
 ridge = "\n".join(s)
 
@@ -89,13 +102,18 @@ for z, col in ZC.items():
     t.append(f'<text x="{PX1+10}" y="{py(vals[z][-1])+4+OFF[z]:.1f}" class="rstat" fill="{col}">{z}</text>')
 for i, y in enumerate(years):
     t.append(f'<text x="{px(i):.1f}" y="{PY1+24:.0f}" class="ax" text-anchor="middle">{y}</text>')
-t.append(f'<text x="{PX0}" y="24" class="rsub" text-anchor="start">'
-         f'andel perioder inom ±10 EUR/MWh</text>')
+t.append(bi(f"{PX0}", "24", "rsub", "start",
+            "andel perioder inom ±10 EUR/MWh",
+            "share of periods within ±10 EUR/MWh"))
 t.append("</svg>")
 zones = "\n".join(t)
 
-block = (f'<div class="fig"><p class="figh">SE3 &#183; fördelning per år</p>{ridge}</div>\n'
-         f'<div class="fig"><p class="figh">Alla fyra elområden &#183; andel nära noll</p>{zones}</div>')
+SVH = ('<span lang="sv">SE3 &#183; fördelning per år</span>'
+       '<span lang="en">SE3 &#183; distribution by year</span>')
+ZOH = ('<span lang="sv">Alla fyra elområden &#183; andel nära noll</span>'
+       '<span lang="en">All four bidding zones &#183; share close to zero</span>')
+block = (f'<div class="fig"><p class="figh">{SVH}</p>{ridge}</div>\n'
+         f'<div class="fig"><p class="figh">{ZOH}</p>{zones}</div>')
 
 page = open(PAGE, encoding="utf-8").read()
 new = re.sub(r"(<!-- STATIC-CHART:BEGIN -->).*?(<!-- STATIC-CHART:END -->)",
