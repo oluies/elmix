@@ -60,6 +60,13 @@ if [ -n "$saknas" ]; then
   exit 1
 fi
 
+# Regressionsvakten ovan ser bara att inget FÖRSVANN. Den duger inte när
+# baslinjen redan är trasig - efter 2026-08-29 saknar cachen 2026 års
+# generation/flows/imbalance, så nästa körning jämför mot ett redan tomt läge.
+# Golvkontrollen är absolut: varje zon och dataset måste finnas, ha rader och
+# vara färsk, oavsett hur läget såg ut innan.
+./viz/check-raw-floor.sh "$YEAR" || { echo "FEL: golvkontroll $YEAR" >&2; exit 1; }
+
 # DE/FR (icke-fatal – bryt inte hela refreshen om kontinentala hämtningen strular)
 retry ./mill Elmix.scala fetcheu --start "$YEAR" --end "$YEAR" || echo "VARNING: fetcheu $YEAR misslyckades – DE/FR ej uppdaterat" >&2
 retry ./mill Elmix.scala transform || { echo "FEL: transform" >&2; exit 1; }
