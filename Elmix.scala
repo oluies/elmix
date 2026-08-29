@@ -117,21 +117,22 @@ def unzipXml(bytes: Array[Byte]): Seq[String] =
   finally zis.close()
 
 /**
- * Sammanfattar ett felsvar for loggen. ENTSO-E svarar pa fel med ett
- * Acknowledgement_MarketDocument dar sjalva forklaringen ligger i Reason/text - den kommer langt
- * efter XML-deklaration och namespace, sa en rak trunkering av kroppen visar bara boilerplate och
- * aldrig orsaken. Plocka ut Reason (code + text); falla tillbaka pa trunkering om kroppen inte ar
- * den XML vi vantar oss.
+ * Sammanfattar ett felsvar for loggen. ENTSO-E svarar pa fel med ett Acknowledgement_MarketDocument
+ * dar sjalva forklaringen ligger i Reason/text - den kommer langt efter XML-deklaration och
+ * namespace, sa en rak trunkering av kroppen visar bara boilerplate och aldrig orsaken. Plocka ut
+ * Reason (code + text); falla tillbaka pa trunkering om kroppen inte ar den XML vi vantar oss.
  */
 def describeFault(body: String): String =
   scala.util
     .Try {
       val xml = XML.loadString(body)
-      val reasons = (xml \\ "Reason").map { r =>
-        val code = (r \ "code").text.trim
-        val text = (r \ "text").text.trim
-        if text.isEmpty then code else s"$code $text"
-      }.filter(_.nonEmpty)
+      val reasons = (xml \\ "Reason")
+        .map { r =>
+          val code = (r \ "code").text.trim
+          val text = (r \ "text").text.trim
+          if text.isEmpty then code else s"$code $text"
+        }
+        .filter(_.nonEmpty)
       if reasons.isEmpty then None else Some(reasons.mkString("; "))
     }
     .toOption
