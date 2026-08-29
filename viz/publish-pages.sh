@@ -32,7 +32,10 @@ else
   echo "VARNING: export-imbalance misslyckades – obalansdata ej uppdaterad" >&2
   [ -f viz/data/imbalance.parquet ] || cp docs/data/imbalance.parquet viz/data/ 2>/dev/null || true
 fi
-(cd viz && ../mill app.fullLinkJS obalans.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
+# bootstrap-mill (funkar även i CI utan global mill). OBS: flera tasks måste
+# separeras med `+` – `mill a.task b.task` tolkar b.task som ARGUMENT till
+# a.task, bygger tyst bara den första och returnerar 0.
+(cd viz && ../mill app.fullLinkJS + obalans.fullLinkJS)
 (cd viz/ssr && node render.mjs)
 
 rm -rf docs
