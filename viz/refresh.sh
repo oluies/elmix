@@ -19,6 +19,12 @@ fi
 
 YEAR="${1:-$(date +%Y)}"
 echo "Refresh: tvingar om-hämtning av $YEAR (tidigare år hoppas över inkrementellt)"
+# Vilka SE-filer fanns för året innan vi rensade? apiGet returnerar tomt både vid
+# "ingen data" och vid HTTP-fel - ENTSO-E svarar 400 + Acknowledgement - och
+# writeParquet hoppar då över filen UTAN att fetch felar. Ett dataset kan alltså
+# försvinna tyst, och transform/publish bygger vidare och committar ofullständig
+# data till docs/. Listan jämförs efter hämtningen; se kontrollen nedan.
+fanns_innan="$(ls data/raw/*/SE_*_"$YEAR".parquet 2>/dev/null | sort)"
 rm -f data/raw/*/SE_*_"$YEAR".parquet
 rm -f data/raw/eu/*/*_"$YEAR".parquet
 
@@ -36,6 +42,24 @@ retry() {
   return 1
 }
 retry ./mill Elmix.scala fetch --start "$YEAR" --end "$YEAR" --data all || { echo "FEL: fetch $YEAR" >&2; exit 1; }
+
+# Fetch kan lyckas (exit 0) och ändå ha tappat ett helt dataset, se kommentaren
+# vid fanns_innan. Kräv att allt som fanns före rensningen finns igen.
+saknas=""
+if [ -n "$fanns_innan" ]; then
+  while IFS= read -r f; do
+    [ -f "$f" ] || saknas="$saknas  $f
+"
+  done <<< "$fanns_innan"
+fi
+if [ -n "$saknas" ]; then
+  echo "FEL: hämtningen av $YEAR tappade filer som fanns före omhämtningen:" >&2
+  printf '%s' "$saknas" >&2
+  echo "ENTSO-E svarade sannolikt 400/Acknowledgement för dessa (se HTTP-raderna ovan)." >&2
+  echo "Avbryter hellre än bygger marts och publicerar på ofullständig data." >&2
+  exit 1
+fi
+
 # DE/FR (icke-fatal – bryt inte hela refreshen om kontinentala hämtningen strular)
 retry ./mill Elmix.scala fetcheu --start "$YEAR" --end "$YEAR" || echo "VARNING: fetcheu $YEAR misslyckades – DE/FR ej uppdaterat" >&2
 retry ./mill Elmix.scala transform || { echo "FEL: transform" >&2; exit 1; }
