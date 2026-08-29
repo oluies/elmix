@@ -32,7 +32,11 @@ else
   echo "VARNING: export-imbalance misslyckades – obalansdata ej uppdaterad" >&2
   [ -f viz/data/imbalance.parquet ] || cp docs/data/imbalance.parquet viz/data/ 2>/dev/null || true
 fi
-(cd viz && ../mill app.fullLinkJS obalans.fullLinkJS)   # bootstrap-mill (funkar även i CI utan global mill)
+# Bygg varje modul för sig. "mill a.fullLinkJS b.fullLinkJS" sväljer det andra
+# namnet som ett argument till det första, rapporterar SUCCESS och bygger bara
+# a -- vilket lät publiceringen falla på en saknad main.js.
+(cd viz && ../mill app.fullLinkJS)      # bootstrap-mill (funkar även i CI utan global mill)
+(cd viz && ../mill obalans.fullLinkJS)
 (cd viz/ssr && node render.mjs)
 
 rm -rf docs
