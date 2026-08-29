@@ -117,6 +117,28 @@ def unzipXml(bytes: Array[Byte]): Seq[String] =
   finally zis.close()
 
 /**
+ * Sammanfattar ett felsvar for loggen. ENTSO-E svarar pa fel med ett
+ * Acknowledgement_MarketDocument dar sjalva forklaringen ligger i Reason/text - den kommer langt
+ * efter XML-deklaration och namespace, sa en rak trunkering av kroppen visar bara boilerplate och
+ * aldrig orsaken. Plocka ut Reason (code + text); falla tillbaka pa trunkering om kroppen inte ar
+ * den XML vi vantar oss.
+ */
+def describeFault(body: String): String =
+  scala.util
+    .Try {
+      val xml = XML.loadString(body)
+      val reasons = (xml \\ "Reason").map { r =>
+        val code = (r \ "code").text.trim
+        val text = (r \ "text").text.trim
+        if text.isEmpty then code else s"$code $text"
+      }.filter(_.nonEmpty)
+      if reasons.isEmpty then None else Some(reasons.mkString("; "))
+    }
+    .toOption
+    .flatten
+    .getOrElse(body.take(200).replace("\n", " ").trim)
+
+/**
  * Hamtar ett API-svar. Stora svar (A85 m.fl.) levereras som zip med ett eller flera dokument -
  * returnerar ett Elem per dokument, tomt vid Acknowledgement (ingen data) eller HTTP-fel.
  */
@@ -129,7 +151,7 @@ def apiGet(params: Map[String, String]): Seq[scala.xml.Elem] =
     check = false
   )
   if resp.statusCode != 200 then
-    System.err.println(s"  HTTP ${resp.statusCode}: ${resp.text().take(200)}")
+    System.err.println(s"  HTTP ${resp.statusCode}: ${describeFault(resp.text())}")
     Nil
   else
     val bytes = resp.bytes
@@ -692,7 +714,32 @@ def runTests(): Unit =
   check("singulär: inga NaN", (p.eigenvalues ++ p.loadings.flatten).forall(x => !x.isNaN))
   check("förklarad summerar till 1", approx(p.explained.sum, 1.0))
 
-  if fails == 0 then println("\nAlla PCA-tester gröna.")
+  // 7. describeFault plockar ut Reason ur ett Acknowledgement. ENTSO-E lagger forklaringen
+  //    efter XML-deklaration och namespace, dvs. bortom de 200 tecken som loggen tidigare
+  //    trunkerade till - "bortom 200 tecken" ar regressionsvakten for just det.
+  val ackText = "No matching data found for Data item Day-ahead Prices [12.1.D]"
+  val ack = s"""<?xml version="1.0" encoding="UTF-8"?>
+<Acknowledgement_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
+  <mRID>60f0551b-b3bb-4</mRID>
+  <createdDateTime>2026-08-29T12:37:58Z</createdDateTime>
+  <Reason>
+    <code>999</code>
+    <text>$ackText</text>
+  </Reason>
+</Acknowledgement_MarketDocument>"""
+  check("describeFault: kod och text", describeFault(ack) == s"999 $ackText", describeFault(ack))
+  check(
+    "describeFault: bortom 200 tecken",
+    !ack.take(200).contains(ackText) && describeFault(ack).contains(ackText)
+  )
+  val ackUtanText = ack.replace(s"<text>$ackText</text>", "")
+  check("describeFault: bara kod", describeFault(ackUtanText) == "999", describeFault(ackUtanText))
+  val skrap = "<html><body>502 Bad Gateway</body></html>"
+  check("describeFault: utan Reason -> trunkering", describeFault(skrap) == skrap)
+  val fritext = "plain text fel"
+  check("describeFault: icke-XML -> trunkering", describeFault(fritext) == fritext)
+
+  if fails == 0 then println("\nAlla självtester gröna.")
   else { System.err.println(s"\n$fails test misslyckades."); sys.exit(1) }
 
 @main
