@@ -198,30 +198,39 @@ object Texts:
    * sajten, men den kinesiska tariffdatan ar handmatad statisk text i Data.scala - da racker det
    * inte att namna varifran den kommer, den maste ga att klicka sig till och kontrollera.
    */
-  final case class Kalla(sv: String, en: String, url: String):
-    def label(lang: String): String = if lang == "en" then en else sv
+  final case class Kalla(label: T, url: String)
 
   val srcHeading = T("Kinesiska primärkällor", "Chinese primary sources")
 
   val srcLinks: Vector[Kalla] = Vector(
     Kalla(
-      "Provinstariffer maj 2025 – tabellen sidans siffror är hämtade ur (China Briefing)",
-      "Provincial tariffs May 2025 – the table this page’s figures come from (China Briefing)",
+      T(
+        "Provinstariffer maj 2025 – tabellen sidans siffror är hämtade ur (China Briefing)",
+        "Provincial tariffs May 2025 – the table this page’s figures come from (China Briefing)"
+      ),
       "https://www.china-briefing.com/news/chinas-industrial-power-rates-category-electricity-usage-region-classification/"
     ),
     Kalla(
-      "NDRC om tidsdifferentierade priser, 发改价格〔2021〕1093号 – topp/plan/dal-mekanismen",
-      "NDRC on time-of-use pricing, NDRC Price [2021] No. 1093 – the peak/flat/valley mechanism",
+      T(
+        "NDRC om tidsdifferentierade priser, 发改价格〔2021〕1093号 – topp/plan/dal-mekanismen",
+        "NDRC on time-of-use pricing, NDRC Price [2021] No. 1093 – the peak/flat/valley mechanism"
+      ),
       "https://www.gov.cn/zhengce/zhengceku/2021-07/29/content_5628297.htm"
     ),
+    // Varden serverar varken HTTPS eller en icke-mobil variant under /mobile/;
+    // desktop-URL:en nedan ar den enda som svarar 200, och den bara over http.
     Kalla(
-      "Månadssammanställning av工商业-priser per provins, februari 2026 (光伏产业网)",
-      "Monthly per-province commercial & industrial prices, February 2026 (Solaren PV)",
-      "http://www.solarenpv.com/mobile/index.php?moduleid=24&itemid=2100"
+      T(
+        "Månadssammanställning av工商业-priser per provins, februari 2026 (光伏产业网)",
+        "Monthly per-province commercial & industrial prices, February 2026 (Solaren PV)"
+      ),
+      "http://www.solarenpv.com/index.php?moduleid=24&itemid=2100"
     ),
     Kalla(
-      "Månadssammanställning med störst topp/dal-spann, januari 2026 (CNESA)",
-      "Monthly summary of the largest peak-valley spreads, January 2026 (CNESA)",
+      T(
+        "Månadssammanställning med störst topp/dal-spann, januari 2026 (CNESA)",
+        "Monthly summary of the largest peak-valley spreads, January 2026 (CNESA)"
+      ),
       "https://www.cnesa.org/information/detail/?column_id=3&id=7747"
     )
   )
