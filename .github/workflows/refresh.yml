@@ -3,7 +3,17 @@ name: Data refresh
 on:
   schedule:
     - cron: '17 5 * * *'   # 05:17 UTC dagligen
-  workflow_dispatch: {}    # manuell körning från Actions-fliken
+  workflow_dispatch:       # manuell körning från Actions-fliken
+    inputs:
+      steg:
+        description: 'Vilket steg som ska köras'
+        type: choice
+        options: [allt, hamta, bygg]
+        default: allt
+      ar:
+        description: 'År att hämta om (tomt = innevarande)'
+        type: string
+        default: ''
 
 permissions:
   contents: write          # för att committa/pusha ombyggd docs/
@@ -43,7 +53,8 @@ jobs:
           key: elmix-rawdata-v1-${{ github.run_id }}
           restore-keys: elmix-rawdata-v1-
 
-      - name: Refresh data + bygg rapporter
+      - name: Bootstrap vid kall cache (full hämtning)
+        if: inputs.steg != 'bygg'
         env:
           ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
         run: |
@@ -65,13 +76,29 @@ jobs:
               sleep 5
             done
           fi
-          ./viz/refresh.sh
+
+      # Faller på ENTSO-E:s uppetid (503/400 -> tyst tappade dataset). Rör bara
+      # data/raw, så ett fel här lämnar marts och docs/ orörda och det räcker att
+      # köra om det här steget - välj steg=hamta vid manuell omkörning.
+      - name: Hämta ENTSO-E-data
+        if: inputs.steg != 'bygg'
+        env:
+          ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
+        run: ./viz/fetch-year.sh ${{ inputs.ar }}
+
+      # Faller på DuckDB, inte på ENTSO-E, och behöver ingen API-nyckel. Kör om
+      # med steg=bygg när hämtningen redan gav färsk rådata - golvkontrollen
+      # först i skriptet ser till att steget aldrig publicerar på halvfärdig data.
+      - name: Bygg marts + rapporter
+        if: inputs.steg != 'hamta'
+        run: ./viz/build-reports.sh ${{ inputs.ar }}
 
       # Committa docs. Jobbet tar ~1h, så main kan hinna flyttas (PR-merge) under
       # tiden -> push avvisas eller krockar. Vid avslag: synka till senaste main och
       # BYGG OM docs mot den (rådatan är redan hämtad, så ombygget är snabbt och
       # deterministiskt) -> aldrig innehållskonflikt, alltid ovanpå senaste källa.
       - name: Committa ombyggd docs (rebasa + bygg om vid krock)
+        if: inputs.steg != 'hamta'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
