@@ -144,37 +144,113 @@ enum ApiSvar:
   case Ok, IngenData, Transient, Permanent
 
 /**
+ * Vilket slags fel vi raknar forsok for. Budgeten ar PER SLAG: en timeout och ett 503 ska inte ata
+ * ur samma pott. Med en delad raknare racker det att ett 503 foljs av en enda timeout for att
+ * timeoutbudgeten (2) ska se ut som uttomd - och en belastad ENTSO-E producerar precis sadana
+ * blandade sekvenser.
+ */
+enum Felslag:
+  case Transient, Rate, Timeout, Permanent
+
+/** Vad som ska handa efter ett misslyckat forsok. */
+enum Beslut:
+  case Vanta(ms: Long)
+  case GeUpp
+
+/**
  * ENTSO-E svarar 400 + Acknowledgement bade nar det genuint saknas data och nar anropet ar fel.
  * Koden ar 999 i bada fallen, sa det ar bara Reason-texten som skiljer dem at. Att som forr
  * behandla ALLA fel som "ingen data" gjorde att ett trasigt anrop tyst gav en tom parquet. Okanda
- * 400:or klassas darfor som Permanent - hellre ett hogljutt fel an tyst fel data.
+ * fel klassas darfor som Permanent - hellre ett hogljutt fel an tyst fel data.
+ *
+ * `harData` sager om ett 200-svar faktiskt bar marknadsdokument. Ett 200 vars enda innehall ar ett
+ * Acknowledgement ar inte data och ska bedomas pa sin Reason precis som ett 400 - annars aterkommer
+ * samma tysta bortfall som 2026-08-29, bara via status 200 i stallet.
  */
-def klassificera(status: Int, orsak: String): ApiSvar =
-  if status == 200 then ApiSvar.Ok
-  else if status == 400 && orsak.toLowerCase.contains("no matching data") then ApiSvar.IngenData
+def klassificera(status: Int, orsak: String, harData: Boolean = true): ApiSvar =
+  if status == 200 && harData then ApiSvar.Ok
+  else if orsak.toLowerCase.contains("no matching data") then ApiSvar.IngenData
   else if status == 429 || status >= 500 then ApiSvar.Transient
+  // Ett 200 helt utan dokument har inget Acknowledgement att lasa och har alltid
+  // betytt tomhet - behall det, det ar bara okand Acknowledgement-text som ska bli hogljudd.
+  else if status == 200 && orsak.isEmpty then ApiSvar.IngenData
   else ApiSvar.Permanent
 
 /**
- * Forsok och backoff for transienta ENTSO-E-fel. Timeout far farre forsok an 429/5xx: ett 429
- * svarar direkt, medan en timeout kostar hela readTimeout (180 s). viz/fetch-year.sh kor dessutom
- * om hela fetch fyra ganger, sa forsoken multipliceras - med fyra timeout-forsok blir en hangande
- * endpoint 16 x 180 s = nastan en timme bara dar.
+ * Forsoksbudget per felslag. Timeout far farst: ett 429 eller 503 svarar direkt, medan en timeout
+ * kostar hela readTimeout (180 s). viz/fetch-year.sh kor dessutom om hela fetch fyra ganger, sa
+ * forsoken multipliceras - med fyra timeout-forsok blir en hangande endpoint 16 x 180 s = nastan en
+ * timme bara dar. Summan av budgetarna (4+4+2) taker aven det totala antalet anrop.
  */
-val ApiForsok = 4
-val ApiForsokTimeout = 2
-val ApiBackoffMs = Vector(5000L, 15000L, 45000L)
+val ApiForsok: Map[Felslag, Int] = Map(
+  Felslag.Transient -> 4,
+  Felslag.Rate -> 4,
+  Felslag.Timeout -> 2,
+  Felslag.Permanent -> 1
+)
+
+/**
+ * Backoff per felslag. 429 far en egen, langre trappa: ENTSO-E:s dokumenterade straff for
+ * overskriden anropstakt ar ett flerminutersblock, sa 5+15+45 s skulle lagga samtliga forsok inuti
+ * blocket och hardfela - medan fetch-year.sh kor om efter bara 5 s och branner sina fyra skalforsok
+ * i samma fonster.
+ */
+val ApiBackoffMs: Map[Felslag, Vector[Long]] = Map(
+  Felslag.Transient -> Vector(5000L, 15000L, 45000L),
+  Felslag.Rate -> Vector(60000L, 180000L, 300000L),
+  Felslag.Timeout -> Vector(5000L)
+)
+
+/** Tak for Retry-After sa en trasig header inte parkerar jobbet i timmar. */
+val ApiRetryAfterMaxS = 900L
+
+/**
+ * Ren beslutsfunktion: efter `gjorda` misslyckade forsok av `slag`, vanta eller ge upp. Bruten ur
+ * apiGet for att den var invavd dar och darmed otestbar - och den blandade felsekvensen ar precis
+ * det fall som inte gick att na fran testerna.
+ */
+def nastaForsok(slag: Felslag, gjorda: Int, retryAfterMs: Option[Long] = None): Beslut =
+  if gjorda >= ApiForsok(slag) then Beslut.GeUpp
+  else
+    val tabell = ApiBackoffMs.getOrElse(slag, Vector(0L))
+    val bas = tabell(math.min(gjorda - 1, tabell.length - 1))
+    // Serverns Retry-After respekteras nar den ber om mer an var egen trappa.
+    Beslut.Vanta(retryAfterMs.map(math.max(_, bas)).getOrElse(bas))
+
+/** Antal misslyckade forsok per felslag under ett och samma apiGet-anrop. */
+final case class Forsok(transient: Int = 0, rate: Int = 0, timeout: Int = 0):
+  def inc(slag: Felslag): Forsok = slag match
+    case Felslag.Transient => copy(transient = transient + 1)
+    case Felslag.Rate => copy(rate = rate + 1)
+    case Felslag.Timeout => copy(timeout = timeout + 1)
+    case Felslag.Permanent => this
+  def antal(slag: Felslag): Int = slag match
+    case Felslag.Transient => transient
+    case Felslag.Rate => rate
+    case Felslag.Timeout => timeout
+    case Felslag.Permanent => 1
+
+/**
+ * Retry-After i sekunder. HTTP-datumvarianten stods inte - den forekommer inte hos ENTSO-E - och
+ * ett oparsbart varde ger None sa den egna trappan galler.
+ */
+def retryAfterMs(headers: Map[String, Seq[String]]): Option[Long] =
+  headers
+    .get("retry-after")
+    .flatMap(_.headOption)
+    .flatMap(_.trim.toLongOption)
+    .map(sek => math.max(0L, math.min(sek, ApiRetryAfterMaxS)) * 1000)
 
 /**
  * Hamtar ett API-svar. Stora svar (A85 m.fl.) levereras som zip med ett eller flera dokument -
- * returnerar ett Elem per dokument, och tomt bara nar ENTSO-E faktiskt saknar data
- * (Acknowledgement, eller 400 med "no matching data"). Transienta fel forsoks om; permanenta fel
- * och uttomda forsok kastar i stallet for att tyst se ut som tomhet.
+ * returnerar ett Elem per dokument, och tomt bara nar ENTSO-E faktiskt saknar data (Acknowledgement
+ * med "no matching data", eller ett 200 utan dokument). Transienta fel forsoks om med budget per
+ * felslag; permanenta fel och uttomda forsok kastar i stallet for att tyst se ut som tomhet.
  */
 def apiGet(params: Map[String, String]): Seq[scala.xml.Elem] =
   @annotation.tailrec
-  def kor(forsok: Int): Seq[scala.xml.Elem] =
-    val utfall =
+  def kor(forsok: Forsok): Seq[scala.xml.Elem] =
+    val utfall: Either[(String, Felslag, Option[Long]), Seq[scala.xml.Elem]] =
       try
         val resp = requests.get(
           Base,
@@ -183,41 +259,61 @@ def apiGet(params: Map[String, String]): Seq[scala.xml.Elem] =
           readTimeout = 180000,
           check = false
         )
-        if resp.statusCode == 200 then
-          val bytes = resp.bytes
-          val isZip = bytes.length >= 2 && bytes(0) == 'P'.toByte && bytes(1) == 'K'.toByte
-          val docs =
-            if isZip then unzipXml(bytes) else Seq(new String(bytes, StandardCharsets.UTF_8))
-          Right(docs.flatMap { s =>
-            val xml = XML.loadString(s)
-            // "Ingen data" kommer som Acknowledgement_MarketDocument
-            if xml.label.startsWith("Acknowledgement") then None else Some(xml)
-          })
-        else
-          val orsak = describeFault(resp.text())
-          klassificera(resp.statusCode, orsak) match
-            case ApiSvar.IngenData =>
-              println(s"  ingen data (ENTSO-E: $orsak)")
-              Right(Nil)
-            case ApiSvar.Transient => Left((s"HTTP ${resp.statusCode}: $orsak", ApiForsok))
-            case _ => Left((s"HTTP ${resp.statusCode}: $orsak", 1))
+        // Kroppen parsas fore klassificeringen: den behover veta om ett 200 bar
+        // riktiga marknadsdokument eller bara ett Acknowledgement.
+        val docs =
+          if resp.statusCode == 200 then
+            val bytes = resp.bytes
+            val isZip = bytes.length >= 2 && bytes(0) == 'P'.toByte && bytes(1) == 'K'.toByte
+            val rader =
+              if isZip then unzipXml(bytes) else Seq(new String(bytes, StandardCharsets.UTF_8))
+            rader.map(XML.loadString)
+          else Nil
+        val (ack, data) = docs.partition(_.label.startsWith("Acknowledgement"))
+        val orsak =
+          if resp.statusCode == 200 then ack.map(a => describeFault(a.toString)).mkString("; ")
+          else describeFault(resp.text())
+        klassificera(resp.statusCode, orsak, harData = data.nonEmpty) match
+          case ApiSvar.Ok => Right(data)
+          case ApiSvar.IngenData =>
+            if orsak.nonEmpty then println(s"  ingen data (ENTSO-E: $orsak)")
+            else println("  ingen data (tomt svar)")
+            Right(Nil)
+          case ApiSvar.Transient =>
+            val slag = if resp.statusCode == 429 then Felslag.Rate else Felslag.Transient
+            Left((s"HTTP ${resp.statusCode}: $orsak", slag, retryAfterMs(resp.headers)))
+          case ApiSvar.Permanent =>
+            Left((s"HTTP ${resp.statusCode}: $orsak", Felslag.Permanent, None))
       catch
-        case e: requests.TimeoutException => Left((s"timeout: ${e.getMessage}", ApiForsokTimeout))
-        case e: java.io.IOException => Left((s"io-fel: ${e.getMessage}", ApiForsokTimeout))
+        // requests-scala lindar anslutningsfel i egna typer som arver
+        // requests.RequestsException (extends Exception), INTE java.io.IOException. Utan
+        // grenen nedan slapper en DNS-blipp eller ett TLS-fel forbi oforsokt och river
+        // hela korningen. TimeoutException ar ocksa en RequestsException, sa den maste
+        // matchas forst for att fa sin egen, snalare budget.
+        case e: requests.TimeoutException =>
+          Left((s"timeout: ${e.getMessage}", Felslag.Timeout, None))
+        case e: requests.RequestsException =>
+          Left((s"anslutningsfel: ${e.getMessage}", Felslag.Timeout, None))
+        case e: java.io.IOException =>
+          Left((s"io-fel: ${e.getMessage}", Felslag.Timeout, None))
 
     utfall match
       case Right(docs) => docs
-      case Left((vad, maxForsok)) =>
-        if maxForsok <= 1 then sys.error(s"ENTSO-E avvisade anropet: $vad")
-        else if forsok >= maxForsok then
-          sys.error(s"ENTSO-E svarade inte efter $maxForsok forsok: $vad")
-        else
-          val vanta = ApiBackoffMs(math.min(forsok - 1, ApiBackoffMs.length - 1))
-          System.err.println(s"  $vad - forsok $forsok/$maxForsok, vantar ${vanta / 1000}s")
-          Thread.sleep(vanta)
-          kor(forsok + 1)
+      case Left((vad, slag, retryAfter)) =>
+        val nu = forsok.inc(slag)
+        nastaForsok(slag, nu.antal(slag), retryAfter) match
+          case Beslut.GeUpp if slag == Felslag.Permanent =>
+            sys.error(s"ENTSO-E avvisade anropet: $vad")
+          case Beslut.GeUpp =>
+            sys.error(s"ENTSO-E svarade inte efter ${nu.antal(slag)} forsok ($slag): $vad")
+          case Beslut.Vanta(ms) =>
+            System.err.println(
+              s"  $vad - forsok ${nu.antal(slag)}/${ApiForsok(slag)} ($slag), vantar ${ms / 1000}s"
+            )
+            Thread.sleep(ms)
+            kor(nu)
 
-  kor(1)
+  kor(Forsok())
 
 def fmtReq(t: OffsetDateTime): String =
   t.withOffsetSameInstant(ZoneOffset.UTC).format(ReqFmt)
@@ -817,14 +913,85 @@ def runTests(): Unit =
     "klassificera: versaler spelar ingen roll",
     klassificera(400, "999 NO MATCHING DATA FOUND") == ApiSvar.IngenData
   )
-  // Backofftabellen far inte vara tom - kor(1) indexerar den direkt. Och timeout
-  // maste ha strikt farre forsok an 429/5xx, annars ater en hangande endpoint
-  // upp hela jobbet nar viz/fetch-year.sh dessutom kor om fetch fyra ganger.
-  check("backoff: tabell ifylld", ApiBackoffMs.nonEmpty)
-  check("backoff: racker for alla forsok", ApiForsok - 1 <= ApiBackoffMs.length)
+  // Ett 200 vars enda innehall ar ett Acknowledgement ar inte data. Utan de har
+  // tre gar samma tysta bortfall som 2026-08-29 igenom, bara via status 200.
+  check(
+    "klassificera: 200 + ack no matching data -> IngenData",
+    klassificera(200, s"999 $ackText", harData = false) == ApiSvar.IngenData
+  )
+  check(
+    "klassificera: 200 + okand ack -> Permanent",
+    klassificera(200, "999 Quota exceeded", harData = false) == ApiSvar.Permanent
+  )
+  check(
+    "klassificera: 200 utan dokument alls -> IngenData",
+    klassificera(200, "", harData = false) == ApiSvar.IngenData
+  )
+
+  // 9. Forsoksbudgeten ar per felslag. Med den tidigare delade raknaren racker
+  //    det att ett 503 foljs av EN timeout for att timeoutbudgeten ska se ut som
+  //    uttomd - blandade sekvenser ar precis vad en belastad ENTSO-E ger, och
+  //    precis det fall de gamla testerna inte kunde na.
+  val blandat = Forsok().inc(Felslag.Transient).inc(Felslag.Timeout)
+  check("blandat: 503 ater inte ur timeoutbudgeten", blandat.antal(Felslag.Timeout) == 1)
+  check(
+    "blandat: forsta timeouten efter ett 503 vantar, ger inte upp",
+    nastaForsok(Felslag.Timeout, blandat.antal(Felslag.Timeout)) != Beslut.GeUpp
+  )
+  check(
+    "timeout ger upp pa sitt andra forsok",
+    nastaForsok(Felslag.Timeout, 2) == Beslut.GeUpp
+  )
+  check(
+    "transient ger upp pa sitt fjarde forsok",
+    nastaForsok(Felslag.Transient, 4) == Beslut.GeUpp
+  )
+  check(
+    "permanent ger upp direkt",
+    nastaForsok(Felslag.Permanent, 1) == Beslut.GeUpp
+  )
+  check(
+    "429 backar av langre an 5xx",
+    (nastaForsok(Felslag.Rate, 1), nastaForsok(Felslag.Transient, 1)) match
+      case (Beslut.Vanta(r), Beslut.Vanta(t)) => r > t
+      case _ => false
+  )
+  check(
+    "Retry-After vinner nar den ber om mer",
+    nastaForsok(Felslag.Rate, 1, Some(600000L)) == Beslut.Vanta(600000L)
+  )
+  check(
+    "Retry-After kortare an trappan ignoreras",
+    nastaForsok(Felslag.Transient, 1, Some(1000L)) == Beslut.Vanta(
+      ApiBackoffMs(Felslag.Transient)(0)
+    )
+  )
+  check(
+    "Retry-After: sekunder tolkas",
+    retryAfterMs(Map("retry-after" -> Seq("30"))) == Some(30000L)
+  )
+  check(
+    "Retry-After: skrap ger None",
+    retryAfterMs(Map("retry-after" -> Seq("Wed, 21 Oct"))).isEmpty
+  )
+  check(
+    "Retry-After klampas",
+    retryAfterMs(Map("retry-after" -> Seq("99999"))) == Some(ApiRetryAfterMaxS * 1000)
+  )
+
+  // Backofftabellen indexeras direkt av nastaForsok, sa den maste racka for
+  // budgeten. Och timeout maste ha strikt farre forsok an 429/5xx, annars ater
+  // en hangande endpoint upp jobbet nar fetch-year.sh dessutom kor om fetch
+  // fyra ganger.
+  for slag <- Vector(Felslag.Transient, Felslag.Rate, Felslag.Timeout) do
+    check(
+      s"backoff $slag racker for budgeten",
+      ApiBackoffMs(slag).nonEmpty && ApiForsok(slag) - 1 <= ApiBackoffMs(slag).length
+    )
   check(
     "timeout far farre forsok an 429/5xx",
-    ApiForsokTimeout < ApiForsok && ApiForsokTimeout >= 1
+    ApiForsok(Felslag.Timeout) < ApiForsok(Felslag.Transient) &&
+      ApiForsok(Felslag.Timeout) >= 1
   )
 
   if fails == 0 then println("\nAlla självtester gröna.")
