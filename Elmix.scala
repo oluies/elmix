@@ -157,9 +157,9 @@ def klassificera(status: Int, orsak: String): ApiSvar =
 
 /**
  * Forsok och backoff for transienta ENTSO-E-fel. Timeout far farre forsok an 429/5xx: ett 429
- * svarar direkt, medan en timeout kostar hela readTimeout (180 s). refresh.sh kor dessutom om hela
- * fetch fyra ganger, sa forsoken multipliceras - med fyra timeout-forsok blir en hangande endpoint
- * 16 x 180 s = nastan en timme bara dar.
+ * svarar direkt, medan en timeout kostar hela readTimeout (180 s). viz/fetch-year.sh kor dessutom
+ * om hela fetch fyra ganger, sa forsoken multipliceras - med fyra timeout-forsok blir en hangande
+ * endpoint 16 x 180 s = nastan en timme bara dar.
  */
 val ApiForsok = 4
 val ApiForsokTimeout = 2
@@ -818,8 +818,8 @@ def runTests(): Unit =
     klassificera(400, "999 NO MATCHING DATA FOUND") == ApiSvar.IngenData
   )
   // Backofftabellen far inte vara tom - kor(1) indexerar den direkt. Och timeout
-  //    maste ha strikt farre forsok an 429/5xx, annars ater en hangande endpoint
-  //    upp hela jobbet nar refresh.sh dessutom kor om fetch fyra ganger.
+  // maste ha strikt farre forsok an 429/5xx, annars ater en hangande endpoint
+  // upp hela jobbet nar viz/fetch-year.sh dessutom kor om fetch fyra ganger.
   check("backoff: tabell ifylld", ApiBackoffMs.nonEmpty)
   check("backoff: racker for alla forsok", ApiForsok - 1 <= ApiBackoffMs.length)
   check(
