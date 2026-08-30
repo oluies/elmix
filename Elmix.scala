@@ -139,30 +139,85 @@ def describeFault(body: String): String =
     .flatten
     .getOrElse(body.take(200).replace("\n", " ").trim)
 
+/** Hur ett ENTSO-E-svar ska tolkas. */
+enum ApiSvar:
+  case Ok, IngenData, Transient, Permanent
+
+/**
+ * ENTSO-E svarar 400 + Acknowledgement bade nar det genuint saknas data och nar anropet ar fel.
+ * Koden ar 999 i bada fallen, sa det ar bara Reason-texten som skiljer dem at. Att som forr
+ * behandla ALLA fel som "ingen data" gjorde att ett trasigt anrop tyst gav en tom parquet. Okanda
+ * 400:or klassas darfor som Permanent - hellre ett hogljutt fel an tyst fel data.
+ */
+def klassificera(status: Int, orsak: String): ApiSvar =
+  if status == 200 then ApiSvar.Ok
+  else if status == 400 && orsak.toLowerCase.contains("no matching data") then ApiSvar.IngenData
+  else if status == 429 || status >= 500 then ApiSvar.Transient
+  else ApiSvar.Permanent
+
+/**
+ * Forsok och backoff for transienta ENTSO-E-fel. Timeout far farre forsok an 429/5xx: ett 429
+ * svarar direkt, medan en timeout kostar hela readTimeout (180 s). refresh.sh kor dessutom om hela
+ * fetch fyra ganger, sa forsoken multipliceras - med fyra timeout-forsok blir en hangande endpoint
+ * 16 x 180 s = nastan en timme bara dar.
+ */
+val ApiForsok = 4
+val ApiForsokTimeout = 2
+val ApiBackoffMs = Vector(5000L, 15000L, 45000L)
+
 /**
  * Hamtar ett API-svar. Stora svar (A85 m.fl.) levereras som zip med ett eller flera dokument -
- * returnerar ett Elem per dokument, tomt vid Acknowledgement (ingen data) eller HTTP-fel.
+ * returnerar ett Elem per dokument, och tomt bara nar ENTSO-E faktiskt saknar data
+ * (Acknowledgement, eller 400 med "no matching data"). Transienta fel forsoks om; permanenta fel
+ * och uttomda forsok kastar i stallet for att tyst se ut som tomhet.
  */
 def apiGet(params: Map[String, String]): Seq[scala.xml.Elem] =
-  val resp = requests.get(
-    Base,
-    params = (params + ("securityToken" -> token)).toSeq,
-    connectTimeout = 30000,
-    readTimeout = 180000,
-    check = false
-  )
-  if resp.statusCode != 200 then
-    System.err.println(s"  HTTP ${resp.statusCode}: ${describeFault(resp.text())}")
-    Nil
-  else
-    val bytes = resp.bytes
-    val isZip = bytes.length >= 2 && bytes(0) == 'P'.toByte && bytes(1) == 'K'.toByte
-    val docs = if isZip then unzipXml(bytes) else Seq(new String(bytes, StandardCharsets.UTF_8))
-    docs.flatMap { s =>
-      val xml = XML.loadString(s)
-      // "Ingen data" kommer som Acknowledgement_MarketDocument
-      if xml.label.startsWith("Acknowledgement") then None else Some(xml)
-    }
+  @annotation.tailrec
+  def kor(forsok: Int): Seq[scala.xml.Elem] =
+    val utfall =
+      try
+        val resp = requests.get(
+          Base,
+          params = (params + ("securityToken" -> token)).toSeq,
+          connectTimeout = 30000,
+          readTimeout = 180000,
+          check = false
+        )
+        if resp.statusCode == 200 then
+          val bytes = resp.bytes
+          val isZip = bytes.length >= 2 && bytes(0) == 'P'.toByte && bytes(1) == 'K'.toByte
+          val docs =
+            if isZip then unzipXml(bytes) else Seq(new String(bytes, StandardCharsets.UTF_8))
+          Right(docs.flatMap { s =>
+            val xml = XML.loadString(s)
+            // "Ingen data" kommer som Acknowledgement_MarketDocument
+            if xml.label.startsWith("Acknowledgement") then None else Some(xml)
+          })
+        else
+          val orsak = describeFault(resp.text())
+          klassificera(resp.statusCode, orsak) match
+            case ApiSvar.IngenData =>
+              println(s"  ingen data (ENTSO-E: $orsak)")
+              Right(Nil)
+            case ApiSvar.Transient => Left((s"HTTP ${resp.statusCode}: $orsak", ApiForsok))
+            case _ => Left((s"HTTP ${resp.statusCode}: $orsak", 1))
+      catch
+        case e: requests.TimeoutException => Left((s"timeout: ${e.getMessage}", ApiForsokTimeout))
+        case e: java.io.IOException => Left((s"io-fel: ${e.getMessage}", ApiForsokTimeout))
+
+    utfall match
+      case Right(docs) => docs
+      case Left((vad, maxForsok)) =>
+        if maxForsok <= 1 then sys.error(s"ENTSO-E avvisade anropet: $vad")
+        else if forsok >= maxForsok then
+          sys.error(s"ENTSO-E svarade inte efter $maxForsok forsok: $vad")
+        else
+          val vanta = ApiBackoffMs(math.min(forsok - 1, ApiBackoffMs.length - 1))
+          System.err.println(s"  $vad - forsok $forsok/$maxForsok, vantar ${vanta / 1000}s")
+          Thread.sleep(vanta)
+          kor(forsok + 1)
+
+  kor(1)
 
 def fmtReq(t: OffsetDateTime): String =
   t.withOffsetSameInstant(ZoneOffset.UTC).format(ReqFmt)
@@ -739,6 +794,38 @@ def runTests(): Unit =
   check("describeFault: utan Reason -> trunkering", describeFault(skrap) == skrap)
   val fritext = "plain text fel"
   check("describeFault: icke-XML -> trunkering", describeFault(fritext) == fritext)
+
+  // 8. klassificera skiljer legitim tomhet fran fel. ENTSO-E anvander kod 999 for
+  //    bada, sa bara Reason-texten skiljer dem at - det var precis den harden som
+  //    lat 2026-08-29 tyst publicera ett ar utan generation.
+  check("klassificera: 200 -> Ok", klassificera(200, "") == ApiSvar.Ok)
+  check(
+    "klassificera: 400 no matching data -> IngenData",
+    klassificera(400, s"999 $ackText") == ApiSvar.IngenData
+  )
+  check(
+    "klassificera: 400 annan orsak -> Permanent",
+    klassificera(400, "999 Please provide a valid period") == ApiSvar.Permanent
+  )
+  check(
+    "klassificera: 429 -> Transient",
+    klassificera(429, "too many requests") == ApiSvar.Transient
+  )
+  check("klassificera: 503 -> Transient", klassificera(503, "unavailable") == ApiSvar.Transient)
+  check("klassificera: 401 -> Permanent", klassificera(401, "unauthorized") == ApiSvar.Permanent)
+  check(
+    "klassificera: versaler spelar ingen roll",
+    klassificera(400, "999 NO MATCHING DATA FOUND") == ApiSvar.IngenData
+  )
+  // Backofftabellen far inte vara tom - kor(1) indexerar den direkt. Och timeout
+  //    maste ha strikt farre forsok an 429/5xx, annars ater en hangande endpoint
+  //    upp hela jobbet nar refresh.sh dessutom kor om fetch fyra ganger.
+  check("backoff: tabell ifylld", ApiBackoffMs.nonEmpty)
+  check("backoff: racker for alla forsok", ApiForsok - 1 <= ApiBackoffMs.length)
+  check(
+    "timeout far farre forsok an 429/5xx",
+    ApiForsokTimeout < ApiForsok && ApiForsokTimeout >= 1
+  )
 
   if fails == 0 then println("\nAlla självtester gröna.")
   else { System.err.println(s"\n$fails test misslyckades."); sys.exit(1) }
