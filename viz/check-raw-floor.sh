@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # Golvkontroll för innevarande års rådata.
 #
-# Regressionsvakten i refresh.sh kräver bara att inget som fanns FÖRE rensningen
+# Regressionsvakten i viz/fetch-year.sh kräver bara att inget som fanns FÖRE rensningen
 # försvann. Den duger inte när baslinjen redan är trasig: korningen 2026-08-29
 # (run 33271325417) publicerade ett 2026 utan generation/flows/imbalance, och
 # cachen som sparades saknar dem nu. Nästa körning jämför då mot ett redan
 # tomt läge och ser inget fel.
 #
 # Den här kontrollen är absolut i stället för relativ: varje zon och dataset
-# MÅSTE finnas, ha rader, och vara färsk. Körs efter fetch och före transform.
+# MÅSTE finnas, ha rader, och vara färsk. Körs först i viz/build-reports.sh
+# och är därmed byggstegets ingångsvillkor - den kan alltså köras utan att
+# någon hämtning föregått den i samma anrop. fetch-year.sh kör den också,
+# men bara rådgivande.
 #
 #   ./viz/check-raw-floor.sh [ÅR]
 #
