@@ -35,7 +35,7 @@ fi
 # bootstrap-mill (funkar även i CI utan global mill). OBS: flera tasks måste
 # separeras med `+` – `mill a.task b.task` tolkar b.task som ARGUMENT till
 # a.task, bygger tyst bara den första och returnerar 0.
-(cd viz && ../mill app.fullLinkJS + obalans.fullLinkJS)
+(cd viz && ../mill app.fullLinkJS + obalans.fullLinkJS + foretagspris.fullLinkJS)
 (cd viz/ssr && node render.mjs)
 
 rm -rf docs
@@ -77,6 +77,14 @@ fi
 if [ -f viz/data/euprices-data.js ]; then
   cp viz/euprices.html viz/euprices.js docs/
   cp viz/data/euprices-data.js docs/data/
+fi
+# Företagets elpris – Scala.js-modul som läser samma euprices-data.js, så den
+# publiceras bara när den datan finns. Skripttaggen pekar på Mills fastLink-sökväg
+# under utveckling och skrivs om till den länkade filen här, precis som index.html.
+if [ -f viz/data/euprices-data.js ]; then
+  sed 's|out/foretagspris/fastLinkJS.dest/main.js|foretagspris.js|' \
+    viz/foretagspris.html > docs/foretagspris.html
+  cp viz/out/foretagspris/fullLinkJS.dest/main.js docs/foretagspris.js
 fi
 
 echo "docs/ klar:"
