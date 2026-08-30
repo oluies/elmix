@@ -501,7 +501,20 @@ object Foretagspris:
     val el = dom.document.getElementById("notes")
     if el != null then
       el.innerHTML = Texts.notes.map((h, b) => s"<h3>${h(l)}</h3><p>${b(l)}</p>").mkString
-    setText("src", Texts.src(l))
+
+    // Kallblocket ar HTML, inte textContent: den kinesiska tariffdatan ar
+    // handmatad i Data.scala och maste darfor ga att klicka sig till och
+    // kontrollera. rel=noopener pa allt som oppnas i ny flik.
+    val srcEl = dom.document.getElementById("src")
+    if srcEl != null then
+      val lankar = Texts.srcLinks
+        .map(k =>
+          s"""<li><a href="${k.url}" target="_blank" rel="noopener">${k.label(l)}</a></li>"""
+        )
+        .mkString
+      srcEl.innerHTML = s"<p>${Texts.src(l)}</p>" +
+        s"<p class=\"src-h\">${Texts.srcHeading(l)}</p><ul>$lankar</ul>" +
+        s"<p>${Texts.srcNote(l)}</p>"
 
   // ------------------------------------------------------------------ rita om
   private lazy val chartIds = Vector("stack", "spread", "ts", "tou")

@@ -192,3 +192,47 @@ object Texts:
       "prices (代理购电) compiled by China Briefing/Dezan Shira & Associates, May 2025. " +
       "Exchange rates: ECB reference rates " + Data.FxDate + "."
   )
+
+  /**
+   * Kinesiska primarkallor. Den svenska sidan gar att folja till ENTSO-E via de ovriga sidorna pa
+   * sajten, men den kinesiska tariffdatan ar handmatad statisk text i Data.scala - da racker det
+   * inte att namna varifran den kommer, den maste ga att klicka sig till och kontrollera.
+   */
+  final case class Kalla(sv: String, en: String, url: String):
+    def label(lang: String): String = if lang == "en" then en else sv
+
+  val srcHeading = T("Kinesiska primärkällor", "Chinese primary sources")
+
+  val srcLinks: Vector[Kalla] = Vector(
+    Kalla(
+      "Provinstariffer maj 2025 – tabellen sidans siffror är hämtade ur (China Briefing)",
+      "Provincial tariffs May 2025 – the table this page’s figures come from (China Briefing)",
+      "https://www.china-briefing.com/news/chinas-industrial-power-rates-category-electricity-usage-region-classification/"
+    ),
+    Kalla(
+      "NDRC om tidsdifferentierade priser, 发改价格〔2021〕1093号 – topp/plan/dal-mekanismen",
+      "NDRC on time-of-use pricing, NDRC Price [2021] No. 1093 – the peak/flat/valley mechanism",
+      "https://www.gov.cn/zhengce/zhengceku/2021-07/29/content_5628297.htm"
+    ),
+    Kalla(
+      "Månadssammanställning av工商业-priser per provins, februari 2026 (光伏产业网)",
+      "Monthly per-province commercial & industrial prices, February 2026 (Solaren PV)",
+      "http://www.solarenpv.com/mobile/index.php?moduleid=24&itemid=2100"
+    ),
+    Kalla(
+      "Månadssammanställning med störst topp/dal-spann, januari 2026 (CNESA)",
+      "Monthly summary of the largest peak-valley spreads, January 2026 (CNESA)",
+      "https://www.cnesa.org/information/detail/?column_id=3&id=7747"
+    )
+  )
+
+  val srcNote = T(
+    "De två månadssammanställningarna publicerar sina tabeller som bilder, inte som text, och " +
+      "därför går de inte att läsa maskinellt. Det är skälet till att sidan bygger på China " +
+      "Briefings avskrivna maj 2025-tabell i stället för innevarande månad. Kinesiska källor kan " +
+      "dessutom vara långsamma eller oåtkomliga utanför Kina.",
+    "The two monthly summaries publish their tables as images rather than text, so they cannot be " +
+      "read programmatically. That is why this page builds on China Briefing’s transcribed May " +
+      "2025 table rather than the current month. Chinese sources may also be slow or unreachable " +
+      "outside China."
+  )
