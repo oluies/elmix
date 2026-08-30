@@ -12,3 +12,5 @@ viz/ssr/node_modules/
 # lokalt
 .claude/
 .DS_Store
+# roborev snapshots
+/.roborev/

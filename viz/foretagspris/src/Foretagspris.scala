@@ -446,6 +446,13 @@ object Foretagspris:
     )
 
   // ------------------------------------------------------------------ statisk text
+  /** HTML-escape for text som interpoleras in i innerHTML. */
+  private def esc(s: String): String =
+    s.replace("&", "&amp;")
+      .replace("<", "&lt;")
+      .replace(">", "&gt;")
+      .replace("\"", "&quot;")
+
   private def setText(id: String, s: String): Unit =
     val el = dom.document.getElementById(id)
     if el != null then el.textContent = s
@@ -501,7 +508,27 @@ object Foretagspris:
     val el = dom.document.getElementById("notes")
     if el != null then
       el.innerHTML = Texts.notes.map((h, b) => s"<h3>${h(l)}</h3><p>${b(l)}</p>").mkString
-    setText("src", Texts.src(l))
+
+    // Kallblocket ar HTML, inte textContent: den kinesiska tariffdatan ar
+    // handmatad i Data.scala och maste darfor ga att klicka sig till och
+    // kontrollera. rel=noopener pa allt som oppnas i ny flik.
+    //
+    // Allt som interpoleras escapas. Strangarna ar kompileringskonstanter, sa
+    // det finns ingen XSS-risk - men kalltexten innehaller redan ett rat & i
+    // "Dezan Shira & Associates" och tva av URL:erna har &-separatorer, och da
+    // ar blocket en redigering fran att tyst ga sonder pa en namngiven entitet.
+    val srcEl = dom.document.getElementById("src")
+    if srcEl != null then
+      val lankar = Texts.srcLinks
+        .map(k =>
+          s"""<li><a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(
+              k.label(l)
+            )}</a></li>"""
+        )
+        .mkString
+      srcEl.innerHTML = s"<p>${esc(Texts.src(l))}</p>" +
+        s"<p class=\"src-h\">${esc(Texts.srcHeading(l))}</p><ul>$lankar</ul>" +
+        s"<p>${esc(Texts.srcNote(l))}</p>"
 
   // ------------------------------------------------------------------ rita om
   private lazy val chartIds = Vector("stack", "spread", "ts", "tou")
