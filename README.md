@@ -171,6 +171,27 @@ värden 2025: DE ~300, FR ~32, SE1–3 ~20–26, SE4 ~58 gCO₂eq/kWh. Justera i
 prerendrerar SVG-rapporten och paketerar allt i `docs/`, som GitHub
 Pages serverar från `main`.
 
+Den dagliga refreshen (`.github/workflows/refresh.yml`) kör två steg som
+felar av helt olika skäl och därför går att köra om var för sig:
+
+| Steg | Skript | Faller på | Nyckel |
+|---|---|---|---|
+| Hämtning | `./viz/fetch-year.sh [år]` | ENTSO-E:s uppetid (503/400 ger tyst tappade dataset) | ja |
+| Bygge | `./viz/build-reports.sh [år]` | DuckDB (transform/pca) | nej |
+
+`./viz/refresh.sh [år]` kör båda i följd och är fortsatt den vanliga
+lokala ingången. Vid manuell körning från Actions-fliken väljer indatan
+`steg` mellan `allt`, `hamta` och `bygg`, så ett trasigt bygge inte
+tvingar fram en ny 17-minutershämtning – och varje sådan hämtning är ett
+nytt lotteri mot samma 503:or som fällde den förra.
+
+Hämtningen rensar årets rådata innan den hämtar om, och kontrollerar
+efteråt att inget som fanns före rensningen försvann. Bygget inleds med
+`check-raw-floor.sh`, som är absolut i stället för relativ: varje zon och
+dataset måste finnas, ha rader och vara färskt. Det är därför bygget är
+säkert att köra ensamt – det kan inte publicera på halvfärdig data
+oavsett vad som hänt tidigare i sekvensen.
+
 ## Utveckling och CI
 
 `./mill` är ett bootstrap-skript (pinnar Mill via `.mill-version`), så
