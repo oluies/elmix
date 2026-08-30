@@ -26,19 +26,7 @@ fi
 YEAR="${1:-$(date +%Y)}"
 echo "Hämtning: tvingar om-hämtning av $YEAR (tidigare år hoppas över inkrementellt)"
 
-# DuckDB-native flaky-kraschar slumpvis i CI (icke-deterministiskt, utan
-# stacktrace, drabbar fetch/transform/pca oberoende – oftast vid teardown efter
-# klart arbete). fetch är inkrementell och därmed idempotent, så en omkörning är
-# säker.
-retry() {
-  local a
-  for a in 1 2 3 4; do
-    "$@" && return 0
-    echo "  retry $a/4 (exit ≠0, flaky DuckDB-native): $*" >&2
-    sleep 5
-  done
-  return 1
-}
+. "$(dirname "$0")/retry.sh"
 
 # Vilka SE-filer fanns för året innan vi rensade? apiGet returnerar tomt både vid
 # "ingen data" och vid HTTP-fel - ENTSO-E svarar 400 + Acknowledgement, eller 503
@@ -46,7 +34,11 @@ retry() {
 # felar. Ett dataset kan alltså försvinna tyst, och bygget skulle annars gå
 # vidare på ofullständig data. Listan jämförs efter hämtningen; se kontrollen
 # nedan.
-fanns_innan="$(ls data/raw/*/SE_*_"$YEAR".parquet 2>/dev/null | sort)"
+# `|| true`: vid arsskiftet matchar globben inget, ls exitar 2, pipefail
+# propagerar det och errexit dodar steget INNAN mill fetch hinner kora -
+# och eftersom inget hamtas ser nasta dygn likadant ut. Tomt varde ar
+# redan korrekt hanterat av `if [ -n "$fanns_innan" ]` nedan.
+fanns_innan="$(ls data/raw/*/SE_*_"$YEAR".parquet 2>/dev/null | sort || true)"
 rm -f data/raw/*/SE_*_"$YEAR".parquet
 rm -f data/raw/eu/*/*_"$YEAR".parquet
 
@@ -71,5 +63,12 @@ fi
 
 # DE/FR (icke-fatal – bryt inte hela hämtningen om kontinentala strular)
 retry ./mill Elmix.scala fetcheu --start "$YEAR" --end "$YEAR" || echo "VARNING: fetcheu $YEAR misslyckades – DE/FR ej uppdaterat" >&2
+
+# Regressionsvakten ovan ser bara vad som FORSVANN. Ar baslinjen redan
+# trasig sager den inget, och en steg=hamta-korning skulle da rapportera
+# "klart" trots att bygget kommer falla. Golvkontrollen ar absolut och
+# svarar pa den fragan - radgivande har, avgorande i build-reports.sh.
+./viz/check-raw-floor.sh "$YEAR" ||
+  echo "VARNING: golvkontrollen faller - bygget kommer inte ga igenom" >&2
 
 echo "Hämtning klar för $YEAR. Bygg med: ./viz/build-reports.sh $YEAR"

@@ -44,6 +44,10 @@ jobs:
           unzip -q duckdb.zip && sudo mv duckdb /usr/local/bin/
       - name: Test av golvkontrollen
         run: ./viz/check-raw-floor.test.sh
+      # Hämtningsvakten är av samma slag - sista spärren mot att bygga på
+      # ofullständig rådata - och ska därför regressionstestas likadant.
+      - name: Test av hämtningsvakten
+        run: ./viz/fetch-year.test.sh
 
   lint:
     name: Scalafmt

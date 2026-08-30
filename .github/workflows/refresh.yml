@@ -84,14 +84,21 @@ jobs:
         if: inputs.steg != 'bygg'
         env:
           ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
-        run: ./viz/fetch-year.sh ${{ inputs.ar }}
+          AR: ${{ inputs.ar }}
+        run: |
+          ./viz/kontrollera-ar.sh "$AR"
+          ./viz/fetch-year.sh "$AR"
 
       # Faller på DuckDB, inte på ENTSO-E, och behöver ingen API-nyckel. Kör om
       # med steg=bygg när hämtningen redan gav färsk rådata - golvkontrollen
       # först i skriptet ser till att steget aldrig publicerar på halvfärdig data.
       - name: Bygg marts + rapporter
         if: inputs.steg != 'hamta'
-        run: ./viz/build-reports.sh ${{ inputs.ar }}
+        env:
+          AR: ${{ inputs.ar }}
+        run: |
+          ./viz/kontrollera-ar.sh "$AR"
+          ./viz/build-reports.sh "$AR"
 
       # Committa docs. Jobbet tar ~1h, så main kan hinna flyttas (PR-merge) under
       # tiden -> push avvisas eller krockar. Vid avslag: synka till senaste main och

@@ -24,19 +24,7 @@ YEAR="${1:-$(date +%Y)}"
   exit 1
 }
 
-# DuckDB-native flaky-kraschar slumpvis i CI (icke-deterministiskt, utan
-# stacktrace, drabbar transform/pca oberoende – oftast vid teardown efter klart
-# arbete). Båda skriver om sina marts och är därmed idempotenta, så en omkörning
-# är säker.
-retry() {
-  local a
-  for a in 1 2 3 4; do
-    "$@" && return 0
-    echo "  retry $a/4 (exit ≠0, flaky DuckDB-native): $*" >&2
-    sleep 5
-  done
-  return 1
-}
+. "$(dirname "$0")/retry.sh"
 
 retry ./mill Elmix.scala transform || { echo "FEL: transform" >&2; exit 1; }
 retry ./mill Elmix.scala pca || { echo "FEL: pca" >&2; exit 1; }
