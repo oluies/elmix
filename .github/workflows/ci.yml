@@ -58,7 +58,7 @@ jobs:
         with:
           apps: scalafmt
       - name: Kontrollera formatering
-        run: scalafmt --check Elmix.scala viz/app/src viz/foretagspris/src
+        run: scalafmt --check Elmix.scala viz/app/src viz/echarts/src viz/obalans/src viz/foretagspris/src
 
   links:
     name: Länkkontroll

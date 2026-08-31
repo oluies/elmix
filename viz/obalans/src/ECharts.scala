@@ -4,21 +4,4 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 
-/**
- * Minimal handskriven facade mot ECharts (global fran script-tag). Byt mot ScalablyTyped om typade
- * options behovs senare.
- */
-@js.native
-@JSGlobal("echarts")
-object ECharts extends js.Object:
-  def init(el: dom.Element): EChartsInstance = js.native
-
-@js.native
-trait EChartsInstance extends js.Object:
-  def setOption(option: js.Any): Unit = js.native
-  def setOption(option: js.Any, notMerge: Boolean): Unit = js.native
-  def resize(): Unit = js.native
-  def on(event: String, handler: js.Function1[js.Dynamic, Unit]): Unit = js.native
-  def getOption(): js.Dynamic = js.native
-
-
+import elmix.echarts.{ECharts, EChartsInstance}

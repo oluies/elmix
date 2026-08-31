@@ -3,6 +3,8 @@ package elmix.foretagspris
 import com.raquo.laminar.api.L.{*, given}
 import org.scalajs.dom
 import scala.scalajs.js
+
+import elmix.echarts.{ECharts, EChartsInstance}
 import scala.scalajs.js.Dynamic.literal as obj
 
 /**
@@ -44,7 +46,14 @@ object Foretagspris:
         .toMap
     ).getOrElse(Map.empty)
 
-  private lazy val hasData: Boolean = months.nonEmpty && Zones.forall(spotEur.contains)
+  /**
+   * Racker med EN zon. export-euprices.sh hoppar over en zon icke-fatalt vid upprepade 429, och
+   * euprices_build.py skriver anda ut en giltig payload - med `forall` blev en delvis storning en
+   * helt blank sida, inklusive dygnsprofilen som aldrig ror svensk spot. Allt nedstroms tal en
+   * saknad zon redan: Zones.flatMap hoppar over den, spotAvg ger None och tsOption ger
+   * null-punkter.
+   */
+  private lazy val hasData: Boolean = months.nonEmpty && Zones.exists(spotEur.contains)
 
   /** Perioder: senaste 12 manaderna forst, sedan kalenderaren fallande. */
   private lazy val periods: Vector[(String, Vector[Int])] =
@@ -110,14 +119,16 @@ object Foretagspris:
       spotAvg(z).map(sp => Row(z, sp, grid.now(), profile.now().tax, taxSaved))
     }
     val s = cnSorted
+    // Medianen har ingen egen provins att namnge, till skillnad fran ytterlagena.
+    // Flaggan bars explicit i stallet for att jamfora renderade etiketter mot
+    // varandra - de kommer ur samma T och skulle ge "Kina median · Kina median".
     val cn = Vector(
-      s.head._1.name(lang.now()) -> s.head._2,
-      t(Texts.median) -> cnMedian,
-      s.last._1.name(lang.now()) -> s.last._2
+      (t(Texts.cheapest), Some(s.head._1.name(lang.now())), s.head._2),
+      (t(Texts.median), None, cnMedian),
+      (t(Texts.dearest), Some(s.last._1.name(lang.now())), s.last._2)
     )
-    val labels = Vector(t(Texts.cheapest), t(Texts.median), t(Texts.dearest))
-    se ++ cn.zip(labels).map { case ((nm, ore), lbl) =>
-      val name = if lbl == t(Texts.median) then lbl else s"$lbl · $nm"
+    se ++ cn.map { (lbl, provins, ore) =>
+      val name = provins.fold(lbl)(p => s"$lbl · $p")
       Row(name, ore * CnShareEnergy, ore * CnShareGrid, ore * CnShareLevy, 0.0)
     }
 
@@ -304,7 +315,20 @@ object Foretagspris:
             `type` = "line",
             symbol = "none",
             lineStyle = obj(color = "#a8862c", width = 1.5, `type` = "dashed"),
-            data = flat(med)
+            data = flat(med),
+            // Skuggar den valda perioden. Serien klipps INTE: kontrollen styr de
+            // ovriga vyerna, men har ar rorelsen over aren sjalva poangen, och en
+            // 12-manaders klippning skulle ta bort det som gor vyn vard att ha.
+            markArea = obj(
+              silent = true,
+              itemStyle = obj(color = "#36c", opacity = 0.07),
+              data = js.Array(
+                js.Array[js.Any](
+                  obj(xAxis = months(curPeriod.head)),
+                  obj(xAxis = months(curPeriod.last))
+                )
+              )
+            )
           )
         )
         .concat(
@@ -383,9 +407,10 @@ object Foretagspris:
               aria.pressed <-- profile.signal.map(cur => (cur.key == p.key).toString),
               // Byte av kundtyp aterstaller natavgiften till profilens utgangsvarde;
               // annars slapar ett storindustrivarde med in i tjanstesektorn.
-              onClick --> { _ =>
-                profile.set(p); grid.set(p.grid)
-              }
+              // Batchat: tva separata set ger tva transaktioner, och den forsta
+              // omritningen parar da ny profil med foregaende profils natavgift -
+              // over den nya profilens eget gridMax.
+              onClick --> { _ => Var.set(profile -> p, grid -> p.grid) }
             )
           }
         )
@@ -539,11 +564,16 @@ object Foretagspris:
       if el == null then None else Some(id -> ECharts.init(el))
     }.toMap
 
-  private def redraw(): Unit =
+  /**
+   * Text som inte beror pa spotdatan. Bruten ur redraw for att den maste ritas aven pa fel-grenen:
+   * annars far lasaren fyra tomma <h2>, fyra tomma underrubriker och en tom forklaringsruta, och
+   * inget av det behover data. Prenumereras dessutom pa lang.signal i bada grenarna, sa
+   * sprakvaljaren gor nagot aven nar spoten saknas.
+   */
+  private def renderStatic(): Unit =
     val l = lang.now()
     dom.document.title = "Elmix – " + Texts.title(l)
     setText("fp-title", Texts.title(l))
-    setText("fp-lead", Texts.lead(l))
     setText("stack-h", Texts.stackH(l))
     setText("stack-sub", Texts.stackSub(l))
     setText("spread-h", Texts.spreadH(l))
@@ -552,29 +582,41 @@ object Foretagspris:
     setText("ts-sub", Texts.tsSub(l))
     setText("tou-h", Texts.touH(l))
     setText("tou-sub", Texts.touSub(l))
+    renderNotes()
+
+  private def redraw(): Unit =
+    val l = lang.now()
+    renderStatic()
+    setText("fp-lead", Texts.lead(l))
     val p = profile.now()
-    setText(
-      "profile-desc",
-      s"${p.name(l)}: ${p.desc(l)} · ${if l == "en" then "China" else "Kina"} ${p.cnDesc(l)}"
-    )
+    setText("profile-desc", s"${p.name(l)}: ${p.desc(l)} · ${Texts.china(l)} ${p.cnDesc(l)}")
     charts.get("stack").foreach(_.setOption(stackOption(), true))
     charts.get("spread").foreach(_.setOption(spreadOption(), true))
     charts.get("ts").foreach(_.setOption(tsOption(), true))
     charts.get("tou").foreach(_.setOption(touOption(), true))
     renderTable()
-    renderNotes()
 
-  /** Tom eller trasig spotdata far inte se ut som lyckad rendering. */
+  /**
+   * Saknad spotdata far inte se ut som lyckad rendering. Bara de svenska vyerna doljs -
+   * dygnsprofilen ar ren kinesisk tariffdata och ror aldrig spoten, sa den ritas anda.
+   */
   private def renderEmpty(): Unit =
-    val msg = Texts.noData(lang.now())
+    val l = lang.now()
+    renderStatic()
+    val saknas = Zones.filterNot(spotEur.contains)
+    val msg = Texts.noData(l) + (if saknas.isEmpty then "" else " (" + saknas.mkString(", ") + ")")
     val leadEl = dom.document.getElementById("fp-lead")
     if leadEl != null then
       leadEl.textContent = msg
       leadEl.asInstanceOf[dom.html.Element].style.color = "#b3261e"
-    chartIds.foreach { id =>
+    // Dolj bade diagrammen och deras rubriker - en rubrik utan diagram under sig
+    // ar mer forvirrande an ingen alls. Metodnoterna och kallorna star kvar; de
+    // ar hela poangen med att rendera statisk text pa den har grenen.
+    Vector("stack", "spread", "ts").flatMap(id => Vector(id, s"$id-h", s"$id-sub")).foreach { id =>
       val el = dom.document.getElementById(id)
       if el != null then el.asInstanceOf[dom.html.Element].style.display = "none"
     }
+    charts.get("tou").foreach(_.setOption(touOption(), true))
     setText("chart-status", msg)
 
   def main(args: Array[String]): Unit =
@@ -584,7 +626,11 @@ object Foretagspris:
       sw.innerHTML = ""
       render(sw, langSwitch())
 
-    if !hasData then renderEmpty()
+    if !hasData then
+      // Aven fel-grenen ska folja sprakvaljaren - annars far en engelsk lasare
+      // ett svenskt felmeddelande och knappar som inte gor nagot.
+      lang.signal.foreach(_ => renderEmpty())(unsafeWindowOwner)
+      dom.window.addEventListener("resize", (_: dom.Event) => charts.values.foreach(_.resize()))
     else
       val host = dom.document.getElementById("controls")
       if host != null then

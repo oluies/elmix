@@ -3,6 +3,8 @@ package elmix.viz
 import com.raquo.laminar.api.L.{*, given}
 import org.scalajs.dom
 import scala.scalajs.js
+
+import elmix.echarts.{ECharts, EChartsInstance}
 import scala.scalajs.js.Dynamic.literal as obj
 
 /** En 15-min-observation: tid (epoch ms), kraftslagsandelar, day-ahead-pris. */
