@@ -39,3 +39,13 @@ object foretagspris extends ScalaJSModule {
     mvn"com.raquo::laminar::17.2.0"
   )
 }
+
+// Sprakvaxlaren. Egen modul utan Laminar - den ror bara tva knappar och ett
+// attribut, sa scalajs-dom racker och bundeln blir en brakdel av app/obalans.
+object lang extends ScalaJSModule {
+  def scalaVersion = "3.3.4"
+  def scalaJSVersion = "1.19.0"
+  def mvnDeps = Seq(
+    mvn"org.scala-js::scalajs-dom::2.8.0"
+  )
+}

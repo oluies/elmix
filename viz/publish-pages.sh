@@ -35,7 +35,7 @@ fi
 # bootstrap-mill (funkar även i CI utan global mill). OBS: flera tasks måste
 # separeras med `+` – `mill a.task b.task` tolkar b.task som ARGUMENT till
 # a.task, bygger tyst bara den första och returnerar 0.
-(cd viz && ../mill app.fullLinkJS + obalans.fullLinkJS + foretagspris.fullLinkJS)
+(cd viz && ../mill app.fullLinkJS + obalans.fullLinkJS + foretagspris.fullLinkJS + lang.fullLinkJS)
 (cd viz/ssr && node render.mjs)
 
 rm -rf docs
@@ -62,6 +62,8 @@ cp viz/modell/*.html docs/modell/
 # Obalanssidan är den enda modellsidan med ett bygge: Scala.js-modulen obalans
 # plus ES-modulen som bootar DuckDB-WASM, och parquetten den frågar mot.
 cp viz/out/obalans/fullLinkJS.dest/main.js docs/modell/obalans.js
+# Sprakvaxlaren: liten egen modul utan Laminar, delad av de statiska sidorna.
+cp viz/out/lang/fullLinkJS.dest/main.js docs/modell/lang.js
 cp viz/modell/obalans-boot.mjs docs/modell/
 [ -f viz/data/imbalance.parquet ] && cp viz/data/imbalance.parquet docs/data/
 if [ -f viz/data/consumption-eu-data.js ]; then
