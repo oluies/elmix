@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="sv">
+<html lang="sv" data-lang="sv">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Elmix &#183; Vem har oljan</title>
+<script src="lang.js" defer></script>
 </head>
 <body>
 <nav class="sitenav">
@@ -18,6 +19,7 @@
   <a href="olja.html">Olja</a>
   <a href="verifiering.html">Verifiering</a>
   <a href="referenser.html">Referenser</a>
+  <span id="lang-switch" class="langswitch"></span>
 </nav>
 <style>
 :root{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
@@ -67,46 +69,53 @@ flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
 .big{font:700 34px/1.1 ui-sans-serif,system-ui,sans-serif;color:var(--ink);letter-spacing:-.02em;}
 .bigsub{font-size:13.5px;color:var(--ink3);margin:2px 0 0;}
 .pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:26px;margin:4px 0 10px;}
+html[data-lang="en"] [lang="sv"]{display:none;}
+html[data-lang="sv"] [lang="en"]{display:none;}
+.langswitch{margin-left:auto;display:inline-flex;}
+.langswitch button{font:inherit;font-size:12px;padding:2px 9px;border:1px solid var(--rule);background:var(--panel);cursor:pointer;color:var(--gate);}
+.langswitch button[aria-pressed="true"]{background:var(--gate);color:#fff;border-color:var(--gate);}
+.langswitch button:first-child{border-radius:6px 0 0 6px;}
+.langswitch button:last-child{border-radius:0 6px 6px 0;border-left:none;}
 </style>
 <div class="page">
 <header>
- <div class="eyebrow">Oljans ursprung &#183; regim, EU och EES</div>
- <h1>Sverige k&ouml;per sin olja av demokratier. V&auml;rlden utvinner den i autokratier.</h1>
- <p class="deck">Tre femtedelar av v&auml;rldens r&aring;olja pumpas i l&auml;nder utan konkurrensutsatta val. Fyra procent av det Sverige k&ouml;per g&ouml;r det. Skillnaden ser ut som ett l&ouml;st problem och &auml;r det inte, eftersom olja &auml;r fungibel: priset s&auml;tts p&aring; en v&auml;rldsmarknad d&auml;r autokratierna h&aring;ller volymen och n&auml;stan hela reservkapaciteten.</p>
+ <div class="eyebrow"><span lang="sv">Oljans ursprung &#183; regim, EU och EES</span><span lang="en">Where the oil comes from &#183; regime, EU and EEA</span></div>
+ <h1><span lang="sv">Sverige k&ouml;per sin olja av demokratier. V&auml;rlden utvinner den i autokratier.</span><span lang="en">Sweden buys its oil from democracies. The world extracts it in autocracies.</span></h1>
+ <p class="deck"><span lang="sv">Tre femtedelar av v&auml;rldens r&aring;olja pumpas i l&auml;nder utan konkurrensutsatta val. Fyra procent av det Sverige k&ouml;per g&ouml;r det. Skillnaden ser ut som ett l&ouml;st problem och &auml;r det inte, eftersom olja &auml;r fungibel: priset s&auml;tts p&aring; en v&auml;rldsmarknad d&auml;r autokratierna h&aring;ller volymen och n&auml;stan hela reservkapaciteten.</span><span lang="en">Three fifths of the world&#8217;s crude oil is pumped in countries without competitive elections. Four per cent of what Sweden buys is. The difference looks like a solved problem and is not, because oil is fungible: the price is set on a world market where autocracies hold the volume and nearly all the spare capacity.</span></p>
 </header>
 
 <!-- OLJA-CHART:BEGIN -->
-<div class="fig"><p class="figh">Sveriges råoljeimport 2024 &#183; per ursprungsland</p><svg viewBox="0 0 1180 482" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sveriges raoljeimport per ursprungsland 2024, fargad efter regimklass">
+<div class="fig"><p class="figh"><span lang="sv">Sveriges råoljeimport 2024 &#183; per ursprungsland</span><span lang="en">Sweden&#8217;s crude oil imports 2024 &#183; by country of origin</span></p><svg viewBox="0 0 1180 482" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sveriges raoljeimport per ursprungsland 2024, fargad efter regimklass">
 <rect x="250" y="40" width="720.4" height="26" fill="var(--r3)" rx="2"/>
-<text x="236" y="58" class="obl" text-anchor="end">Norge</text>
-<text x="980.4" y="58" class="oval">56,9 %</text>
+<text x="236" y="58" class="obl" text-anchor="end" lang="sv">Norge</text><text x="236" y="58" class="obl" text-anchor="end" lang="en">Norway</text>
+<text x="980.4" y="58" class="oval" lang="sv">56,9 %</text><text x="980.4" y="58" class="oval" lang="en">56.9%</text>
 <rect x="250" y="84" width="161.1" height="26" fill="var(--r2)" rx="2"/>
-<text x="236" y="102" class="obl" text-anchor="end">USA</text>
-<text x="421.1" y="102" class="oval">12,7 %</text>
+<text x="236" y="102" class="obl" text-anchor="end" lang="sv">USA</text><text x="236" y="102" class="obl" text-anchor="end" lang="en">United States</text>
+<text x="421.1" y="102" class="oval" lang="sv">12,7 %</text><text x="421.1" y="102" class="oval" lang="en">12.7%</text>
 <rect x="250" y="128" width="137.1" height="26" fill="var(--r2)" rx="2"/>
-<text x="236" y="146" class="obl" text-anchor="end">Storbritannien</text>
-<text x="397.1" y="146" class="oval">10,8 %</text>
+<text x="236" y="146" class="obl" text-anchor="end" lang="sv">Storbritannien</text><text x="236" y="146" class="obl" text-anchor="end" lang="en">United Kingdom</text>
+<text x="397.1" y="146" class="oval" lang="sv">10,8 %</text><text x="397.1" y="146" class="oval" lang="en">10.8%</text>
 <rect x="250" y="172" width="135.4" height="26" fill="var(--r2)" rx="2"/>
-<text x="236" y="190" class="obl" text-anchor="end">Guyana</text>
-<text x="395.4" y="190" class="oval">10,7 %</text>
+<text x="236" y="190" class="obl" text-anchor="end" lang="sv">Guyana</text><text x="236" y="190" class="obl" text-anchor="end" lang="en">Guyana</text>
+<text x="395.4" y="190" class="oval" lang="sv">10,7 %</text><text x="395.4" y="190" class="oval" lang="en">10.7%</text>
 <rect x="250" y="216" width="56.5" height="26" fill="var(--r2)" rx="2"/>
-<text x="236" y="234" class="obl" text-anchor="end">Nigeria</text>
-<text x="316.5" y="234" class="oval">4,5 %</text>
+<text x="236" y="234" class="obl" text-anchor="end" lang="sv">Nigeria</text><text x="236" y="234" class="obl" text-anchor="end" lang="en">Nigeria</text>
+<text x="316.5" y="234" class="oval" lang="sv">4,5 %</text><text x="316.5" y="234" class="oval" lang="en">4.5%</text>
 <rect x="250" y="260" width="45.5" height="26" fill="var(--r0)" rx="2"/>
-<text x="236" y="278" class="obl" text-anchor="end">Libyen</text>
-<text x="305.5" y="278" class="oval">3,6 %</text>
+<text x="236" y="278" class="obl" text-anchor="end" lang="sv">Libyen</text><text x="236" y="278" class="obl" text-anchor="end" lang="en">Libya</text>
+<text x="305.5" y="278" class="oval" lang="sv">3,6 %</text><text x="305.5" y="278" class="oval" lang="en">3.6%</text>
 <rect x="250" y="304" width="4.7" height="26" fill="var(--r1)" rx="2"/>
-<text x="236" y="322" class="obl" text-anchor="end">Elfenbenskusten</text>
-<text x="264.7" y="322" class="oval">0,4 %</text>
+<text x="236" y="322" class="obl" text-anchor="end" lang="sv">Elfenbenskusten</text><text x="236" y="322" class="obl" text-anchor="end" lang="en">Côte d'Ivoire</text>
+<text x="264.7" y="322" class="oval" lang="sv">0,4 %</text><text x="264.7" y="322" class="oval" lang="en">0.4%</text>
 <rect x="250" y="348" width="3.2" height="26" fill="var(--r3)" rx="2"/>
-<text x="236" y="366" class="obl" text-anchor="end">Danmark</text>
-<text x="263.2" y="366" class="oval">0,3 %</text>
+<text x="236" y="366" class="obl" text-anchor="end" lang="sv">Danmark</text><text x="236" y="366" class="obl" text-anchor="end" lang="en">Denmark</text>
+<text x="263.2" y="366" class="oval" lang="sv">0,3 %</text><text x="263.2" y="366" class="oval" lang="en">0.3%</text>
 <rect x="250" y="392" width="2.7" height="26" fill="var(--rna)" rx="2"/>
-<text x="236" y="410" class="obl" text-anchor="end">Ej specificerat</text>
-<text x="262.7" y="410" class="oval">0,2 %</text>
-<text x="250" y="468" class="osub">andel av Sveriges råoljeimport, 18,2 Mt totalt</text>
-</svg><p class="leg"><span class="lgi"><span class="sw" style="background:var(--r0)"></span>sluten autokrati</span> <span class="lgi"><span class="sw" style="background:var(--r1)"></span>valautokrati</span> <span class="lgi"><span class="sw" style="background:var(--r2)"></span>valdemokrati</span> <span class="lgi"><span class="sw" style="background:var(--r3)"></span>liberal demokrati</span> <span class="lgi"><span class="sw" style="background:var(--rna)"></span>ej specificerat</span></p></div>
-<div class="fig"><p class="figh">Samma fyra klasser &#183; import mot världsproduktion</p><svg viewBox="0 0 1180 150" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Regimfordelning: Sveriges import mot varldens produktion">
+<text x="236" y="410" class="obl" text-anchor="end" lang="sv">Ej specificerat</text><text x="236" y="410" class="obl" text-anchor="end" lang="en">Not specified</text>
+<text x="262.7" y="410" class="oval" lang="sv">0,2 %</text><text x="262.7" y="410" class="oval" lang="en">0.2%</text>
+<text x="250" y="468" class="osub" text-anchor="start" lang="sv">andel av Sveriges råoljeimport, 18,2 Mt totalt</text><text x="250" y="468" class="osub" text-anchor="start" lang="en">share of Sweden's crude oil imports, 18.2 Mt in total</text>
+</svg><p class="leg"><span class="lgi"><span class="sw" style="background:var(--r0)"></span><span lang="sv">sluten autokrati</span><span lang="en">closed autocracy</span></span> <span class="lgi"><span class="sw" style="background:var(--r1)"></span><span lang="sv">valautokrati</span><span lang="en">electoral autocracy</span></span> <span class="lgi"><span class="sw" style="background:var(--r2)"></span><span lang="sv">valdemokrati</span><span lang="en">electoral democracy</span></span> <span class="lgi"><span class="sw" style="background:var(--r3)"></span><span lang="sv">liberal demokrati</span><span lang="en">liberal democracy</span></span> <span class="lgi"><span class="sw" style="background:var(--rna)"></span><span lang="sv">ej specificerat</span><span lang="en">not specified</span></span></p></div>
+<div class="fig"><p class="figh"><span lang="sv">Samma fyra klasser &#183; import mot världsproduktion</span><span lang="en">The same four classes &#183; imports against world production</span></p><svg viewBox="0 0 1180 150" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Regimfordelning: Sveriges import mot varldens produktion">
 <rect x="250.0" y="26" width="31.2" height="30" fill="var(--r0)"/>
 <rect x="281.2" y="26" width="3.2" height="30" fill="var(--r1)"/>
 <rect x="284.4" y="26" width="336.6" height="30" fill="var(--r2)"/>
@@ -114,7 +123,7 @@ flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
 <rect x="621.1" y="26" width="497.0" height="30" fill="var(--r3)"/>
 <text x="869.6" y="46" class="oin" text-anchor="middle">57 %</text>
 <rect x="1118.1" y="26" width="1.9" height="30" fill="var(--rna)"/>
-<text x="236" y="46" class="obl" text-anchor="end">Sveriges import</text>
+<text x="236" y="46" class="obl" text-anchor="end" lang="sv">Sveriges import</text><text x="236" y="46" class="obl" text-anchor="end" lang="en">Sweden's imports</text>
 <rect x="250.0" y="78" width="240.1" height="30" fill="var(--r0)"/>
 <text x="370.1" y="98" class="oin" text-anchor="middle">28 %</text>
 <rect x="490.1" y="78" width="277.5" height="30" fill="var(--r1)"/>
@@ -123,23 +132,23 @@ flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
 <text x="932.1" y="98" class="oin" text-anchor="middle">38 %</text>
 <rect x="1096.5" y="78" width="22.6" height="30" fill="var(--r3)"/>
 <rect x="1119.1" y="78" width="0.9" height="30" fill="var(--rna)"/>
-<text x="236" y="98" class="obl" text-anchor="end">Världens produktion</text>
-</svg><p class="leg">Autokratier står för 4,0 % av importen och 60 % av världsproduktionen.</p></div>
+<text x="236" y="98" class="obl" text-anchor="end" lang="sv">Världens produktion</text><text x="236" y="98" class="obl" text-anchor="end" lang="en">World production</text>
+</svg><p class="leg"><span lang="sv">Autokratier står för 4,0 % av importen och 60 % av världsproduktionen.</span><span lang="en">Autocracies account for 4.0% of the imports and 60% of world production.</span></p></div>
 <!-- OLJA-CHART:END -->
 
 <div class="pair">
- <div><div class="eyebrow">EU-andel</div><p class="big">0,25 %</p><p class="bigsub">Bara Danmark. Sverige importerar mer olja fr&aring;n Elfenbenskusten &auml;n fr&aring;n resten av unionen.</p></div>
- <div><div class="eyebrow">EES-andel</div><p class="big">57,1 %</p><p class="bigsub">Norge plus Danmark. Hela skillnaden &auml;r Norge, som st&aring;r utanf&ouml;r EU men innanf&ouml;r den inre marknaden.</p></div>
+ <div><div class="eyebrow"><span lang="sv">EU-andel</span><span lang="en">EU share</span></div><p class="big"><span lang="sv">0,25 %</span><span lang="en">0.25%</span></p><p class="bigsub"><span lang="sv">Bara Danmark. Sverige importerar mer olja fr&aring;n Elfenbenskusten &auml;n fr&aring;n resten av unionen.</span><span lang="en">Denmark and nothing else. Sweden imports more oil from C&ocirc;te d&#8217;Ivoire than from the rest of the Union.</span></p></div>
+ <div><div class="eyebrow"><span lang="sv">EES-andel</span><span lang="en">EEA share</span></div><p class="big"><span lang="sv">57,1 %</span><span lang="en">57.1%</span></p><p class="bigsub"><span lang="sv">Norge plus Danmark. Hela skillnaden &auml;r Norge, som st&aring;r utanf&ouml;r EU men innanf&ouml;r den inre marknaden.</span><span lang="en">Norway plus Denmark. The whole difference is Norway, outside the Union and inside the internal market.</span></p></div>
 </div>
 
 <div class="notes">
- <div class="note"><h3>Varf&ouml;r andelarna inte skyddar</h3><p>Ett fat olja ers&auml;tter ett annat, s&aring; priset s&auml;tts globalt. Sverige betalar v&auml;rldsmarknadspris oavsett vems flagga som sitter p&aring; tankern. Att k&ouml;pa norskt skyddar mot att en last uteblir &#8212; inte mot vad den kostar.</p><p>Norge &auml;r beviset: stor nettoexport&ouml;r, och norska konsumenter betalade europeiska priser genom 2022 som alla andra.</p></div>
- <div class="note"><h3>En kodning styr bilden</h3><p>USA &auml;r 21 % av v&auml;rldsproduktionen och klassas av V-Dem som valdemokrati, inte liberal demokrati. R&auml;knas USA som liberalt g&aring;r den understa klassen i v&auml;rldsstapeln fr&aring;n 2,6 % till 24 %, och den m&ouml;rkbl&aring; andelen av Sveriges import fr&aring;n 57 % till 81 %.</p><p>Mexiko som valautokrati &auml;r ocks&aring; omtvistat. Freedom House och EIU drar gr&auml;nserna p&aring; andra st&auml;llen. Det finns inget neutralt svar, bara ett svar per klassificering.</p></div>
- <div class="note"><h3>Ursprungsland &auml;r inte utvinningsland</h3><p>Eurostat redovisar den handelsr&auml;ttsliga motparten. En last som lastats i Rotterdam kan ha pumpats n&aring;gon annanstans, s&aring; l&auml;nderna i stapeln &auml;r vem Sverige handlar med, inte n&ouml;dv&auml;ndigtvis var oljan kom ur marken.</p></div>
- <div class="note"><h3>Samma argument, andra r&aring;varor</h3><p>Koncentrationen i olja n&aring;r en import&ouml;r genom <em>priset</em>. I uran n&aring;r den genom <em>r&ouml;ret</em>: Kazakstan ensamt st&aring;r f&ouml;r 39 % av brytningen och det finns ingen spotmarknad djup nog att byta kazakiska pound mot kanadensiska med kort varsel. Prisrisk delas av alla; leveransrisk faller p&aring; den som skrev kontraktet.</p></div>
+ <div class="note"><h3><span lang="sv">Varf&ouml;r andelarna inte skyddar</span><span lang="en">Why the shares do not protect</span></h3><p><span lang="sv">Ett fat olja ers&auml;tter ett annat, s&aring; priset s&auml;tts globalt. Sverige betalar v&auml;rldsmarknadspris oavsett vems flagga som sitter p&aring; tankern. Att k&ouml;pa norskt skyddar mot att en last uteblir &#8212; inte mot vad den kostar.</span><span lang="en">One barrel substitutes for another, so the price is set globally. Sweden pays the world price whoever&#8217;s flag is on the tanker. Buying Norwegian protects against a cargo not arriving &#8212; not against what it costs.</span><span lang="sv"><p>Norge &auml;r beviset: stor nettoexport&ouml;r, och norska konsumenter betalade europeiska priser genom 2022 som alla andra.</p></span><span lang="en"><p>Norway is the proof: a large net exporter whose own consumers paid European prices through 2022 like everybody else.</p></span></p></div>
+ <div class="note"><h3><span lang="sv">En kodning styr bilden</span><span lang="en">One coding drives the picture</span></h3><p><span lang="sv">USA &auml;r 21 % av v&auml;rldsproduktionen och klassas av V-Dem som valdemokrati, inte liberal demokrati. R&auml;knas USA som liberalt g&aring;r den understa klassen i v&auml;rldsstapeln fr&aring;n 2,6 % till 24 %, och den m&ouml;rkbl&aring; andelen av Sveriges import fr&aring;n 57 % till 81 %.</span><span lang="en">The United States is 21% of world production, and V-Dem classes it an electoral democracy rather than a liberal one. Count it as liberal and the bottom class in the world bar goes from 2.6% to 24%, and the dark blue share of Sweden&#8217;s imports from 57% to 81%.</span><span lang="sv"><p>Mexiko som valautokrati &auml;r ocks&aring; omtvistat. Freedom House och EIU drar gr&auml;nserna p&aring; andra st&auml;llen. Det finns inget neutralt svar, bara ett svar per klassificering.</p></span><span lang="en"><p>Mexico as an electoral autocracy is contestable too. Freedom House and the EIU draw the lines elsewhere. There is no neutral answer, only an answer per classification.</p></span></p></div>
+ <div class="note"><h3><span lang="sv">Ursprungsland &auml;r inte utvinningsland</span><span lang="en">Partner country is not extraction country</span></h3><p><span lang="sv">Eurostat redovisar den handelsr&auml;ttsliga motparten. En last som lastats i Rotterdam kan ha pumpats n&aring;gon annanstans, s&aring; l&auml;nderna i stapeln &auml;r vem Sverige handlar med, inte n&ouml;dv&auml;ndigtvis var oljan kom ur marken.</span><span lang="en">Eurostat reports the trading counterparty. A cargo loaded in Rotterdam may have been pumped elsewhere, so the countries in the bar are who Sweden trades with, not necessarily where the oil came out of the ground.</span></p></div>
+ <div class="note"><h3><span lang="sv">Samma argument, andra r&aring;varor</span><span lang="en">The same argument, other commodities</span></h3><p><span lang="sv">Koncentrationen i olja n&aring;r en import&ouml;r genom <em>priset</em>. I uran n&aring;r den genom <em>r&ouml;ret</em>: Kazakstan ensamt st&aring;r f&ouml;r 39 % av brytningen och det finns ingen spotmarknad djup nog att byta kazakiska pound mot kanadensiska med kort varsel. Prisrisk delas av alla; leveransrisk faller p&aring; den som skrev kontraktet.</span><span lang="en">Concentration in oil reaches an importer through the <em>price</em>. In uranium it reaches them through the <em>pipe</em>: Kazakhstan alone supplies 39% of mining, and no spot market is deep enough to swap Kazakh pounds for Canadian ones at short notice. Price risk is shared by everyone; delivery risk falls on whoever signed the contract.</span></p></div>
 </div>
 
-<p class="src">Import: <a href="https://ec.europa.eu/eurostat/databrowser/view/nrg_ti_oil">Eurostat <code>nrg_ti_oil</code></a>, r&aring;olja per partnerland, Sverige 2024, 18&#160;165 tusen ton. Produktion: Energy Institute <em>Statistical Review of World Energy</em> 2026, 2025 &aring;rs produktion i tusen fat per dag. Regim: <a href="https://ourworldindata.org/grapher/political-regime">V-Dem Regimes of the World 2025</a> via Our World in Data. Sammanfogningen av produktion och regimklass &auml;r egen r&auml;kning: matchade l&auml;nder t&auml;cker 99&#160;400 av Statistical Reviews 100&#160;590 tusen fat per dag, och skillnaden &auml;r regionala restposter utan land. Samma material finns i kapitel 1 och N i <a href="https://oluies.github.io/climate/">Sustainable Energy &#8212; Without the Hot Air, 2026</a>.</p>
+<p class="src"><span lang="sv">Import: <a href="https://ec.europa.eu/eurostat/databrowser/view/nrg_ti_oil">Eurostat <code>nrg_ti_oil</code></a>, r&aring;olja per partnerland, Sverige 2024, 18&#160;165 tusen ton. Produktion: Energy Institute <em>Statistical Review of World Energy</em> 2026, 2025 &aring;rs produktion. Regim: <a href="https://ourworldindata.org/grapher/political-regime">V-Dem Regimes of the World 2025</a> via Our World in Data. Sammanfogningen av produktion och regimklass &auml;r egen r&auml;kning: matchade l&auml;nder t&auml;cker 99&#160;400 av Statistical Reviews 100&#160;590 tusen fat per dag, och skillnaden &auml;r regionala restposter utan land. Samma material finns i kapitel 1 och N i <a href="https://oluies.github.io/climate/">Sustainable Energy &#8212; Without the Hot Air, 2026</a>.</span><span lang="en">Imports: <a href="https://ec.europa.eu/eurostat/databrowser/view/nrg_ti_oil">Eurostat <code>nrg_ti_oil</code></a>, crude oil by partner country, Sweden 2024, 18,165 thousand tonnes. Production: Energy Institute <em>Statistical Review of World Energy</em> 2026, 2025 production. Regime: <a href="https://ourworldindata.org/grapher/political-regime">V-Dem Regimes of the World 2025</a> via Our World in Data. Joining production to regime class is this site&#8217;s own arithmetic: matched countries cover 99,400 of the Statistical Review&#8217;s 100,590 thousand barrels daily, the difference being regional residuals with no country. The same material appears in chapters 1 and N of <a href="https://oluies.github.io/climate/">Sustainable Energy &#8212; Without the Hot Air, 2026</a>.</span></p>
 </div>
 <script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
