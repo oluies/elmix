@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elmix &#183; Vem har oljan</title>
+</head>
+<body>
+<nav class="sitenav">
+  <a href="../index.html">&#8592; Elmix</a>
+  <a href="index.html">Modell</a>
+  <a href="system.html">Systemet</a>
+  <a href="gate.html">Grinden (v5)</a>
+  <a href="elpannor.html">Elpannor FI/SE</a>
+  <a href="../lagring.html">Lagring</a>
+  <a href="batterier.html">Batterier</a>
+  <a href="obalans.html">Obalans</a>
+  <a href="olja.html">Olja</a>
+  <a href="verifiering.html">Verifiering</a>
+  <a href="referenser.html">Referenser</a>
+</nav>
+<style>
+:root{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
+ --pos:#2f7d4f;--neg:#c0392b;--gate:#0f6b80;--flex:#1a7f6b;--pol:#6b4a9e;--ind:#94671c;--dc:#8a4fb5;--eco:#b8402e;--ca:#1a6b7f;--ne:#b07020;}
+@media (prefers-color-scheme:dark){:root{--ground:#121716;--panel:#181f1e;--ink:#e9eeec;--ink2:#a8b4b1;--ink3:#7e8b88;--rule:#242d2b;
+ --pos:#5cba82;--neg:#e8795c;--gate:#4fc0d8;--flex:#48c5aa;--pol:#a98ede;--ind:#d1a252;--dc:#c08ae8;--eco:#e8795c;--ca:#4fb3d1;--ne:#d9a04e;}}
+:root[data-theme="light"]{--ground:#f6f7f5;--panel:#fffffe;--ink:#161d1b;--ink2:#46534f;--ink3:#7b8683;--rule:#e2e6e2;
+ --pos:#2f7d4f;--neg:#c0392b;--gate:#0f6b80;--flex:#1a7f6b;--pol:#6b4a9e;--ind:#94671c;--dc:#8a4fb5;--eco:#b8402e;--ca:#1a6b7f;--ne:#b07020;}
+:root[data-theme="dark"]{--ground:#121716;--panel:#181f1e;--ink:#e9eeec;--ink2:#a8b4b1;--ink3:#7e8b88;--rule:#242d2b;
+ --pos:#5cba82;--neg:#e8795c;--gate:#4fc0d8;--flex:#48c5aa;--pol:#a98ede;--ind:#d1a252;--dc:#c08ae8;--eco:#e8795c;--ca:#4fb3d1;--ne:#d9a04e;}
+body{background:var(--ground);color:var(--ink);margin:0;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+.page{max-width:1300px;margin:0 auto;padding:44px 22px 72px;display:flex;flex-direction:column;gap:26px;}
+.eyebrow{font:600 11.5px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);}
+h1{font:700 34px/1.14 ui-sans-serif,system-ui,sans-serif;letter-spacing:-.021em;margin:8px 0 0;text-wrap:balance;max-width:24ch;}
+.deck{color:var(--ink2);font-size:16.5px;max-width:70ch;margin:12px 0 0;}
+.fig{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:22px 20px 12px;overflow-x:auto;}
+.fig svg{min-width:1080px;display:block;}
+.figh{font:600 12px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 0 12px;}
+text{fill:var(--ink);}
+.ntitle{font-size:13.5px;font-weight:700;}
+.nsub{font-size:11.5px;fill:var(--ink3);}
+.sgn{font-size:15px;font-weight:700;}
+.elab{font-size:11.5px;font-style:italic;}
+.loop{font-size:16px;font-weight:800;}
+.loopsub{font-size:9.5px;}
+.ax{font-size:12px;fill:var(--ink3);font-family:ui-monospace,Menlo,monospace;}
+.blab{font-size:14px;font-weight:700;}
+.bval{font-size:14px;font-weight:700;font-family:ui-monospace,Menlo,monospace;}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px 34px;}
+.note h3{font:600 12px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 0 7px;padding-bottom:7px;border-bottom:1px solid var(--rule);}
+.note p{margin:0 0 9px;font-size:14.6px;color:var(--ink2);}
+.chg{border-left:3px solid var(--ind);padding-left:14px;}
+.src{font-size:12.5px;color:var(--ink3);border-top:1px solid var(--rule);padding-top:16px;}
+a{color:var(--gate);}
+.sitenav{max-width:1300px;margin:0 auto;padding:12px 22px 0;display:flex;gap:16px;
+flex-wrap:wrap;font-size:13.5px;align-items:baseline;}
+.sitenav a{color:var(--ink3);text-decoration:none;}
+.sitenav a:hover{color:var(--ink);text-decoration:underline;}
+:root{--r0:#bf4433;--r1:#dfa03a;--r2:#1f9bc4;--r3:#4b52ad;--rna:#c3c3bd;}
+.obl{font-size:14px;font-weight:600;fill:var(--ink);}
+.oval{font-size:14px;font-weight:700;fill:var(--ink);font-family:ui-monospace,Menlo,monospace;}
+.osub{font-size:11.5px;fill:var(--ink3);}
+.oin{font-size:12.5px;font-weight:700;fill:#fff;}
+.leg{display:flex;flex-wrap:wrap;gap:6px 18px;margin:12px 0 4px;font-size:13px;color:var(--ink2);}
+.lgi{display:inline-flex;align-items:center;gap:7px;}
+.sw{width:15px;height:11px;border-radius:2px;display:inline-block;}
+.big{font:700 34px/1.1 ui-sans-serif,system-ui,sans-serif;color:var(--ink);letter-spacing:-.02em;}
+.bigsub{font-size:13.5px;color:var(--ink3);margin:2px 0 0;}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:26px;margin:4px 0 10px;}
+</style>
+<div class="page">
+<header>
+ <div class="eyebrow">Oljans ursprung &#183; regim, EU och EES</div>
+ <h1>Sverige k&ouml;per sin olja av demokratier. V&auml;rlden utvinner den i autokratier.</h1>
+ <p class="deck">Tre femtedelar av v&auml;rldens r&aring;olja pumpas i l&auml;nder utan konkurrensutsatta val. Fyra procent av det Sverige k&ouml;per g&ouml;r det. Skillnaden ser ut som ett l&ouml;st problem och &auml;r det inte, eftersom olja &auml;r fungibel: priset s&auml;tts p&aring; en v&auml;rldsmarknad d&auml;r autokratierna h&aring;ller volymen och n&auml;stan hela reservkapaciteten.</p>
+</header>
+
+<!-- OLJA-CHART:BEGIN -->
+<div class="fig"><p class="figh">Sveriges råoljeimport 2024 &#183; per ursprungsland</p><svg viewBox="0 0 1180 482" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sveriges raoljeimport per ursprungsland 2024, fargad efter regimklass">
+<rect x="250" y="40" width="720.4" height="26" fill="var(--r3)" rx="2"/>
+<text x="236" y="58" class="obl" text-anchor="end">Norge</text>
+<text x="980.4" y="58" class="oval">56,9 %</text>
+<rect x="250" y="84" width="161.1" height="26" fill="var(--r2)" rx="2"/>
+<text x="236" y="102" class="obl" text-anchor="end">USA</text>
+<text x="421.1" y="102" class="oval">12,7 %</text>
+<rect x="250" y="128" width="137.1" height="26" fill="var(--r2)" rx="2"/>
+<text x="236" y="146" class="obl" text-anchor="end">Storbritannien</text>
+<text x="397.1" y="146" class="oval">10,8 %</text>
+<rect x="250" y="172" width="135.4" height="26" fill="var(--r2)" rx="2"/>
+<text x="236" y="190" class="obl" text-anchor="end">Guyana</text>
+<text x="395.4" y="190" class="oval">10,7 %</text>
+<rect x="250" y="216" width="56.5" height="26" fill="var(--r2)" rx="2"/>
+<text x="236" y="234" class="obl" text-anchor="end">Nigeria</text>
+<text x="316.5" y="234" class="oval">4,5 %</text>
+<rect x="250" y="260" width="45.5" height="26" fill="var(--r0)" rx="2"/>
+<text x="236" y="278" class="obl" text-anchor="end">Libyen</text>
+<text x="305.5" y="278" class="oval">3,6 %</text>
+<rect x="250" y="304" width="4.7" height="26" fill="var(--r1)" rx="2"/>
+<text x="236" y="322" class="obl" text-anchor="end">Elfenbenskusten</text>
+<text x="264.7" y="322" class="oval">0,4 %</text>
+<rect x="250" y="348" width="3.2" height="26" fill="var(--r3)" rx="2"/>
+<text x="236" y="366" class="obl" text-anchor="end">Danmark</text>
+<text x="263.2" y="366" class="oval">0,3 %</text>
+<rect x="250" y="392" width="2.7" height="26" fill="var(--rna)" rx="2"/>
+<text x="236" y="410" class="obl" text-anchor="end">Ej specificerat</text>
+<text x="262.7" y="410" class="oval">0,2 %</text>
+<text x="250" y="468" class="osub">andel av Sveriges råoljeimport, 18,2 Mt totalt</text>
+</svg><p class="leg"><span class="lgi"><span class="sw" style="background:var(--r0)"></span>sluten autokrati</span> <span class="lgi"><span class="sw" style="background:var(--r1)"></span>valautokrati</span> <span class="lgi"><span class="sw" style="background:var(--r2)"></span>valdemokrati</span> <span class="lgi"><span class="sw" style="background:var(--r3)"></span>liberal demokrati</span> <span class="lgi"><span class="sw" style="background:var(--rna)"></span>ej specificerat</span></p></div>
+<div class="fig"><p class="figh">Samma fyra klasser &#183; import mot världsproduktion</p><svg viewBox="0 0 1180 150" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Regimfordelning: Sveriges import mot varldens produktion">
+<rect x="250.0" y="26" width="31.2" height="30" fill="var(--r0)"/>
+<rect x="281.2" y="26" width="3.2" height="30" fill="var(--r1)"/>
+<rect x="284.4" y="26" width="336.6" height="30" fill="var(--r2)"/>
+<text x="452.8" y="46" class="oin" text-anchor="middle">39 %</text>
+<rect x="621.1" y="26" width="497.0" height="30" fill="var(--r3)"/>
+<text x="869.6" y="46" class="oin" text-anchor="middle">57 %</text>
+<rect x="1118.1" y="26" width="1.9" height="30" fill="var(--rna)"/>
+<text x="236" y="46" class="obl" text-anchor="end">Sveriges import</text>
+<rect x="250.0" y="78" width="240.1" height="30" fill="var(--r0)"/>
+<text x="370.1" y="98" class="oin" text-anchor="middle">28 %</text>
+<rect x="490.1" y="78" width="277.5" height="30" fill="var(--r1)"/>
+<text x="628.9" y="98" class="oin" text-anchor="middle">32 %</text>
+<rect x="767.7" y="78" width="328.9" height="30" fill="var(--r2)"/>
+<text x="932.1" y="98" class="oin" text-anchor="middle">38 %</text>
+<rect x="1096.5" y="78" width="22.6" height="30" fill="var(--r3)"/>
+<rect x="1119.1" y="78" width="0.9" height="30" fill="var(--rna)"/>
+<text x="236" y="98" class="obl" text-anchor="end">Världens produktion</text>
+</svg><p class="leg">Autokratier står för 4,0 % av importen och 60 % av världsproduktionen.</p></div>
+<!-- OLJA-CHART:END -->
+
+<div class="pair">
+ <div><div class="eyebrow">EU-andel</div><p class="big">0,25 %</p><p class="bigsub">Bara Danmark. Sverige importerar mer olja fr&aring;n Elfenbenskusten &auml;n fr&aring;n resten av unionen.</p></div>
+ <div><div class="eyebrow">EES-andel</div><p class="big">57,1 %</p><p class="bigsub">Norge plus Danmark. Hela skillnaden &auml;r Norge, som st&aring;r utanf&ouml;r EU men innanf&ouml;r den inre marknaden.</p></div>
+</div>
+
+<div class="notes">
+ <div class="note"><h3>Varf&ouml;r andelarna inte skyddar</h3><p>Ett fat olja ers&auml;tter ett annat, s&aring; priset s&auml;tts globalt. Sverige betalar v&auml;rldsmarknadspris oavsett vems flagga som sitter p&aring; tankern. Att k&ouml;pa norskt skyddar mot att en last uteblir &#8212; inte mot vad den kostar.</p><p>Norge &auml;r beviset: stor nettoexport&ouml;r, och norska konsumenter betalade europeiska priser genom 2022 som alla andra.</p></div>
+ <div class="note"><h3>En kodning styr bilden</h3><p>USA &auml;r 21 % av v&auml;rldsproduktionen och klassas av V-Dem som valdemokrati, inte liberal demokrati. R&auml;knas USA som liberalt g&aring;r den understa klassen i v&auml;rldsstapeln fr&aring;n 2,6 % till 24 %, och den m&ouml;rkbl&aring; andelen av Sveriges import fr&aring;n 57 % till 81 %.</p><p>Mexiko som valautokrati &auml;r ocks&aring; omtvistat. Freedom House och EIU drar gr&auml;nserna p&aring; andra st&auml;llen. Det finns inget neutralt svar, bara ett svar per klassificering.</p></div>
+ <div class="note"><h3>Ursprungsland &auml;r inte utvinningsland</h3><p>Eurostat redovisar den handelsr&auml;ttsliga motparten. En last som lastats i Rotterdam kan ha pumpats n&aring;gon annanstans, s&aring; l&auml;nderna i stapeln &auml;r vem Sverige handlar med, inte n&ouml;dv&auml;ndigtvis var oljan kom ur marken.</p></div>
+ <div class="note"><h3>Samma argument, andra r&aring;varor</h3><p>Koncentrationen i olja n&aring;r en import&ouml;r genom <em>priset</em>. I uran n&aring;r den genom <em>r&ouml;ret</em>: Kazakstan ensamt st&aring;r f&ouml;r 39 % av brytningen och det finns ingen spotmarknad djup nog att byta kazakiska pound mot kanadensiska med kort varsel. Prisrisk delas av alla; leveransrisk faller p&aring; den som skrev kontraktet.</p></div>
+</div>
+
+<p class="src">Import: <a href="https://ec.europa.eu/eurostat/databrowser/view/nrg_ti_oil">Eurostat <code>nrg_ti_oil</code></a>, r&aring;olja per partnerland, Sverige 2024, 18&#160;165 tusen ton. Produktion: Energy Institute <em>Statistical Review of World Energy</em> 2026, 2025 &aring;rs produktion i tusen fat per dag. Regim: <a href="https://ourworldindata.org/grapher/political-regime">V-Dem Regimes of the World 2025</a> via Our World in Data. Sammanfogningen av produktion och regimklass &auml;r egen r&auml;kning: matchade l&auml;nder t&auml;cker 99&#160;400 av Statistical Reviews 100&#160;590 tusen fat per dag, och skillnaden &auml;r regionala restposter utan land. Samma material finns i kapitel 1 och N i <a href="https://oluies.github.io/climate/">Sustainable Energy &#8212; Without the Hot Air, 2026</a>.</p>
+</div>
+<script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
