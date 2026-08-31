@@ -88,28 +88,6 @@ två förberäknade per-zon-diagram (statiska marter, ej periodberoende):
   bakom kannibaliseringen. En förklaringssektion med källor (bl.a. Lannhard,
   KTH 2023) följer med rapporten.
 
-### Företagets elpris: SE1–SE4 mot Kina (`foretagspris.html`)
-
-Egen Scala.js-modul (`viz/foretagspris/`) som svarar på vad ett företag
-faktiskt betalar, inte vad spot står i. Svensk sida byggs ur samma
-`data/euprices-data.js` som elprissidan; kinesisk sida är statisk tariffdata
-i `Data.scala` (nätbolagens agentköpspriser per provins, maj 2025) – Kina
-publicerar ingen öppen tim- eller spotserie.
-
-Priset staplas som spot + nätavgift + energiskatt, och energiskatten är
-poängen: el i tillverkningsprocessen beskattas med 0,6 öre/kWh mot
-normalsatsens 36,0 (2026). Nedsättningen på 35,4 öre/kWh är lika stor som
-hela spannet mellan Kinas billigaste och dyraste provins, så den avgör
-jämförelsen. Tre kundprofiler väljer svensk nättariff/skattesats och
-motsvarande kinesisk tariffkolumn tillsammans; nätavgiften är ett antagande
-med reglage, eftersom svenska nättariffer inte publiceras som jämförbara
-öre/kWh.
-
-```bash
-cd viz
-mill foretagspris.fastLinkJS      # -> öppna viz/foretagspris.html
-```
-
 ```bash
 ./viz/export-data.sh              # elmix.duckdb -> viz/data/elmix-data.js
 cd viz
@@ -126,6 +104,32 @@ funktionella Jacobi-kärnan (`PcaCore.scala`, samma algoritm som i
 Elmix.scala) kompileras till Scala.js och räknas om för vald tidsperiod.
 Ingen SQL/DuckDB i klienten. Den prerenderade vyn läser i stället de
 färdiga `pca_*.json` direkt (ECharts Node-SSR).
+
+### Företagets elpris: SE1–SE4 mot Kina (`foretagspris.html`)
+
+Egen Scala.js-modul (`viz/foretagspris/`) som svarar på vad ett företag
+faktiskt betalar, inte vad spot står i. Svensk sida byggs ur samma
+`data/euprices-data.js` som elprissidan; kinesisk sida är statisk tariffdata
+i `Data.scala` (nätbolagens agentköpspriser per provins, maj 2025) – Kina
+publicerar ingen öppen tim- eller spotserie.
+
+Priset staplas som spot + nätavgift + energiskatt, och energiskatten är
+poängen: el i tillverkningsprocessen beskattas med 0,6 öre/kWh mot
+normalsatsens 36,0 (2026). Nedsättningen på 35,4 öre/kWh är i samma
+storleksordning som hela spannet mellan Kinas billigaste och dyraste
+provins (56,1–98,9 öre, alltså 42,8), så den avgör jämförelsen. Tre
+kundprofiler väljer svensk nättariff/skattesats och motsvarande kinesisk
+tariffkolumn tillsammans; nätavgiften är ett antagande med reglage,
+eftersom svenska nättariffer inte publiceras som jämförbara öre/kWh.
+
+```bash
+./viz/export-euprices.sh          # -> viz/data/euprices-data.js (gitignorerad)
+cd viz
+mill foretagspris.fastLinkJS      # -> öppna viz/foretagspris.html
+```
+
+Utan uttaget först byggs sidan felfritt men renderar sitt felmeddelande:
+spotdatan kommer inte från `export-data.sh` utan från Energy-Charts-uttaget.
 
 ### CO₂-intensitet (metod)
 

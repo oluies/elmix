@@ -1,9 +1,22 @@
 package build
 import mill.*, scalalib.*, scalajslib.*, scalajslib.api.*
 
+// Delad ECharts-facade. Bryts ut for att den lag ordagrant i alla tre modulerna
+// och varje fix mot den darfor behovde goras pa tre stallen.
+object echarts extends ScalaJSModule {
+  def scalaVersion = "3.3.4"
+  def scalaJSVersion = "1.19.0"
+  // Facaden ror DOM men inte Laminar. De ovriga modulerna far scalajs-dom
+  // transitivt via Laminar; den har behover den explicit.
+  def mvnDeps = Seq(
+    mvn"org.scala-js::scalajs-dom::2.8.0"
+  )
+}
+
 object app extends ScalaJSModule {
   def scalaVersion = "3.3.4"
   def scalaJSVersion = "1.19.0"
+  def moduleDeps = Seq(echarts)
   def mvnDeps = Seq(
     mvn"com.raquo::laminar::17.2.0"
   )
@@ -12,6 +25,7 @@ object app extends ScalaJSModule {
 object obalans extends ScalaJSModule {
   def scalaVersion = "3.3.4"
   def scalaJSVersion = "1.19.0"
+  def moduleDeps = Seq(echarts)
   def mvnDeps = Seq(
     mvn"com.raquo::laminar::17.2.0"
   )
@@ -20,6 +34,7 @@ object obalans extends ScalaJSModule {
 object foretagspris extends ScalaJSModule {
   def scalaVersion = "3.3.4"
   def scalaJSVersion = "1.19.0"
+  def moduleDeps = Seq(echarts)
   def mvnDeps = Seq(
     mvn"com.raquo::laminar::17.2.0"
   )

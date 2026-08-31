@@ -3,16 +3,18 @@ package elmix.obalans
 import com.raquo.laminar.api.L.{*, given}
 import org.scalajs.dom
 import scala.scalajs.js
+
+import elmix.echarts.{ECharts, EChartsInstance}
 import scala.scalajs.js.Dynamic.literal as obj
 import scala.scalajs.js.Thenable.Implicits.given
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/** Rullande fönster genom obalansserien. Histogrammet räknas om i webbläsaren av
-  * DuckDB-WASM (viz/modell/obalans-boot.mjs) och ritas med ECharts. Motorn hämtas
-  * först när läsaren trycker Spela; de statiska diagrammen på sidan klarar sig
-  * utan den.
-  */
+/**
+ * Rullande fönster genom obalansserien. Histogrammet räknas om i webbläsaren av DuckDB-WASM
+ * (viz/modell/obalans-boot.mjs) och ritas med ECharts. Motorn hämtas först när läsaren trycker
+ * Spela; de statiska diagrammen på sidan klarar sig utan den.
+ */
 @js.native
 @js.annotation.JSGlobal("ObalansDB")
 object ObalansDB extends js.Object:
@@ -24,23 +26,29 @@ object Obalans:
   val Zones = Vector("SE1", "SE2", "SE3", "SE4")
   val WindowDays = Vector(7, 30, 90)
   val Lim = 150.0
-  val Bins = 150                     // 2 EUR per stapel mellan -150 och +150
-  val StepDays = 5                   // hur långt fönstret flyttas per bildruta
+  val Bins = 150 // 2 EUR per stapel mellan -150 och +150
+  val StepDays = 5 // hur långt fönstret flyttas per bildruta
 
   final case class Frame(day: Double, label: String)
-  final case class ZoneShape(ys: Vector[Double], near: Double, zero: Double,
-                             out: Double, n: Double)
+  final case class ZoneShape(ys: Vector[Double], near: Double, zero: Double, out: Double, n: Double)
   final case class Shape(xs: Vector[Double], zones: Map[String, ZoneShape])
 
-  /** Samma färger som de statiska diagrammen, lästa ur sidans CSS-variabler så
-    * att diagrammet följer ljust och mörkt läge i stället för att frysa ljusa
-    * värden. Reservvärdena är de ljusa. */
-  private val ZoneVar = Map("SE1" -> ("--ind", "#94671c"), "SE2" -> ("--flex", "#1a7f6b"),
-                            "SE3" -> ("--pol", "#6b4a9e"), "SE4" -> ("--eco", "#b8402e"))
+  /**
+   * Samma färger som de statiska diagrammen, lästa ur sidans CSS-variabler så att diagrammet följer
+   * ljust och mörkt läge i stället för att frysa ljusa värden. Reservvärdena är de ljusa.
+   */
+  private val ZoneVar = Map(
+    "SE1" -> ("--ind", "#94671c"),
+    "SE2" -> ("--flex", "#1a7f6b"),
+    "SE3" -> ("--pol", "#6b4a9e"),
+    "SE4" -> ("--eco", "#b8402e")
+  )
 
   private def cssVar(name: String, fallback: String): String =
-    val v = dom.window.getComputedStyle(dom.document.documentElement)
-      .getPropertyValue(name).trim
+    val v = dom.window
+      .getComputedStyle(dom.document.documentElement)
+      .getPropertyValue(name)
+      .trim
     if v.isEmpty then fallback else v
 
   private def zoneColor(z: String): String =
@@ -56,10 +64,15 @@ object Obalans:
   private val playing = Var(false)
   private val booted = Var(false)
 
-  /** Sidan byter språk med html[data-lang]; statisk text sköts av CSS, och den
-    * här signalen sköter texten som Scala.js ritar. */
-  private val lang = Var(Option(dom.document.documentElement.getAttribute("data-lang"))
-    .filter(_ == "en").getOrElse("sv"))
+  /**
+   * Sidan byter språk med html[data-lang]; statisk text sköts av CSS, och den här signalen sköter
+   * texten som Scala.js ritar.
+   */
+  private val lang = Var(
+    Option(dom.document.documentElement.getAttribute("data-lang"))
+      .filter(_ == "en")
+      .getOrElse("sv")
+  )
   private def t(sv: String, en: String): Signal[String] =
     lang.signal.map(l => if l == "en" then en else sv)
   private def now(sv: String, en: String): String =
@@ -75,7 +88,8 @@ object Obalans:
       val lo = rows(0).lo.asInstanceOf[Double]
       val hi = rows(0).hi.asInstanceOf[Double]
       val first = lo + win.now() * DayMs
-      val fs = Iterator.iterate(first)(_ + StepDays * DayMs)
+      val fs = Iterator
+        .iterate(first)(_ + StepDays * DayMs)
         .takeWhile(_ <= hi)
         .map(t => Frame(t, fmtDate(t)))
         .toVector
@@ -83,10 +97,10 @@ object Obalans:
       idx.set(math.min(idx.now(), math.max(fs.size - 1, 0)))
     }
 
-  private val MonthsSv = Vector("jan", "feb", "mar", "apr", "maj", "jun",
-                                "jul", "aug", "sep", "okt", "nov", "dec")
-  private val MonthsEn = Vector("Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  private val MonthsSv =
+    Vector("jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec")
+  private val MonthsEn =
+    Vector("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
   private def fmtDate(ms: Double): String =
     val d = new js.Date(ms)
@@ -118,8 +132,12 @@ object Obalans:
         val totals = scala.collection.mutable.Map.empty[String, (Double, Double, Double, Double)]
         rows.foreach { r =>
           val z = r.zone.asInstanceOf[String]
-          totals(z) = (r.n.asInstanceOf[Double], r.z.asInstanceOf[Double],
-                       r.near.asInstanceOf[Double], r.out.asInstanceOf[Double])
+          totals(z) = (
+            r.n.asInstanceOf[Double],
+            r.z.asInstanceOf[Double],
+            r.near.asInstanceOf[Double],
+            r.out.asInstanceOf[Double]
+          )
           if !js.isUndefined(r.b) && r.b != null then
             counts((z, r.b.asInstanceOf[Double].toInt)) = r.c.asInstanceOf[Double]
         }
@@ -128,13 +146,19 @@ object Obalans:
           val xs = (-75 to 74).map(b => b * 2.0 + 1.0).toVector
           val zs = Zones.flatMap { z =>
             totals.get(z).map { (n, zero, near, out) =>
-              val raw = (-75 to 74).map(b => counts.getOrElse((z, b), 0.0) / math.max(n, 1) / 2.0).toVector
+              val raw =
+                (-75 to 74).map(b => counts.getOrElse((z, b), 0.0) / math.max(n, 1) / 2.0).toVector
               val sm = raw.indices.map { i =>
                 val lo = math.max(0, i - 2); val hi = math.min(raw.size - 1, i + 2)
                 raw.slice(lo, hi + 1).sum / (hi - lo + 1)
               }.toVector
-              z -> ZoneShape(sm, 100 * near / math.max(n, 1), 100 * zero / math.max(n, 1),
-                             100 * out / math.max(n, 1), n)
+              z -> ZoneShape(
+                sm,
+                100 * near / math.max(n, 1),
+                100 * zero / math.max(n, 1),
+                100 * out / math.max(n, 1),
+                n
+              )
             }
           }.toMap
           shape.set(Some(Shape(xs, zs)))
@@ -144,41 +168,56 @@ object Obalans:
     obj(
       animation = false,
       grid = obj(left = 62, right = 26, top = 46, bottom = 46),
-      legend = obj(top = 4, itemWidth = 18, itemHeight = 3,
+      legend = obj(
+        top = 4,
+        itemWidth = 18,
+        itemHeight = 3,
         textStyle = obj(fontSize = 12, color = inkMuted),
-        data = js.Array(Zones.filter(s.zones.contains)*)),
-      xAxis = obj(`type` = "value", min = -Lim, max = Lim,
-        name = now("obalanspris minus day-ahead, EUR/MWh",
-                   "imbalance price minus day-ahead, EUR/MWh"),
-        nameLocation = "middle", nameGap = 28,
+        data = js.Array(Zones.filter(s.zones.contains)*)
+      ),
+      xAxis = obj(
+        `type` = "value",
+        min = -Lim,
+        max = Lim,
+        name =
+          now("obalanspris minus day-ahead, EUR/MWh", "imbalance price minus day-ahead, EUR/MWh"),
+        nameLocation = "middle",
+        nameGap = 28,
         nameTextStyle = obj(fontSize = 11.5, color = inkMuted),
         axisLabel = obj(fontSize = 11, color = inkMuted),
-        splitLine = obj(show = false)),
+        splitLine = obj(show = false)
+      ),
       yAxis = obj(`type` = "value", min = 0, max = yMax, show = false),
       tooltip = obj(trigger = "axis"),
-      series = js.Array(
-        Zones.filter(s.zones.contains).zipWithIndex.map { (z, i) =>
-          val zs = s.zones(z)
-          obj(
-            name = z, `type` = "line", showSymbol = false, smooth = false,
-            lineStyle = obj(width = 2, color = zoneColor(z)),
-            itemStyle = obj(color = zoneColor(z)),
-            markLine =
-              if i == 0 then
-                obj(silent = true, symbol = "none",
-                  lineStyle = obj(color = inkMuted, `type` = "dashed", width = 1),
-                  label = obj(show = false), data = js.Array(obj(xAxis = 0)))
-              else obj(data = js.Array()),
-            data = js.Array(s.xs.zip(zs.ys).map((x, y) => js.Array(x, y): js.Any)*)
-          ): js.Any
-        }*)
+      series = js.Array(Zones.filter(s.zones.contains).zipWithIndex.map { (z, i) =>
+        val zs = s.zones(z)
+        obj(
+          name = z,
+          `type` = "line",
+          showSymbol = false,
+          smooth = false,
+          lineStyle = obj(width = 2, color = zoneColor(z)),
+          itemStyle = obj(color = zoneColor(z)),
+          markLine =
+            if i == 0 then
+              obj(
+                silent = true,
+                symbol = "none",
+                lineStyle = obj(color = inkMuted, `type` = "dashed", width = 1),
+                label = obj(show = false),
+                data = js.Array(obj(xAxis = 0))
+              )
+            else obj(data = js.Array()),
+          data = js.Array(s.xs.zip(zs.ys).map((x, y) => js.Array(x, y): js.Any)*)
+        ): js.Any
+      }*)
     )
 
   def main(args: Array[String]): Unit =
     val host = dom.document.getElementById("anim")
     if host == null then ()
     else
-      host.innerHTML = ""     // platshållaren gäller bara tills bygget är på plats
+      host.innerHTML = "" // platshållaren gäller bara tills bygget är på plats
       render(host, app())
       val sw = dom.document.getElementById("lang-switch")
       if sw != null then
@@ -189,12 +228,15 @@ object Obalans:
     div(
       display := "contents",
       Vector("sv", "en").map { l =>
-        button(tpe := "button", l.toUpperCase,
+        button(
+          tpe := "button",
+          l.toUpperCase,
           aria.pressed <-- lang.signal.map(cur => (cur == l).toString),
           onClick --> { _ =>
             lang.set(l)
             dom.document.documentElement.setAttribute("data-lang", l)
-          })
+          }
+        )
       }
     )
 
@@ -217,18 +259,26 @@ object Obalans:
 
     def start(): Unit =
       if timer == 0 then
-        timer = dom.window.setInterval(() => {
-          val fs = frames.now()
-          if fs.isEmpty then () else idx.update(i => if i + 1 >= fs.size then 0 else i + 1)
-        }, 220)
+        timer = dom.window.setInterval(
+          () => {
+            val fs = frames.now()
+            if fs.isEmpty then () else idx.update(i => if i + 1 >= fs.size then 0 else i + 1)
+          },
+          220
+        )
         playing.set(true)
 
     def bootThenPlay(): Unit =
       if booted.now() then (if playing.now() then stop() else start())
       else
-        status.set(now("hämtar DuckDB-WASM, cirka 10 MB komprimerat …",
-                       "fetching DuckDB-WASM, about 10 MB compressed …"))
-        ObalansDB.ready(((s: String) => status.set(s"$s …")): js.Function1[String, Unit])
+        status.set(
+          now(
+            "hämtar DuckDB-WASM, cirka 10 MB komprimerat …",
+            "fetching DuckDB-WASM, about 10 MB compressed …"
+          )
+        )
+        ObalansDB
+          .ready(((s: String) => status.set(s"$s …")): js.Function1[String, Unit])
           .toFuture
           .flatMap(_ => buildFrames())
           .flatMap(_ => loadShape())
@@ -236,47 +286,66 @@ object Obalans:
             case scala.util.Success(_) =>
               booted.set(true); status.set(""); redraw(); start()
             case scala.util.Failure(e) =>
-              status.set(now(
-                s"DuckDB kunde inte startas: ${e.getMessage}. De statiska diagrammen ovan är opåverkade.",
-                s"DuckDB could not start: ${e.getMessage}. The static charts above are unaffected."))
+              status.set(
+                now(
+                  s"DuckDB kunde inte startas: ${e.getMessage}. De statiska diagrammen ovan är opåverkade.",
+                  s"DuckDB could not start: ${e.getMessage}. The static charts above are unaffected."
+                )
+              )
           }
 
     div(
       cls := "animwrap",
-      div(cls := "ctrl",
-        button(tpe := "button", cls := "play",
+      div(
+        cls := "ctrl",
+        button(
+          tpe := "button",
+          cls := "play",
           aria.pressed <-- playing.signal.map(_.toString),
           child.text <-- playing.signal.combineWith(lang.signal).map { (p, l) =>
             if p then (if l == "en" then "\u23f8 Pause" else "\u23f8 Pausa")
-            else (if l == "en" then "\u25b6 Play" else "\u25b6 Spela")
+            else (if l == "en" then "\u25b6 Play"
+                  else "\u25b6 Spela")
           },
-          onClick --> { _ => bootThenPlay() }),
+          onClick --> { _ => bootThenPlay() }
+        ),
         select(
-          WindowDays.map(d => option(value := d.toString,
-            child.text <-- t(s"$d dagar", s"$d days"))),
+          WindowDays.map(d =>
+            option(value := d.toString, child.text <-- t(s"$d dagar", s"$d days"))
+          ),
           value <-- win.signal.map(_.toString),
           onChange.mapToValue --> { v =>
             win.set(v.toInt)
             if booted.now() then buildFrames().flatMap(_ => loadShape()).foreach(_ => redraw())
-          }),
-        input(tpe := "range", minAttr := "0", stepAttr := "1",
+          }
+        ),
+        input(
+          tpe := "range",
+          minAttr := "0",
+          stepAttr := "1",
           maxAttr <-- frames.signal.map(f => math.max(f.size - 1, 0).toString),
           controlled(
             value <-- idx.signal.map(_.toString),
             onInput.mapToValue --> { v =>
               stop(); idx.set(v.toInt); if booted.now() then refresh()
-            })),
-        span(cls := "rdg",
+            }
+          )
+        ),
+        span(
+          cls := "rdg",
           child.text <-- frames.signal.combineWith(idx.signal).map { (fs, i) =>
             if fs.isEmpty then "—" else fs(math.min(i, fs.size - 1)).label
-          })
+          }
+        )
       ),
       div(
         cls := "animstat",
         child.text <-- shape.signal.combineWith(lang.signal).map {
           case (Some(s), l) =>
-            val per = Zones.filter(s.zones.contains)
-              .map(z => f"$z ${s.zones(z).near}%.0f%%").mkString(" · ")
+            val per = Zones
+              .filter(s.zones.contains)
+              .map(z => f"$z ${s.zones(z).near}%.0f%%")
+              .mkString(" · ")
             val n = s.zones.values.map(_.n).maxOption.getOrElse(0.0).toLong
             if l == "en" then s"$per within ±10 EUR/MWh · $n periods per zone"
             else s"$per inom ±10 EUR/MWh · $n perioder per zon"
@@ -284,7 +353,8 @@ object Obalans:
         }
       ),
       div(
-        width := "100%", height := "340px",
+        width := "100%",
+        height := "340px",
         onMountCallback { ctx =>
           val c = ECharts.init(ctx.thisNode.ref)
           chart = Some(c)

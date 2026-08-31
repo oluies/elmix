@@ -4,20 +4,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 
-/**
- * Minimal handskriven facade mot ECharts (global fran script-tag). Byt mot ScalablyTyped om typade
- * options behovs senare.
- */
-@js.native
-@JSGlobal("echarts")
-object ECharts extends js.Object:
-  def init(el: dom.Element): EChartsInstance = js.native
-
-@js.native
-trait EChartsInstance extends js.Object:
-  def setOption(option: js.Any): Unit = js.native
-  def setOption(option: js.Any, notMerge: Boolean): Unit = js.native
-  def resize(): Unit = js.native
+import elmix.echarts.{ECharts, EChartsInstance}
 
 /**
  * Data injicerad av data/euprices-data.js (samma fil som euprices.html laser). Sidan far bara den

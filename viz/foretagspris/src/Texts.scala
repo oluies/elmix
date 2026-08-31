@@ -56,10 +56,14 @@ object Texts:
 
   val tsH = T("Samma jämförelse över tid", "The same comparison over time")
   val tsSub = T(
-    "Månadsvis svenskt totalpris per elområde mot det kinesiska spannet. Det kinesiska bandet är " +
+    "Hela historiken, till skillnad från de övriga vyerna – periodvalet ovan skuggar sitt fönster " +
+      "här i stället för att klippa serien, eftersom det är rörelsen över åren som är poängen. " +
+      "Månadsvis svenskt totalpris per elområde mot det kinesiska spannet. Det kinesiska bandet är " +
       "en ögonblicksbild från maj 2025 som hålls konstant – kinesiska tariffer revideras månadsvis " +
       "men publiceras inte som öppen tidsserie, så bandet visar nivå, inte rörelse.",
-    "Monthly Swedish total price per bidding zone against the Chinese range. The Chinese band is a " +
+    "Full history, unlike the other views – the period selector above shades its window here " +
+      "rather than clipping the series, because the movement across years is the point. " +
+      "Monthly Swedish total price per bidding zone against the Chinese range. The Chinese band is a " +
       "May 2025 snapshot held flat – Chinese tariffs are revised monthly but are not published as " +
       "an open time series, so the band shows level, not movement."
   )
@@ -82,6 +86,7 @@ object Texts:
   val sFlat = T("Plan", "Flat")
   val sValley = T("Dal", "Valley")
   val unit = T("öre/kWh", "öre/kWh")
+  val china = T("Kina", "China")
   val cheapest = T("Kina billigast", "China cheapest")
   val median = T("Kina median", "China median")
   val dearest = T("Kina dyrast", "China dearest")
