@@ -72,3 +72,35 @@ syntetisk rådata, ren DuckDB.
 - Tidsstämplar är TIMESTAMPTZ; ENTSO-E levererar UTC, transform.sql sätter
   Europe/Stockholm. Inga naiva timestamps.
 - Import positiv, export negativ i flows.
+
+<!-- rtk-instructions v2 -->
+# RTK (Rust Token Killer)
+
+Prefixa kommandon med `rtk`. Finns ett filter används det, annars går
+kommandot igenom oförändrat - så `rtk` är alltid säkert. Gäller även i
+kedjor: `rtk git add . && rtk git commit -m "msg"`, inte bara det första
+ledet.
+
+**Blocket är medvetet beskuret** till det som faktiskt förekommer i
+elmix. Den fullständiga kommandolistan står i `~/.claude/RTK.md`, som
+laddas globalt i alla projekt - en `rtk init` här skulle skriva tillbaka
+hela listan, inklusive cargo, tsc, jest, prisma, docker och kubectl, som
+inget av det här repot använder.
+
+```bash
+rtk git status | log | diff | show | add | commit | push | fetch | branch
+rtk gh pr view <num> | pr checks | run list | issue list | api
+rtk ls <path> | find <pattern>
+rtk grep <pattern>       # OBS: -c -l -L -o -Z kör ofiltrerat
+rtk curl <url>
+rtk err <cmd>            # bara felraderna ur valfritt kommando
+rtk log <file>           # deduplicerade loggar med antal
+```
+
+Git-passthrough gäller alla subkommandon, även de som inte listas ovan.
+
+Meta: `rtk gain` (besparing), `rtk gain --history`, `rtk discover`
+(missad användning), `rtk proxy <cmd>` (kör ofiltrerat vid felsökning).
+
+Projektlokala filter kan läggas i `.rtk/filters.toml`.
+<!-- /rtk-instructions -->
