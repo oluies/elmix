@@ -98,6 +98,18 @@ object Texts:
   val years = T("år", "yr")
   val never = T("aldrig", "never")
 
+  // aria-label pa diagramrutorna. Ligger har och inte i HTML:en for att de
+  // annars blir kvar pa svenska nar sidan staller om till engelska.
+  val ariaRev = T(
+    "Intäkt per marknad mot kostnaden att äga, för valt elområde",
+    "Revenue by market against the cost of ownership, for the selected zone"
+  )
+  val ariaDur = T(
+    "Arbitrageintäkt mot varaktighet per elområde, med kostnadslinje",
+    "Arbitrage revenue against duration per zone, with the cost line"
+  )
+  val ariaBe = T("Break-even-investering per elområde", "Break-even capex by bidding zone")
+
   val noData = T(
     "Prisdatan för SE1–SE4 kunde inte hämtas vid senaste publiceringen. Diagrammen är därför " +
       "tomma. Källa: Energy-Charts (ENTSO-E/SMARD).",

@@ -147,6 +147,14 @@ object Bess:
     val varden = k(arb) +: kap.map(x => k(x._2))
     val farger = ZonFarg(z) +: kap.map(_ => "#8a8a85")
     val kost = k(kostnad)
+    val bandA = k(
+      Modell.arskostnad(CapexGlobal, h, wacc.now() / 100, livslangd.now().toInt, opex.now() / 100)
+    )
+    val bandB = k(
+      Modell.arskostnad(CapexSverige, h, wacc.now() / 100, livslangd.now().toInt, opex.now() / 100)
+    )
+    val kostBandLag = math.min(bandA, bandB)
+    val kostBandHog = math.max(bandA, bandB)
 
     obj(
       grid = obj(top = 42, bottom = 76, left = 62, right = 24),
@@ -187,6 +195,66 @@ object Bess:
               position = "insideEndTop"
             ),
             data = js.Array(obj(yAxis = kost): js.Any)
+          ),
+          // Bandet spanner de tva capex-nivaerna, inte bara den valda: det ar
+          // spannet mellan BNEF:s globala nyckelfardiga niva och den uppgivna
+          // svenska som sager om en stapel raknas som betald eller inte.
+          // Grupperna markeras dessutom pa x-axeln - uppdelningen i "betalt for
+          // energi" och "betalt for effekt" ar sjalva argumentet och far inte
+          // bara sta i brodtexten.
+          markArea = obj(
+            silent = true,
+            data = js
+              .Array(
+                js.Array[js.Any](
+                  obj(
+                    yAxis = kostBandLag,
+                    itemStyle = obj(color = "#8a8a85", opacity = 0.16),
+                    label = obj(
+                      show = true,
+                      position = "insideTopLeft",
+                      fontSize = 10,
+                      color = "#5a5a55",
+                      formatter = t(Texts.costBand)
+                    )
+                  ),
+                  obj(yAxis = kostBandHog)
+                ),
+                js.Array[js.Any](
+                  obj(
+                    xAxis = kat.head,
+                    itemStyle = obj(color = "#4477aa", opacity = 0.06),
+                    label = obj(
+                      show = true,
+                      position = "insideTop",
+                      fontSize = 10,
+                      color = "#4477aa",
+                      formatter = t(Texts.energyGroup)
+                    )
+                  ),
+                  obj(xAxis = kat.head)
+                )
+              )
+              .concat(
+                if kap.isEmpty then js.Array[js.Any]()
+                else
+                  js.Array(
+                    js.Array[js.Any](
+                      obj(
+                        xAxis = kat(1),
+                        itemStyle = obj(color = "#8a8a85", opacity = 0.06),
+                        label = obj(
+                          show = true,
+                          position = "insideTop",
+                          fontSize = 10,
+                          color = "#6a6a65",
+                          formatter = t(Texts.powerGroup)
+                        )
+                      ),
+                      obj(xAxis = kat.last)
+                    ): js.Any
+                  )
+              )
           )
         )
       )
@@ -243,6 +311,9 @@ object Bess:
               `type` = "line",
               symbol = "none",
               lineStyle = obj(color = "#161d1b", width = 2, `type` = "dashed"),
+              // Legendsymbolen tar sin farg fran itemStyle, inte lineStyle - utan
+              // den blir kostnadslinjen svart i diagrammet men bla i legenden.
+              itemStyle = obj(color = "#161d1b"),
               data = js.Array(kostLinje.map(x => x: js.Any)*)
             ): js.Any
           )
@@ -300,6 +371,39 @@ object Bess:
         )
       )
     )
+
+  /**
+   * Varaktigheten dar arbitraget slutar tacka arskostnaden, linjart interpolerad mellan hela
+   * timmar. None nar linjerna aldrig korsas inom 1-8 h - antingen for att arbitraget ligger under
+   * kostnaden redan vid en timme, eller for att det ligger over hela vagen.
+   */
+  private def korsning(z: String): Option[Double] =
+    def kost(hh: Double) =
+      Modell.arskostnad(capex.now(), hh, wacc.now() / 100, livslangd.now().toInt, opex.now() / 100)
+    val diff = Varaktigheter.map(hh => arbitrageFor(z, hh).map(_ - kost(hh.toDouble)))
+    if diff.exists(_.isEmpty) then None
+    else
+      val d = diff.map(_.get)
+      // Forsta bytet fran plus till minus. Ett arbitrage som aldrig ar positivt
+      // korsar inte - det ligger under hela vagen och har ingen brytpunkt.
+      val i = (1 until d.length).find(j => d(j - 1) > 0 && d(j) <= 0)
+      i.map { j =>
+        val (a, b) = (d(j - 1), d(j))
+        Varaktigheter(j - 1) + (if a - b == 0 then 0.0 else a / (a - b))
+      }
+
+  private def korsningsText(): String =
+    val l = lang.now()
+    val delar = zoner.map { z =>
+      korsning(z) match
+        case Some(v) => s"$z ${fmt(v, 1)} h"
+        case None =>
+          val over = arbitrageNu(z).exists(_ > kostnad)
+          s"$z " + (if over then (if l == "en" then "never within 8 h" else "aldrig inom 8 h")
+                    else (if l == "en" then "already below at 1 h"
+                          else "redan under vid 1 h"))
+    }
+    (if l == "en" then "Crossing duration: " else "Korsning vid: ") + delar.mkString(" · ") + "."
 
   // ------------------------------------------------------------------ nyckeltal
   private def statRad(): String =
@@ -477,6 +581,10 @@ object Bess:
     val el = dom.document.getElementById(id)
     if el != null then el.textContent = s
 
+  private def sattAria(id: String, s: String): Unit =
+    val el = dom.document.getElementById(id)
+    if el != null then el.setAttribute("aria-label", s)
+
   private def html(id: String, s: String): Unit =
     val el = dom.document.getElementById(id)
     if el != null then el.innerHTML = s
@@ -495,6 +603,9 @@ object Bess:
     satt("rev-h", Texts.revH(l)); satt("rev-sub", Texts.revSub(l))
     satt("dur-h", Texts.durH(l)); satt("dur-sub", Texts.durSub(l))
     satt("be-h", Texts.beH(l)); satt("be-sub", Texts.beSub(l))
+    sattAria("rev", Texts.ariaRev(l))
+    sattAria("dur", Texts.ariaDur(l))
+    sattAria("be", Texts.ariaBe(l))
     html("notes", Texts.notes.map((h2, b) => s"<h3>${h2(l)}</h3><p>${b(l)}</p>").mkString)
     satt("src", Texts.src(l) + (if uppdaterad.isEmpty then "" else s" · ${uppdaterad}"))
 
@@ -502,6 +613,7 @@ object Bess:
     statiskText()
     satt("bess-lead", Texts.lead(lang.now()))
     html("stats", statRad())
+    satt("dur-cross", if harData then korsningsText() else "")
     diagram.get("rev").foreach(_.setOption(intaktOption(), true))
     diagram.get("dur").foreach(_.setOption(varaktighetOption(), true))
     diagram.get("be").foreach(_.setOption(breakEvenOption(), true))
