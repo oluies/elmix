@@ -50,8 +50,12 @@ fi
 echo "VARNING: bess-uttaget misslyckades - försöker återanvända publicerad payload" >&2
 # Inte bara -f: filen måste innehålla en spread för minst en zon. Annars är den
 # lika värdelös som ingen fil alls, och sidan skulle se publicerad ut men tom.
+# Kräver inte bara att nycklarna finns utan att det ligger en faktisk spread
+# under dem: "hi" skrivs bara av bess_agg.py när ett dygn gett både ett köp- och
+# ett säljfönster. En payload med tomma zoner passerar de två första villkoren.
 if [ -f "docs/data/bess-data.js" ] && grep -q '"spread"' "docs/data/bess-data.js" &&
-   grep -qE '"SE[1-4]"' "docs/data/bess-data.js"; then
+   grep -qE '"SE[1-4]"' "docs/data/bess-data.js" &&
+   grep -q '"hi"' "docs/data/bess-data.js"; then
   cp "docs/data/bess-data.js" "$OUT"
   echo "  återanvände docs/data/bess-data.js" >&2
   exit 0
