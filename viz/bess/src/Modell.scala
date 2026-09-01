@@ -58,18 +58,29 @@ object Modell:
     val n = 1000 * H * (crf(wacc, livslangd) + opexAndel)
     if n <= 0 then 0.0 else intakt / n
 
-  /** Enkel aterbetalningstid i ar: kapital delat med arligt overskott. */
+  /**
+   * Enkel, odiskonterad aterbetalningstid i ar: kapital delat med arligt overskott efter drift.
+   *
+   * None nar overskottet ar noll eller negativt, OCH nar aterbetalningen skulle ta langre tid an
+   * tillgangen lever - ett tal som "30 ar" bredvid ett 15-arsreglage laser som en lang men
+   * barkraftig investering, inte som "aldrig", vilket ar vad det betyder.
+   *
+   * Tar medvetet inte wacc: det har ar den enkla aterbetalningen, inte den diskonterade. Vill man
+   * ha den senare ar det en annan funktion, inte en extra parameter som tyst ignoreras.
+   */
   def payback(
       intakt: Double,
       capexEurPerKWh: Double,
       H: Double,
       opexAndel: Double,
-      wacc: Double,
       livslangd: Int
   ): Option[Double] =
     val kapital = capexEurPerKWh * 1000 * H
     val netto = intakt - kapital * opexAndel
-    if netto <= 0 then None else Some(kapital / netto)
+    if netto <= 0 then None
+    else
+      val ar = kapital / netto
+      if ar > livslangd then None else Some(ar)
 
   /** Den spread som skulle kravas for att tacka arskostnaden, EUR/MWh. */
   def kravdSpread(arskostnad: Double, mwh: Double): Option[Double] =

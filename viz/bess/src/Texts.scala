@@ -52,14 +52,18 @@ object Texts:
   val revSub = T(
     "Tusen euro per MW ansluten effekt och år. Vänstergruppen betalas för levererad energi och " +
       "är netto laddningskostnad; högergruppen betalas för tillgänglig effekt och har ingen " +
-      "laddning att dra av. Bandet är vad ägandet kostar vid vald investering. Summera dem inte: " +
-      "reglagen finns just för att du ska välja hur mycket av effekten som faktiskt säljs till " +
-      "varje marknad, och ingen enhet är tillgänglig till hundra procent överallt samtidigt.",
+      "laddning att dra av. Bandet är en fast referens: det spänner de två capex-nivåerna, " +
+      "BNEF:s globala nyckelfärdiga och den uppgivna svenska, och rör sig därför inte med " +
+      "reglaget – det gör den streckade årskostnadslinjen. Summera inte staplarna: reglagen " +
+      "finns just för att du ska välja hur mycket av effekten som faktiskt säljs till varje " +
+      "marknad, och ingen enhet är tillgänglig till hundra procent överallt samtidigt.",
     "Thousand euros per MW of connected power per year. The left group is paid for energy " +
       "delivered and is net of charging; the right group is paid for power held available and " +
-      "has no charging to deduct. The band is what ownership costs at the chosen capex. Do not " +
-      "sum them: the sliders exist precisely so you choose how much of the power is actually " +
-      "sold to each market, and no unit is available at a hundred per cent everywhere at once."
+      "has no charging to deduct. The band is a fixed reference: it spans the two capex levels, " +
+      "BNEF’s global turnkey and the reported Swedish one, and therefore does not move with the " +
+      "slider – the dashed annual-cost line does. Do not sum the bars: the sliders exist " +
+      "precisely so you choose how much of the power is actually sold to each market, and no " +
+      "unit is available at a hundred per cent everywhere at once."
   )
 
   val durH = T("Intäkt mot varaktighet", "Revenue against duration")
@@ -90,6 +94,16 @@ object Texts:
   val national = T("nationellt pris", "national price")
   val zonal = T("zonpris", "zonal price")
   val noZonePrice = T("inget publicerat pris för denna zon", "no published price for this zone")
+
+  val crossPrefix = T("Korsning vid: ", "Crossing duration: ")
+  val neverWithin8h = T("aldrig inom 8 h", "never within 8 h")
+  val belowAt1h = T("redan under vid 1 h", "already below at 1 h")
+  val noCrossData = T("ingen data", "no data")
+
+  val thZone = T("Zon", "Zone")
+  val thArbitrage = T("Arbitrage", "Arbitrage")
+  val thBreakEven = T("Break-even", "Break-even")
+  val thAnnualCost = T("Årskostnad", "Annual cost")
 
   val statBreakEven = T("Break-even", "Break-even")
   val statPayback = T("Återbetalning", "Payback")

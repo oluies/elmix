@@ -99,6 +99,21 @@ object Bess:
       .filter(_.nonEmpty)
       .map(v => v.map(_.price.asInstanceOf[Double]).sum / v.size)
 
+  /** Perioderna en reservprodukts observationer kommer fran, t.ex. "2025-03-10". */
+  private def reservperiod(p: js.Dynamic): String =
+    val obs =
+      if p.basis.asInstanceOf[String] == "national" then falt(p, "observations")
+      else falt(p, "byZone").flatMap(falt(_, zon.now()))
+    val perioder = obs
+      .map(_.asInstanceOf[js.Array[js.Dynamic]].toVector)
+      .getOrElse(Vector.empty)
+      .map(_.period.asInstanceOf[String])
+      .distinct
+      .sorted
+    if perioder.isEmpty then "?"
+    else if perioder.size == 1 then perioder.head
+    else s"${perioder.head}\u2013${perioder.last}"
+
   // ------------------------------------------------------------------ harledda tal
   private def h: Double = H.now()
   private def mwh: Double = Modell.levereradMwh(cykler.now(), dod.now() / 100, eta.now() / 100, h)
@@ -133,19 +148,30 @@ object Bess:
   private def intaktOption(): js.Any =
     val z = zon.now()
     val arb = arbitrageNu(z).getOrElse(0.0)
+    // Produkter UTAN pris for zonen ritas som en namngiven nollstapel i stallet
+    // for att forsvinna: att aFRR saknas i SE1 och SE2 ar ett resultat, inte
+    // ett skal att dolja marknaden.
+    val utanPris = produkter.filter(p => reservpris(p, z).isEmpty).map { p =>
+      val namn = (if lang.now() == "en" then p.en else p.sv).asInstanceOf[String]
+      (s"$namn\n(${t(Texts.noZonePrice)})", 0.0)
+    }
     val kap = produkter.flatMap { p =>
       reservpris(p, z).map { pris =>
         val tg =
           if p.id.asInstanceOf[String].startsWith("afrr") then tillgAfrr.now() else tillgFcr.now()
         val namn = (if lang.now() == "en" then p.en else p.sv).asInstanceOf[String]
         val bas =
-          if p.basis.asInstanceOf[String] == "national" then t(Texts.national) else t(Texts.zonal)
-        (s"$namn\n($bas)", Modell.kapacitet(pris, tg / 100))
+          if p.basis.asInstanceOf[String] == "national" then t(Texts.national)
+          else t(Texts.zonal)
+        // Perioden star pa stapeln: reservpriserna ar handmatade och rors inte av
+        // arsvaljaren, sa utan den star ett 2021-arbitrage bredvid ett 2025-reservpris
+        // i samma diagram utan att nagot sager att halva bilden inte flyttade sig.
+        (s"$namn\n($bas, ${reservperiod(p)})", Modell.kapacitet(pris, tg / 100))
       }
     }
-    val kat = (t(Texts.arbitrage) + s"\n(${z})") +: kap.map(_._1)
-    val varden = k(arb) +: kap.map(x => k(x._2))
-    val farger = ZonFarg(z) +: kap.map(_ => "#8a8a85")
+    val kat = (t(Texts.arbitrage) + s"\n(${z})") +: (kap ++ utanPris).map(_._1)
+    val varden = k(arb) +: (kap ++ utanPris).map(x => k(x._2))
+    val farger = ZonFarg(z) +: (kap ++ utanPris).map(_ => "#8a8a85")
     val kost = k(kostnad)
     val bandA = k(
       Modell.arskostnad(CapexGlobal, h, wacc.now() / 100, livslangd.now().toInt, opex.now() / 100)
@@ -389,21 +415,28 @@ object Bess:
       val i = (1 until d.length).find(j => d(j - 1) > 0 && d(j) <= 0)
       i.map { j =>
         val (a, b) = (d(j - 1), d(j))
-        Varaktigheter(j - 1) + (if a - b == 0 then 0.0 else a / (a - b))
+      Varaktigheter(j - 1) + a / (a - b)
       }
 
   private def korsningsText(): String =
-    val l = lang.now()
     val delar = zoner.map { z =>
-      korsning(z) match
-        case Some(v) => s"$z ${fmt(v, 1)} h"
-        case None =>
-          val over = arbitrageNu(z).exists(_ > kostnad)
-          s"$z " + (if over then (if l == "en" then "never within 8 h" else "aldrig inom 8 h")
-                    else (if l == "en" then "already below at 1 h"
-                          else "redan under vid 1 h"))
+      // Tre skilda lagen som alla gav None forut: ingen data alls for zonen och
+      // aret, arbitrage over kostnaden hela vagen, och arbitrage under redan vid
+      // en timme. Utan atskillnaden pastod texten "redan under vid 1 h" om en zon
+      // sidan inte har nagon data for - medan diagrammet korrekt ritade null.
+      if !harAllaVaraktigheter(z) then s"$z ${t(Texts.noCrossData)}"
+      else
+        korsning(z) match
+          case Some(v) => s"$z ${fmt(v, 1)} h"
+          case None =>
+            val over = arbitrageNu(z).exists(_ > kostnad)
+            s"$z " + (if over then t(Texts.neverWithin8h) else t(Texts.belowAt1h))
     }
-    (if l == "en" then "Crossing duration: " else "Korsning vid: ") + delar.mkString(" · ") + "."
+    t(Texts.crossPrefix) + delar.mkString(" · ") + "."
+
+  /** Har zonen en spread for varje varaktighet 1-8 det valda aret? */
+  private def harAllaVaraktigheter(z: String): Boolean =
+    Varaktigheter.forall(hh => spread(z, ar.now(), hh).isDefined)
 
   // ------------------------------------------------------------------ nyckeltal
   private def statRad(): String =
@@ -412,14 +445,8 @@ object Bess:
     arbitrageNu(z).fold("") { arb =>
       val be =
         Modell.breakEvenCapex(arb, h, wacc.now() / 100, livslangd.now().toInt, opex.now() / 100)
-      val pb = Modell.payback(
-        arb,
-        capex.now(),
-        h,
-        opex.now() / 100,
-        wacc.now() / 100,
-        livslangd.now().toInt
-      )
+      val pb =
+        Modell.payback(arb, capex.now(), h, opex.now() / 100, livslangd.now().toInt)
       val kravd = Modell.kravdSpread(kostnad, mwh)
       val faktisk = spread(z, ar.now(), math.round(h).toInt)
         .map((hi, lo) => hi - lo / (eta.now() / 100))
@@ -432,6 +459,9 @@ object Bess:
     }
 
   // ------------------------------------------------------------------ URL
+  /** Senast skrivna query-strang, sa identiska skrivningar hoppas over. */
+  private var sistaUrl = ""
+
   private def skrivUrl(): Unit =
     val q = Seq(
       "zon" -> zon.now(),
@@ -448,7 +478,13 @@ object Bess:
       "afrr" -> fmt0(tillgAfrr.now()),
       "median" -> (if median.now() then "1" else "0")
     ).map((a, b) => s"$a=$b").mkString("&")
-    dom.window.history.replaceState(js.undefined, "", "?" + q)
+    // Safari kastar SecurityError over 100 replaceState per 30 s, och ett drag i
+    // ett reglage ger langt fler input-handelser an sa. Skriv darfor bara nar
+    // stangen faktiskt andrats, och lat aldrig ett undantag har riva omritningen.
+    if q != sistaUrl then
+      sistaUrl = q
+      try dom.window.history.replaceState(js.undefined, "", "?" + q)
+      catch case _: Throwable => ()
 
   private def fmt0(v: Double): String =
     if v == math.floor(v) then math.round(v).toString else v.toString
@@ -459,7 +495,10 @@ object Bess:
       Option(p.get(k)).flatMap(_.toDoubleOption).foreach(f)
     Option(p.get("zon")).filter(zoner.contains).foreach(zon.set)
     num("ar", v => if aren.contains(v.toInt) then ar.set(v.toInt))
-    num("h", v => H.set(v.max(1).min(8)))
+    // Snappa till reglagets heltalssteg: spreaden slas upp pa avrundat h medan
+    // kostnaden anvander det rada, sa ?h=3.7 hade gett tre olika varden for
+    // samma parameter utan nagot pa skarmen som avslojade det.
+    num("h", v => H.set(math.round(v).toDouble.max(1).min(8)))
     num("capex", v => capex.set(v.max(60).min(260)))
     num("wacc", v => wacc.set(v.max(3).min(12)))
     num("liv", v => livslangd.set(v.max(8).min(25)))
@@ -622,12 +661,8 @@ object Bess:
 
   private def tabell(): Unit =
     val l = lang.now()
-    val huvud = Vector(
-      "Zon",
-      if l == "en" then "Arbitrage" else "Arbitrage",
-      if l == "en" then "Break-even" else "Break-even",
-      if l == "en" then "Annual cost" else "Årskostnad"
-    )
+    val huvud =
+      Vector(Texts.thZone, Texts.thArbitrage, Texts.thBreakEven, Texts.thAnnualCost).map(_(l))
     val rader = zoner.map { z =>
       val a = arbitrageNu(z)
       Vector(
@@ -680,6 +715,13 @@ object Bess:
 
     if !harData then lang.signal.foreach(_ => ritaTomt())(unsafeWindowOwner)
     else
+      // Tillgangligheten hor hemma i underlaget, inte som en andra sanning har.
+      produkter.foreach { p =>
+        falt(p, "defaultAvailability").map(_.asInstanceOf[Double] * 100).foreach { v =>
+          if p.id.asInstanceOf[String].startsWith("afrr") then tillgAfrr.set(v)
+          else tillgFcr.set(v)
+        }
+      }
       if aren.nonEmpty then ar.set(aren.last)
       if !zoner.contains(zon.now()) then zon.set(zoner.head)
       lasUrl()

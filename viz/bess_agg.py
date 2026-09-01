@@ -34,9 +34,12 @@ from zoneinfo import ZoneInfo
 STHLM = ZoneInfo("Europe/Stockholm")
 ZONER = ["SE1", "SE2", "SE3", "SE4"]
 VARAKTIGHETER = list(range(1, 9))
-# Ett dygn måste ha minst så här många punkter för att räknas. Skär bort
-# stympade dygn i seriens ändar, som annars ger en spread på tre timmar.
-MIN_PUNKTER = 20
+# Ett dygn räknas bara om det är hyfsat helt. Tröskeln måste vara RELATIV:
+# efter kvartsbytet 2025-10-01 är ett helt dygn 96 punkter, så ett fast tal som
+# 20 släppte igenom ett stympat dygn och lät dygnsspreaden räknas på ett
+# femtimmarsfönster som om det vore hela dygnet. Andelen jämförs mot dygnets
+# egen förväntade längd, härledd ur den upplösning dygnet faktiskt har.
+MIN_ANDEL = 0.8
 
 
 def las_zon(sokvag):
@@ -65,10 +68,22 @@ def dygnsspread(priser, H):
     return sum(s[-n:]) / n, sum(s[:n]) / n
 
 
+def helt_dygn(priser):
+    """Är dygnet tillräckligt komplett för att räknas?
+
+    Upplösningen härleds ur punktantalet: närmare 96 betyder kvartar, närmare 24
+    betyder timmar. DST-dygnen har 23 respektive 25 timmar, vilket ryms inom
+    marginalen.
+    """
+    n = len(priser)
+    forvantat = 96 if n > 48 else 24
+    return n >= MIN_ANDEL * forvantat
+
+
 def spread_for_ar(dagar, ar, H):
     hi, lo = [], []
     for datum, priser in dagar.items():
-        if datum.year != ar or len(priser) < MIN_PUNKTER:
+        if datum.year != ar or not helt_dygn(priser):
             continue
         par = dygnsspread(priser, H)
         if par is None:
@@ -119,11 +134,9 @@ def main():
     if not spread:
         sys.exit("FEL: ingen zon gav data - skriver inte payloaden")
 
-    # En payload utan de svenska zonerna är värdelös för sidan. Bättre att fela
-    # än att skriva en fil som passerar -f och blankar diagrammen.
+    # `if not spread` ovanför har redan fångat fallet att ALLA zoner saknas, så
+    # här återstår bara delvis bortfall - varna, men skriv payloaden.
     saknas = [z for z in ZONER if z not in spread]
-    if len(saknas) == len(ZONER):
-        sys.exit("FEL: alla zoner saknas")
     if saknas:
         print(f"  VARNING: saknar {', '.join(saknas)}", file=sys.stderr)
 
@@ -146,7 +159,7 @@ def main():
 
 
 def las_reserver():
-    """Reservpriser från viz/data/bess-reserves.json om filen finns.
+    """Reservpriser från viz/bess-reserves.json om filen finns.
 
     Svenska kraftnät publicerar inga öppna reservprisserier - Mimer har ett
     internt API bakom webbgränssnittet men inget dokumenterat publikt. Därför
