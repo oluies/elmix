@@ -15,3 +15,5 @@ viz/ssr/node_modules/
 .DS_Store
 # roborev snapshots
 /.roborev/
+# rtk: bara en mall med utkommenterade exempel tills nagon skriver ett filter
+/.rtk/
