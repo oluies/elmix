@@ -20,6 +20,7 @@ START="${BESS_START:-2020-01-01}"
 END="${BESS_END:-$(date -u +%Y-%m-%d)}"
 OUT="viz/data/bess-data.js"
 GAP="${BESS_GAP:-8}"
+SHARE="viz/data/raw-se-prices"   # fylls av export-euprices.sh
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p viz/data
@@ -37,25 +38,39 @@ fetch_zone() {  # $1=zon -> $TMP/$1.json
   return 1
 }
 
-echo "Hämtar SE1-SE4 $START..$END (Energy-Charts)..." >&2
-for z in SE1 SE2 SE3 SE4; do
-  if fetch_zone "$z"; then echo "  $z ok" >&2; else echo "  $z: ingen data (hoppas)" >&2; fi
-  perl -e "select(undef,undef,undef,$GAP)"
-done
+# export-euprices.sh hämtar redan exakt de här fyra zonerna från samma
+# rate-limitade endpoint i samma publiceringskörning. Återanvänd dess rådata när
+# den täcker samma period - annars fördubblas 429-risken för båda sidorna utan
+# att någon av dem får ett enda extra datum. Fristående körning hämtar som förut.
+delad=0
+if [ -f "$SHARE/range" ] && [ "$(cat "$SHARE/range")" = "$START..$END" ]; then
+  delad=1
+  for z in SE1 SE2 SE3 SE4; do
+    [ -f "$SHARE/$z.json" ] || delad=0
+  done
+fi
+
+if [ "$delad" = 1 ]; then
+  echo "Återanvänder SE1-SE4 $START..$END från $SHARE (hämtade av export-euprices)" >&2
+  cp "$SHARE"/SE?.json "$TMP/"
+else
+  echo "Hämtar SE1-SE4 $START..$END (Energy-Charts)..." >&2
+  for z in SE1 SE2 SE3 SE4; do
+    if fetch_zone "$z"; then echo "  $z ok" >&2; else echo "  $z: ingen data (hoppas)" >&2; fi
+    perl -e "select(undef,undef,undef,$GAP)"
+  done
+fi
 
 if UPDATED="$(date -u +%Y-%m-%d)" python3 viz/bess_agg.py "$TMP" "$OUT"; then
   exit 0
 fi
 
 echo "VARNING: bess-uttaget misslyckades - försöker återanvända publicerad payload" >&2
-# Inte bara -f: filen måste innehålla en spread för minst en zon. Annars är den
-# lika värdelös som ingen fil alls, och sidan skulle se publicerad ut men tom.
-# Kräver inte bara att nycklarna finns utan att det ligger en faktisk spread
-# under dem: "hi" skrivs bara av bess_agg.py när ett dygn gett både ett köp- och
-# ett säljfönster. En payload med tomma zoner passerar de två första villkoren.
-if [ -f "docs/data/bess-data.js" ] && grep -q '"spread"' "docs/data/bess-data.js" &&
-   grep -qE '"SE[1-4]"' "docs/data/bess-data.js" &&
-   grep -q '"hi"' "docs/data/bess-data.js"; then
+# Inte bara -f: filen måste innehålla en faktisk spread. Kontrollen är
+# strukturell och delad med publish-pages.sh - tre okarade greppar fanns här
+# förut, och "SE[1-4]" matchade dessutom reserves.byZone, så en payload utan en
+# enda spread kunde passera.
+if python3 viz/bess-payload-ok.py "docs/data/bess-data.js"; then
   cp "docs/data/bess-data.js" "$OUT"
   echo "  återanvände docs/data/bess-data.js" >&2
   exit 0

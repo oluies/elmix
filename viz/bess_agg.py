@@ -43,7 +43,13 @@ MIN_ANDEL = 0.8
 
 
 def las_zon(sokvag):
-    """unix_seconds + price -> {lokalt datum: [pris, ...]}."""
+    """unix_seconds + price -> {lokalt datum: (priser, steg_i_sekunder)}.
+
+    Steget bärs med: upplösningen går bara att veta ur tidsstämplarna, och den
+    behövs för att avgöra om ett dygn är helt. Att gissa den ur punktantalet
+    gör kontrollen cirkulär - ett stympat kvartsdygn ser då ut som ett helt
+    timdygn.
+    """
     with open(sokvag) as f:
         d = json.load(f)
     dagar = defaultdict(list)
@@ -51,8 +57,23 @@ def las_zon(sokvag):
         if p is None:
             continue
         dt = datetime.fromtimestamp(t, timezone.utc).astimezone(STHLM)
-        dagar[dt.date()].append(p)
-    return dagar
+        dagar[dt.date()].append((t, p))
+    ut = {}
+    for datum, poster in dagar.items():
+        poster.sort()
+        steg = _typiskt_steg([t for t, _ in poster])
+        ut[datum] = ([p for _, p in poster], steg)
+    return ut
+
+
+def _typiskt_steg(tider):
+    """Vanligaste avståndet mellan tidsstämplar, i sekunder. 0 vid en enda punkt."""
+    if len(tider) < 2:
+        return 0
+    diffar = [b - a for a, b in zip(tider, tider[1:]) if b > a]
+    if not diffar:
+        return 0
+    return max(set(diffar), key=diffar.count)
 
 
 def dygnsspread(priser, H):
@@ -68,22 +89,22 @@ def dygnsspread(priser, H):
     return sum(s[-n:]) / n, sum(s[:n]) / n
 
 
-def helt_dygn(priser):
+def helt_dygn(priser, steg):
     """Är dygnet tillräckligt komplett för att räknas?
 
-    Upplösningen härleds ur punktantalet: närmare 96 betyder kvartar, närmare 24
-    betyder timmar. DST-dygnen har 23 respektive 25 timmar, vilket ryms inom
-    marginalen.
+    Förväntat antal punkter räknas ur dygnets FAKTISKA steg (900 s = kvartar,
+    3600 s = timmar), inte ur punktantalet. DST-dygnen har 23 respektive 25
+    timmar, vilket ryms inom marginalen.
     """
-    n = len(priser)
-    forvantat = 96 if n > 48 else 24
-    return n >= MIN_ANDEL * forvantat
+    if steg <= 0:
+        return False
+    return len(priser) >= MIN_ANDEL * (86400 / steg)
 
 
 def spread_for_ar(dagar, ar, H):
     hi, lo = [], []
-    for datum, priser in dagar.items():
-        if datum.year != ar or not helt_dygn(priser):
+    for datum, (priser, steg) in dagar.items():
+        if datum.year != ar or not helt_dygn(priser, steg):
             continue
         par = dygnsspread(priser, H)
         if par is None:

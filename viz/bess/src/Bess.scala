@@ -716,10 +716,19 @@ object Bess:
     if !harData then lang.signal.foreach(_ => ritaTomt())(unsafeWindowOwner)
     else
       // Tillgangligheten hor hemma i underlaget, inte som en andra sanning har.
+      // Vardet klampas och snappas till reglagets steg om 5: ett 0.42 i JSON
+      // hade annars gett 42, som <input type=range step=5> renderar som 40
+      // medan etiketten skriver 42 - samma glapp som h just fatt bort. Och
+      // FORSTA produkten per marknad vinner, sa iterationsordningen i JSON inte
+      // tyst avgor vilket varde som galler nar tva skiljer sig.
+      def snappa(v: Double): Double = (math.round(v / 5.0) * 5.0).max(0).min(100)
+      var fcrSatt = false
+      var afrrSatt = false
       produkter.foreach { p =>
         falt(p, "defaultAvailability").map(_.asInstanceOf[Double] * 100).foreach { v =>
-          if p.id.asInstanceOf[String].startsWith("afrr") then tillgAfrr.set(v)
-          else tillgFcr.set(v)
+          if p.id.asInstanceOf[String].startsWith("afrr") then
+            if !afrrSatt then { tillgAfrr.set(snappa(v)); afrrSatt = true }
+          else if !fcrSatt then { tillgFcr.set(snappa(v)); fcrSatt = true }
         }
       }
       if aren.nonEmpty then ar.set(aren.last)

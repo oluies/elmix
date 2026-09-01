@@ -26,8 +26,10 @@ china_ok viz/data/ember-data.js || echo "VARNING: ingen användbar ember-data.js
 # Betalar batteriet sig (Energy-Charts, ingen nyckel) – icke-fatalt. MASTE ligga
 # fore `rm -rf docs` nedan: uttagets fallback laser docs/data/bess-data.js, och
 # efter raderingen finns den inte kvar att falla tillbaka pa.
+# Ingen rescue-rad har: export-bess.sh ager sin egen fallback och AVVISAR
+# medvetet en oanvandbar docs-payload. En ovillkorlig kopia skulle aterinfora
+# just den fil som guarden precis kastade.
 ./viz/export-bess.sh || echo "VARNING: export-bess misslyckades – batterisidan ej uppdaterad" >&2
-[ -f viz/data/bess-data.js ] || cp docs/data/bess-data.js viz/data/ 2>/dev/null || true
 
 # Obalanspris mot day-ahead (eSett, ingen nyckel) – icke-fatal. Fallback:
 # återanvänd redan publicerad parquet så obalanssidans rullande vy inte dör.
@@ -86,7 +88,7 @@ if [ -f viz/data/euprices-data.js ]; then
   cp viz/euprices.html viz/euprices.js docs/
   cp viz/data/euprices-data.js docs/data/
 fi
-if [ -f viz/data/bess-data.js ] && grep -q '"spread"' viz/data/bess-data.js; then
+if python3 viz/bess-payload-ok.py viz/data/bess-data.js; then
   sed 's|out/bess/fastLinkJS.dest/main.js|bess.js|' viz/bess.html > docs/bess.html
   cp viz/out/bess/fullLinkJS.dest/main.js docs/bess.js
   cp viz/data/bess-data.js docs/data/
