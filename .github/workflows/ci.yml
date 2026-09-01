@@ -35,7 +35,7 @@ jobs:
           ./mill Elmix.scala test 2>&1 | tee test.log || true
           grep -q "Alla självtester gröna" test.log && ! grep -qE "^  FAIL " test.log
       - name: Kompilera viz (Scala.js)
-        run: cd viz && ../mill app.compile + obalans.compile + foretagspris.compile
+        run: cd viz && ../mill app.compile + obalans.compile + foretagspris.compile + bess.compile
       # Golvkontrollen är sista spärren mot att publicera ofullständig data,
       # så den regressionstestas i stället för att bara finnas.
       - name: Installera DuckDB CLI
@@ -58,7 +58,7 @@ jobs:
         with:
           apps: scalafmt
       - name: Kontrollera formatering
-        run: scalafmt --check Elmix.scala viz/app/src viz/echarts/src viz/obalans/src viz/foretagspris/src
+        run: scalafmt --check Elmix.scala viz/app/src viz/echarts/src viz/obalans/src viz/bess/src viz/foretagspris/src
 
   links:
     name: Länkkontroll

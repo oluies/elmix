@@ -2,33 +2,42 @@
 <html lang="sv" data-lang="sv">
 <head>
   <meta charset="utf-8">
-  <title>Elmix – Vad elen kostar företaget: SE1–SE4 mot Kina</title>
+  <title>Elmix – Betalar batteriet sig? SE1–SE4</title>
   <script src="vendor/echarts.min.js"></script>
-  <script src="data/euprices-data.js"></script>
+  <script src="data/bess-data.js"></script>
   <style>
     body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;
            max-width: 1180px; padding: 0 16px 48px; color: #222; }
     h1 { font-size: 20px; margin-top: 24px; }
     .lead { color: #555; font-size: 14px; line-height: 1.5; max-width: 940px; }
-    .controls { margin: 16px 0 6px; font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap; align-items: stretch; }
-    .controls fieldset { border: 1px solid #e3e8ef; border-radius: 8px; padding: 4px 12px 8px; margin: 0;
-                         display: flex; align-items: center; gap: 10px; }
+    .controls { margin: 16px 0 6px; font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap;
+                align-items: flex-start; }
+    .controls fieldset { border: 1px solid #e3e8ef; border-radius: 8px; padding: 4px 12px 8px;
+                         margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .controls fieldset.wide { flex: 1 1 340px; display: block; }
     .controls legend { font-size: 12px; color: #777; padding: 0 4px; }
-    #grid-picker { flex: 1 1 320px; }
-    #grid-slider { flex: 1; min-width: 140px; }
-    #grid-label { font-weight: 600; font-variant-numeric: tabular-nums; min-width: 82px; }
-    .profile-desc { font-size: 13px; color: #666; margin: 2px 0 0; }
-    .chart { width: 100%; background: #fafbfd; border: 1px solid #e3e8ef; border-radius: 10px; margin-top: 12px; }
-    #stack { height: 480px; }
-    #spread { height: 520px; }
-    #ts { height: 460px; }
-    #tou { height: 520px; }
+    .slider { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: 13px; }
+    .slider .sn { flex: 0 0 128px; color: #555; }
+    .slider input[type=range] { flex: 1; min-width: 90px; }
+    .slider .sv2 { flex: 0 0 84px; text-align: right; font-weight: 600;
+                   font-variant-numeric: tabular-nums; }
     .segswitch { display: inline-flex; flex-wrap: wrap; }
     .segswitch button { font: inherit; font-size: 12px; padding: 3px 10px; border: 1px solid #c9d2e0;
                         background: #fff; cursor: pointer; color: #36c; border-left: none; }
     .segswitch button:first-child { border-left: 1px solid #c9d2e0; border-radius: 6px 0 0 6px; }
     .segswitch button:last-child { border-radius: 0 6px 6px 0; }
     .segswitch button.active { background: #36c; color: #fff; border-color: #36c; }
+    #stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 2px; }
+    .stat { border: 1px solid #e3e8ef; border-radius: 8px; padding: 6px 14px; background: #fafbfd;
+            min-width: 118px; }
+    .stat .k { display: block; font-size: 11px; color: #777; }
+    .stat .v { display: block; font-size: 16px; font-weight: 600;
+               font-variant-numeric: tabular-nums; }
+    .chart { width: 100%; background: #fafbfd; border: 1px solid #e3e8ef; border-radius: 10px;
+             margin-top: 12px; }
+    #rev { height: 440px; }
+    #dur { height: 460px; }
+    #be { height: 260px; }
     h2 { font-size: 16px; margin: 30px 0 2px; }
     .sub { color: #666; font-size: 13px; margin: 0; max-width: 940px; line-height: 1.45; }
     .forklaring { margin-top: 32px; background: #f7f9fc; border: 1px solid #e3e8ef;
@@ -36,15 +45,12 @@
     .forklaring h3 { font-size: 14px; margin: 16px 0 2px; }
     .forklaring p { margin: 2px 0 10px; color: #444; }
     #src { display: block; margin-top: 18px; font-size: 12px; color: #777; line-height: 1.45; }
-    #src p { margin: 0 0 8px; color: inherit; }
-    #src .src-h { font-weight: 600; color: #555; margin-top: 12px; }
-    #src ul { margin: 0 0 8px; padding-left: 18px; }
-    #src li { margin: 3px 0; }
-    #src a { color: #36c; }
-    footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
+    footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px;
+             color: #666; }
     footer a { color: #36c; }
     .topnav { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap;
-              padding: 10px 0 8px; margin-bottom: 4px; border-bottom: 1px solid #e3e8ef; font-size: 14px; }
+              padding: 10px 0 8px; margin-bottom: 4px; border-bottom: 1px solid #e3e8ef;
+              font-size: 14px; }
     .topnav .brand { font-weight: 600; color: #333; margin-right: 4px; }
     .topnav a { color: #36c; text-decoration: none; }
     .topnav a:hover { text-decoration: underline; }
@@ -66,12 +72,10 @@
     <a href="index.html">Interaktiv</a>
     <a href="round.html">Runda vyer</a>
     <a href="consumption.html">Förbrukningsmix SE</a>
-    <a href="consumption-se.html">SE alla zoner</a>
-    <a href="consumption-eu.html">DE vs FR</a>
     <a href="energi.html">Volym &amp; kostnad</a>
     <a href="china.html">Kina vs världen</a>
-    <a class="current" href="foretagspris.html">Företagets elpris</a>
-    <a href="bess.html">Betalar batteriet sig?</a>
+    <a href="foretagspris.html">Företagets elpris</a>
+    <a class="current" href="bess.html">Betalar batteriet sig?</a>
     <a href="investering.html">Investeringssignal</a>
     <a href="uk.html">Storbritannien</a>
     <a href="euprices.html">Elpris EU+Norge</a>
@@ -81,33 +85,32 @@
   </nav>
 
   <main>
-    <h1 id="fp-title">Vad elen kostar företaget – SE1–SE4 mot Kinas provinser</h1>
-    <p class="lead" id="fp-lead"></p>
+    <h1 id="bess-title">Betalar batteriet sig? SE1–SE4</h1>
+    <p class="lead" id="bess-lead"></p>
 
     <div id="controls"></div>
-    <p class="profile-desc" id="profile-desc"></p>
+    <div id="stats"></div>
 
     <p id="chart-status" class="visually-hidden" aria-live="polite"></p>
 
-    <h2 id="stack-h"></h2>
-    <p class="sub" id="stack-sub"></p>
-    <div id="stack" class="chart" role="img" aria-label="Uppdelat elpris per elområde och kinesisk provins"></div>
+    <h2 id="rev-h"></h2>
+    <p class="sub" id="rev-sub"></p>
+    <div id="rev" class="chart" role="img"
+         aria-label="Intäkt per marknad mot kostnaden att äga, för valt elområde"></div>
 
-    <h2 id="spread-h"></h2>
-    <p class="sub" id="spread-sub"></p>
-    <div id="spread" class="chart" role="img" aria-label="Elpris per kinesisk provins med svenska elområden som referenslinjer"></div>
+    <h2 id="dur-h"></h2>
+    <p class="sub" id="dur-sub"></p>
+    <div id="dur" class="chart" role="img"
+         aria-label="Arbitrageintäkt mot varaktighet per elområde, med kostnadslinje"></div>
 
-    <h2 id="ts-h"></h2>
-    <p class="sub" id="ts-sub"></p>
-    <div id="ts" class="chart" role="img" aria-label="Månadsvis totalpris per svenskt elområde mot det kinesiska spannet"></div>
-
-    <h2 id="tou-h"></h2>
-    <p class="sub" id="tou-sub"></p>
-    <div id="tou" class="chart" role="img" aria-label="Topp-, plan- och dalpris per kinesisk provins"></div>
+    <h2 id="be-h"></h2>
+    <p class="sub" id="be-sub"></p>
+    <div id="be" class="chart" role="img"
+         aria-label="Break-even-investering per elområde"></div>
 
     <section class="forklaring">
       <div id="notes"></div>
-      <div id="src"></div>
+      <small id="src"></small>
     </section>
 
     <div id="chart-data" class="visually-hidden"></div>
@@ -118,11 +121,10 @@
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
     Källkod: <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
     Spot <a href="https://energy-charts.info/">Energy-Charts</a> (ENTSO-E/SMARD, CC BY 4.0) ·
-    Skatt <a href="https://www.skatteverket.se/">Skatteverket</a> ·
-    Kina <a href="https://www.china-briefing.com/news/chinas-industrial-power-rates-category-electricity-usage-region-classification/">China Briefing</a> ·
-    Valuta <a href="https://www.ecb.europa.eu/stats/eurofxref/">ECB</a> · ECharts</footer>
+    Reserver <a href="https://www.svk.se/aktorsportalen/bidra-med-reserver/handel-prissattning/marknadsanalys-balanstjanster/">Svenska kraftnät</a> ·
+    ECharts</footer>
 
-  <script src="out/foretagspris/fastLinkJS.dest/main.js?v=20260830b"></script>
+  <script src="out/bess/fastLinkJS.dest/main.js?v=20260901a"></script>
   <script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

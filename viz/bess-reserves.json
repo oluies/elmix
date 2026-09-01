@@ -1,0 +1,61 @@
+{
+  "_kommentar": [
+    "Handmatade reservpriser ur Svenska kraftnats manadsrapporter. Mimer har ett",
+    "internt API bakom webbgranssnittet men inget dokumenterat publikt, och",
+    "rapporterna publiceras som PDF bakom en JS-renderad lanklista - darfor gar de",
+    "inte att hamta automatiskt. Varje post bar sin kalla och sin period sa sidan",
+    "kan saga vilka tal som INTE uppdateras av publiceringen.",
+    "",
+    "basis: 'national' for FCR-D och FCR-N, som upphandlas for hela Sverige, och",
+    "'zonal' for aFRR och mFRR, som upphandlas per elomrade. Sidan far aldrig visa",
+    "ett nationellt pris som om det vore zonens - darfor bar varje post det har.",
+    "",
+    "Uppdatera genom att lasa senaste manadsrapporten pa",
+    "svk.se/aktorsportalen/bidra-med-reserver/handel-prissattning/marknadsanalys-balanstjanster/",
+    "och lagga till en rad. Ta inte bort gamla rader; snittet over dem ar vad",
+    "sidan visar, och spannet sager nagot om hur rorliga priserna ar."
+  ],
+  "unit": "EUR/MW/h",
+  "manual": true,
+  "checked": "2026-09-01",
+  "products": [
+    {
+      "id": "fcrd_upp",
+      "sv": "FCR-D upp",
+      "en": "FCR-D up",
+      "basis": "national",
+      "defaultAvailability": 0.9,
+      "observations": [
+        { "period": "2025-03", "price": 5.89, "source": "Svenska kraftnat, manadsrapport FCR mars 2025" },
+        { "period": "2025-04", "price": 8.91, "source": "Svenska kraftnat, manadsrapport FCR april 2025" },
+        { "period": "2025-10", "price": 6.86, "source": "Svenska kraftnat, manadsrapport FCR oktober 2025" }
+      ]
+    },
+    {
+      "id": "fcrd_ned",
+      "sv": "FCR-D ner",
+      "en": "FCR-D down",
+      "basis": "national",
+      "defaultAvailability": 0.9,
+      "observations": [
+        { "period": "2025-04", "price": 11.38, "source": "Svenska kraftnat, manadsrapport FCR april 2025" }
+      ]
+    },
+    {
+      "id": "afrr_upp",
+      "sv": "aFRR upp",
+      "en": "aFRR up",
+      "basis": "zonal",
+      "defaultAvailability": 0.4,
+      "rangeAvailability": [0.4, 0.9],
+      "byZone": {
+        "SE3": [
+          { "period": "2025-03", "price": 29.4, "source": "Svenska kraftnat, manadsrapport aFRR mars 2025" }
+        ],
+        "SE4": [
+          { "period": "2025-03", "price": 36.6, "source": "Svenska kraftnat, manadsrapport aFRR mars 2025" }
+        ]
+      }
+    }
+  ]
+}

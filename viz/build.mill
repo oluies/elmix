@@ -31,6 +31,15 @@ object obalans extends ScalaJSModule {
   )
 }
 
+object bess extends ScalaJSModule {
+  def scalaVersion = "3.3.4"
+  def scalaJSVersion = "1.19.0"
+  def moduleDeps = Seq(echarts)
+  def mvnDeps = Seq(
+    mvn"com.raquo::laminar::17.2.0"
+  )
+}
+
 object foretagspris extends ScalaJSModule {
   def scalaVersion = "3.3.4"
   def scalaJSVersion = "1.19.0"

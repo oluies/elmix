@@ -80,6 +80,16 @@ if [ -f viz/data/euprices-data.js ]; then
   cp viz/euprices.html viz/euprices.js docs/
   cp viz/data/euprices-data.js docs/data/
 fi
+# Betalar batteriet sig – Scala.js-modul med eget uttag. Icke-fatalt: uttaget
+# faller självt tillbaka på publicerad payload, och sidan publiceras bara om det
+# finns en payload att rita på.
+./viz/export-bess.sh || echo "VARNING: export-bess misslyckades – batterisidan ej uppdaterad" >&2
+if [ -f viz/data/bess-data.js ] && grep -q '"spread"' viz/data/bess-data.js; then
+  sed 's|out/bess/fastLinkJS.dest/main.js|bess.js|' viz/bess.html > docs/bess.html
+  cp viz/out/bess/fullLinkJS.dest/main.js docs/bess.js
+  cp viz/data/bess-data.js docs/data/
+fi
+
 # Företagets elpris – Scala.js-modul som läser samma euprices-data.js, så den
 # publiceras bara när den datan finns. Skripttaggen pekar på Mills fastLink-sökväg
 # under utveckling och skrivs om till den länkade filen här, precis som index.html.
