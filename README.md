@@ -131,6 +131,43 @@ mill foretagspris.fastLinkJS      # -> öppna viz/foretagspris.html
 Utan uttaget först byggs sidan felfritt men renderar sitt felmeddelande:
 spotdatan kommer inte från `export-data.sh` utan från Energy-Charts-uttaget.
 
+### Betalar batteriet sig? (`bess.html`)
+
+Egen Scala.js-modul (`viz/bess/`) som svarar på om ett batteri betalar sig
+per elområde, och hur svaret ändras med varaktigheten. Poängen är inte vad
+batterier tjänade i fjol utan hur mycket av intäkten som hänger på lagrad
+energi och hur mycket på tillgänglig effekt – bara det första växer med en
+femte timme.
+
+Arbitraget är proportionellt mot varaktigheten, men spreaden krymper när
+fönstret vidgas: den femte billigaste timmen är dyrare än den första.
+Kapacitetsintäkten innehåller ingen varaktighet alls, kostnaden gör det
+linjärt, och där linjerna korsas slutar en timme till att löna sig. För 2025
+sker det vid 1,0 h i SE3 och 4,5 h i SE4, medan SE1 och SE2 ligger under
+kostnaden redan vid en timme. Sidan öppnar på det senaste året i payloaden,
+så siffrorna där är andra – årtalet måste alltid följa med ett sådant tal.
+
+Payloaden täcker 2020 till innevarande år, ett år per knapp i årsväljaren.
+
+`viz/bess_agg.py` räknar dygnsvisa spreadar per zon, år och varaktighet –
+per dygn först och medelvärde över dygn sedan, inte tvärtom, eftersom ett
+medeldygn jämnar ut just den variation batteriet lever på. "H timmar" tas
+som `round(H/24 × dygnets punkter)`, för day-ahead gick över till kvartar
+2025-10-01. Allt reglagen rör räknas i webbläsaren, så payloaden är några kB.
+
+Reservpriserna hämtas inte: Mimer har ett internt API bakom
+webbgränssnittet men inget dokumenterat publikt, och månadsrapporterna
+ligger som PDF bakom en JS-renderad länklista. De står därför handmatade i
+`viz/bess-reserves.json`, där varje tal bär sin månad och källa och varje
+produkt sin `basis` – FCR-D upphandlas nationellt, aFRR per elområde, och
+ett nationellt pris får aldrig ritas som zonens.
+
+```bash
+./viz/export-bess.sh              # -> viz/data/bess-data.js (gitignorerad)
+cd viz
+mill bess.fastLinkJS              # -> öppna viz/bess.html
+```
+
 ### CO₂-intensitet (metod)
 
 CO₂-heatmapsen (förbrukningssidorna, `co2Heat`/`co2DayOption` i `round.js`) räknas

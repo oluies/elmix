@@ -17,6 +17,7 @@ END="${EUPRICES_END:-$(date -u +%Y-%m-%d)}"
 OUT="viz/data/euprices-data.js"
 TMP="$(mktemp -d)"
 GAP="${EUPRICES_GAP:-4}"      # sekunder mellan zoner
+SHARE="viz/data/raw-se-prices"   # delas med export-bess.sh
 mkdir -p viz/data
 
 # bzn|label|land(sv)|cc|är_sverige   – ENTSO-E-elområden, EU + Norge
@@ -79,6 +80,15 @@ echo "Hämtar EU+Norge-priser $START..$END (Energy-Charts)..." >&2
 while IFS='|' read -r bzn label land cc se; do
   [ -z "$bzn" ] && continue
   if fetch_zone "$bzn"; then
+    # Spara SE-zonernas rådata åt export-bess.sh, som annars hämtar exakt samma
+    # fyra zoner från samma rate-limitade endpoint i samma publiceringskörning.
+    # Katalogen ligger under viz/data/ och är därmed gitignorerad.
+    case "$bzn" in
+      SE1|SE2|SE3|SE4)
+        mkdir -p "$SHARE"
+        cp "$TMP/$bzn.json" "$SHARE/$bzn.json" 2>/dev/null || true
+        printf '%s..%s\n' "$START" "$END" > "$SHARE/range" ;;
+    esac
     JSON="$TMP/$bzn.json" START="$START" ZLABEL="$label" ZLAND="$land" ZCC="$cc" ZSE="$se" ZCODE="$bzn" \
       python3 viz/euprices_agg.py >> "$TMP/zones.jsonl" \
       && echo "  $bzn ok" >&2 || echo "  $bzn: aggregering misslyckades" >&2

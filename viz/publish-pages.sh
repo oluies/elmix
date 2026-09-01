@@ -23,6 +23,14 @@ china_ok viz/data/ember-data.js || echo "VARNING: ingen användbar ember-data.js
 # Fallback: återanvänd redan publicerad data så sidan inte raderas ur docs/.
 ./viz/export-euprices.sh || echo "VARNING: export-euprices misslyckades – elpris-sidan ej uppdaterad" >&2
 [ -f viz/data/euprices-data.js ] || cp docs/data/euprices-data.js viz/data/ 2>/dev/null || true
+# Betalar batteriet sig (Energy-Charts, ingen nyckel) – icke-fatalt. MASTE ligga
+# fore `rm -rf docs` nedan: uttagets fallback laser docs/data/bess-data.js, och
+# efter raderingen finns den inte kvar att falla tillbaka pa.
+# Ingen rescue-rad har: export-bess.sh ager sin egen fallback och AVVISAR
+# medvetet en oanvandbar docs-payload. En ovillkorlig kopia skulle aterinfora
+# just den fil som guarden precis kastade.
+./viz/export-bess.sh || echo "VARNING: export-bess misslyckades – batterisidan ej uppdaterad" >&2
+
 # Obalanspris mot day-ahead (eSett, ingen nyckel) – icke-fatal. Fallback:
 # återanvänd redan publicerad parquet så obalanssidans rullande vy inte dör.
 # Den statiska SVG:n ligger i modell/obalans.html och påverkas inte av utfallet.
@@ -35,7 +43,7 @@ fi
 # bootstrap-mill (funkar även i CI utan global mill). OBS: flera tasks måste
 # separeras med `+` – `mill a.task b.task` tolkar b.task som ARGUMENT till
 # a.task, bygger tyst bara den första och returnerar 0.
-(cd viz && ../mill app.fullLinkJS + obalans.fullLinkJS + foretagspris.fullLinkJS + lang.fullLinkJS)
+(cd viz && ../mill app.fullLinkJS + obalans.fullLinkJS + foretagspris.fullLinkJS + lang.fullLinkJS + bess.fullLinkJS)
 (cd viz/ssr && node render.mjs)
 
 rm -rf docs
@@ -80,6 +88,12 @@ if [ -f viz/data/euprices-data.js ]; then
   cp viz/euprices.html viz/euprices.js docs/
   cp viz/data/euprices-data.js docs/data/
 fi
+if python3 viz/bess-payload-ok.py viz/data/bess-data.js; then
+  sed 's|out/bess/fastLinkJS.dest/main.js|bess.js|' viz/bess.html > docs/bess.html
+  cp viz/out/bess/fullLinkJS.dest/main.js docs/bess.js
+  cp viz/data/bess-data.js docs/data/
+fi
+
 # Företagets elpris – Scala.js-modul som läser samma euprices-data.js, så den
 # publiceras bara när den datan finns. Skripttaggen pekar på Mills fastLink-sökväg
 # under utveckling och skrivs om till den länkade filen här, precis som index.html.
