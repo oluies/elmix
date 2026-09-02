@@ -65,10 +65,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # 429 och 503 betyder "servern lever men kan inte just nu", inte "länken är
+      # trasig". ENTSO-E:s driftstörning i september 2026 fällde bygget på en
+      # fullt giltig länk till transparency.entsoe.eu - en tredjeparts avbrott
+      # ska inte stoppa vår CI.
       - name: Kontrollera länkar
         uses: lycheeverse/lychee-action@v2
         with:
           args: >-
-            --no-progress --max-retries 2 --accept 200,429
+            --no-progress --max-retries 2 --accept 200,429,503
             README.md docs/index.html docs/prerendered.html
           fail: true
