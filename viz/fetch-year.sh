@@ -95,6 +95,8 @@ if [ -n "$saknas" ]; then
   printf '%s' "$saknas" >&2
   echo "ENTSO-E svarade sannolikt 400/Acknowledgement eller 503 för dessa (se HTTP-raderna ovan)." >&2
   echo "Kör om hämtningssteget - bygget rörs inte och behöver inte göras om." >&2
+  echo "Ligger felet hos ENTSO-E? Det finns ingen live-statustavla, men driftnotiser och" >&2
+  echo "supportärenden går via https://transparencyplatform.zendesk.com/hc/en-us" >&2
   exit 1
 fi
 

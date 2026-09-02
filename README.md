@@ -242,6 +242,22 @@ felar av helt olika skäl och därför går att köra om var för sig:
 | Hämtning | `./viz/fetch-year.sh [år]` | ENTSO-E:s uppetid (503/400 ger tyst tappade dataset) | ja |
 | Bygge | `./viz/build-reports.sh [år]` | DuckDB (transform/pca) | nej |
 
+Faller hämtningen upprepat är det oftast ENTSO-E och inte pipelinen. Någon
+live-statustavla finns inte – ingen `status.entsoe.eu` – men driftnotiser och
+supportärenden går via [Transparency Platforms
+helpcenter](https://transparencyplatform.zendesk.com/hc/en-us), och plattformen
+i sig ligger på [transparency.entsoe.eu](https://transparency.entsoe.eu/).
+Snabbaste egna kontrollen är att jämföra API:t med webbplatsen:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "https://web-api.tp.entsoe.eu/api?documentType=A75"   # 503/000 = API:t nere
+curl -s -o /dev/null -w '%{http_code}\n' https://transparency.entsoe.eu/
+```
+
+Svarar webbplatsen 200 medan API:t inte gör det är det API-värden som är ur
+funktion, inte ditt nät.
+
 `./viz/refresh.sh [år]` kör båda i följd och är fortsatt den vanliga
 lokala ingången. Vid manuell körning från Actions-fliken väljer indatan
 `steg` mellan `allt`, `hamta` och `bygg`, så ett trasigt bygge inte
