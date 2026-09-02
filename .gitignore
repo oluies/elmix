@@ -17,3 +17,5 @@ viz/ssr/node_modules/
 /.roborev/
 # rtk: bara en mall med utkommenterade exempel tills nagon skriver ett filter
 /.rtk/
+# bess_agg importerar bess_optimal, vilket ger en bytecode-katalog
+__pycache__/

@@ -32,6 +32,10 @@ object Texts:
   val dayMean = T("Medeldygn", "Mean day")
   val dayMedian = T("Mediandygn", "Median day")
 
+  val driftLegend = T("Driftprofil", "Dispatch")
+  val driftEnCykel = T("En cykel/dygn", "One cycle a day")
+  val driftOptimal = T("Optimal profil", "Optimal profile")
+
   val sysLegend = T("Batteriet", "The battery")
   val ekoLegend = T("Kapitalet", "Capital")
   val markLegend = T("Marknaderna", "Markets")
@@ -40,7 +44,7 @@ object Texts:
   val capexLabel = T("Investering", "Capex")
   val waccLabel = T("WACC", "WACC")
   val lifeLabel = T("Livslängd", "Life")
-  val opexLabel = T("Drift", "Opex")
+  val opexLabel = T("Drift & underhåll", "Opex")
   val cyclesLabel = T("Cykler/år", "Cycles/yr")
   val etaLabel = T("Verkningsgrad", "Round-trip")
   val dodLabel = T("Urladdningsdjup", "Depth of discharge")
@@ -128,6 +132,21 @@ object Texts:
   )
   val ariaBe = T("Break-even-investering per elområde", "Break-even capex by bidding zone")
 
+  /** Rad under kontrollerna nar den optimala profilen ar vald. */
+  def optimalNot(cykler: String, eta: String, dod: String, lang: String): String =
+    if lang == "en" then
+      s"Optimal profile: perfect foresight over the whole year, $cykler cycles a year at the " +
+        s"chosen duration. It is computed in the extract at $eta % round-trip and $dod % depth of " +
+        "discharge, so the cycles, round-trip and depth sliders do not move this line - and the " +
+        "cycle count is the optimiser’s own choice, not the slider’s. Cell degradation at that " +
+        "rate is not costed anywhere on this page."
+    else
+      s"Optimal profil: perfekt förutsägelse över hela året, $cykler cykler per år vid vald " +
+        s"varaktighet. Den räknas i uttaget vid $eta % verkningsgrad och $dod % urladdningsdjup, " +
+        "så reglagen för cykler, verkningsgrad och urladdningsdjup rör inte den här linjen – och " +
+        "cykelantalet är optimerarens eget val, inte reglagets. Cellslitaget vid den takten är " +
+        "inte prissatt någonstans på sidan."
+
   val noData = T(
     "Prisdatan för SE1–SE4 kunde inte hämtas vid senaste publiceringen. Diagrammen är därför " +
       "tomma. Källa: Energy-Charts (ENTSO-E/SMARD).",
@@ -213,6 +232,34 @@ object Texts:
           "figure is not tomorrow’s. And the model assumes perfect foresight of the day’s prices; " +
           "the more volatile the market, the wider the gap between modelled and realised spread, " +
           "so the lead is smaller in practice than the numbers suggest."
+      ),
+    T("En cykel om dygnet är inte optimum", "One cycle a day is not the optimum") ->
+      T(
+        "Grundmodellen tar dygnets H dyraste timmar mot dygnets H billigaste och antar en cykel. " +
+          "Det är optimalt givet EN cykel inom kalenderdygnet, men det är inte optimum: ett dygn " +
+          "med två pristoppar bär mer än en cykel, ett platt dygn bär ingen alls, och de billiga " +
+          "timmarna ligger ofta kring midnatt så affären spänner över dygnsgränsen.\n\n" +
+          "Reglaget överst byter till en profil räknad med dynamisk programmering över hela året, " +
+          "med effekt- och energigränser. Skillnaden är 7–26 % och störst vid korta varaktigheter, " +
+          "eftersom ett tvåtimmarsbatteri hinner flera cykler per dygn medan ett åttatimmars knappt " +
+          "hinner en. Priset är cykler: optimum landar på 400–830 per år mot grundmodellens 365, " +
+          "och den takten sliter på cellerna på ett sätt sidan inte prissätter.\n\n" +
+          "Sanningen ligger mellan de två. Grundmodellen är för pessimistisk om cykling men för " +
+          "optimistisk om framförhållning; optimum antar facit i hand för hela året, vilket ingen " +
+          "aktör har. Läs dem som undre och övre gräns, inte som två gissningar.",
+        "The base model takes the day’s H dearest hours against its H cheapest and assumes one " +
+          "cycle. That is optimal given ONE cycle inside the calendar day, but it is not the " +
+          "optimum: a day with two price peaks carries more than one cycle, a flat day carries " +
+          "none, and the cheap hours often sit around midnight so the trade spans the day " +
+          "boundary.\n\nThe control at the top switches to a profile computed by dynamic " +
+          "programming over the whole year, with power and energy limits. The difference is 7–26 % " +
+          "and largest at short durations, because a two-hour battery fits several cycles a day " +
+          "while an eight-hour one barely fits one. The price is cycles: the optimum lands at " +
+          "400–830 a year against the base model’s 365, and that rate wears the cells in a way " +
+          "this page does not cost.\n\nThe truth lies between the two. The base model is too " +
+          "pessimistic about cycling but too optimistic about foresight; the optimum assumes " +
+          "hindsight over the whole year, which no operator has. Read them as a lower and an " +
+          "upper bound, not as two guesses."
       ),
     T("Läs med förbehåll", "Read with care") ->
       T(

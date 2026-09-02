@@ -27,6 +27,8 @@ import json
 import os
 import statistics
 import sys
+
+from bess_optimal import optimal
 from collections import defaultdict
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -47,6 +49,30 @@ VARAKTIGHETER = list(range(1, 9))
 # femtimmarsfönster som om det vore hela dygnet. Andelen jämförs mot dygnets
 # egen förväntade längd, härledd ur den upplösning dygnet faktiskt har.
 MIN_ANDEL = 0.8
+
+# Referensvärden för den optimala profilen. De måste vara konstanter: DP:n körs
+# här i uttaget, inte i webbläsaren, så den kan inte följa sidans reglage för
+# verkningsgrad och urladdningsdjup. Sidan säger därför uttryckligen vid vilka
+# värden den optimala linjen är räknad, och att cykelantalet är dess eget val
+# och inte cykelreglagets.
+OPT_ETA = 0.88
+OPT_DOD = 0.90
+
+
+def las_serie(sokvag):
+    """[(unix_sekunder, pris, lokalt_år), ...] i tidsordning. DP:n behöver
+    serien obruten - dygnsuppdelningen i las_zon duger inte, eftersom de
+    billiga timmarna ofta ligger kring midnatt och affären då spänner över
+    dygnsgränsen."""
+    with open(sokvag) as f:
+        d = json.load(f)
+    ut = []
+    for t, p in zip(d["unix_seconds"], d["price"]):
+        if p is None:
+            continue
+        ut.append((t, p, datetime.fromtimestamp(t, timezone.utc).astimezone(STHLM).year))
+    ut.sort()
+    return ut
 
 
 def las_zon(sokvag):
@@ -131,9 +157,29 @@ def spread_for_ar(dagar, ar, H):
     }
 
 
+def optimal_for_ar(poster, ar, H):
+    """Optimal profil för ett år och en varaktighet, per MW ansluten effekt.
+
+    Normaliserat till 1 MW effekt och H MWh kapacitet, så talet är direkt
+    jämförbart med heuristikens EUR/MW/år.
+    """
+    ipoang = [(t, p) for (t, p, y) in poster if y == ar]
+    if len(ipoang) < 100:
+        return None
+    intakt, levererad = optimal(ipoang, 1.0, float(H), eta=OPT_ETA, dod=OPT_DOD)
+    if intakt <= 0:
+        return None
+    anvandbar = H * OPT_DOD
+    return {
+        "eur": round(intakt),
+        "cycles": round(levererad / anvandbar, 1) if anvandbar > 0 else 0,
+    }
+
+
 def main():
     katalog, utfil = sys.argv[1], sys.argv[2]
     spread = {}
+    opt = {}
     ar_sedda = set()
     for z in ALLA_ZONER:
         p = os.path.join(katalog, f"{z}.json")
@@ -157,7 +203,20 @@ def main():
                 ar_sedda.add(ar)
         if per_ar:
             spread[z] = per_ar
-            print(f"  {z}: {len(per_ar)} år, {len(dagar)} dygn", file=sys.stderr)
+            serie = las_serie(p)
+            opt_per_ar = {}
+            for ar in ar_i_zon:
+                opt_H = {}
+                for H in VARAKTIGHETER:
+                    r = optimal_for_ar(serie, ar, H)
+                    if r:
+                        opt_H[str(H)] = r
+                if opt_H:
+                    opt_per_ar[str(ar)] = opt_H
+            if opt_per_ar:
+                opt[z] = opt_per_ar
+            print(f"  {z}: {len(per_ar)} år, {len(dagar)} dygn, optimal för "
+                  f"{len(opt_per_ar)} år", file=sys.stderr)
 
     if not spread:
         sys.exit("FEL: ingen zon gav data - skriver inte payloaden")
@@ -177,6 +236,10 @@ def main():
         "years": sorted(ar_sedda),
         "durations": VARAKTIGHETER,
         "spread": spread,
+        # Optimal profil, per MW ansluten effekt. Räknad vid OPT_ETA/OPT_DOD och
+        # med DP:ns eget val av cykelantal - sidan måste säga båda delarna.
+        "optimal": opt,
+        "optimalRef": {"eta": OPT_ETA, "dod": OPT_DOD},
         "reserves": las_reserver(),
     }
     tmp = utfil + ".tmp"
