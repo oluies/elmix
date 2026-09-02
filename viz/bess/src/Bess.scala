@@ -41,6 +41,7 @@ object Bess:
   private val zon = Var("SE3")
   private val ar = Var(0)
   private val median = Var(false)
+  private val optimalDrift = Var(false)
   private val H = Var(4.0)
   private val capex = Var(CapexSverige)
   private val wacc = Var(7.0)
@@ -135,6 +136,47 @@ object Bess:
     else if perioder.size == 1 then perioder.head
     else s"${perioder.head}\u2013${perioder.last}"
 
+  /**
+   * Optimal profil ur payloaden, EUR/MW/ar. Rakningen sker i uttaget, inte har - DP over hela aret
+   * gar inte att gora i webblasaren vid varje reglagedrag - sa serien ar last vid referensvardena
+   * for verkningsgrad och urladdningsdjup, och cykelantalet ar DP:ns eget val. Sidan maste saga
+   * bada delarna, annars ser reglagen ut att styra en linje de inte ror.
+   */
+  private def optimalFor(z: String, hh: Int): Option[Double] =
+    for
+      d <- data
+      o <- falt(d, "optimal")
+      zz <- falt(o, z)
+      yy <- falt(zz, ar.now().toString)
+      x <- falt(yy, hh.toString)
+    yield x.eur.asInstanceOf[Double]
+
+  private def cyklerFor(z: String, hh: Int): Option[Double] =
+    for
+      d <- data
+      o <- falt(d, "optimal")
+      zz <- falt(o, z)
+      yy <- falt(zz, ar.now().toString)
+      x <- falt(yy, hh.toString)
+    yield x.cycles.asInstanceOf[Double]
+
+  private lazy val optEta: Double =
+    data
+      .flatMap(falt(_, "optimalRef"))
+      .flatMap(falt(_, "eta"))
+      .map(_.asInstanceOf[Double] * 100)
+      .getOrElse(88.0)
+
+  private lazy val optDod: Double =
+    data
+      .flatMap(falt(_, "optimalRef"))
+      .flatMap(falt(_, "dod"))
+      .map(_.asInstanceOf[Double] * 100)
+      .getOrElse(90.0)
+
+  private lazy val harOptimal: Boolean =
+    data.flatMap(falt(_, "optimal")).exists(o => zoner.exists(z => falt(o, z).isDefined))
+
   // ------------------------------------------------------------------ harledda tal
   private def h: Double = H.now()
   private def mwh: Double = Modell.levereradMwh(cykler.now(), dod.now() / 100, eta.now() / 100, h)
@@ -142,6 +184,10 @@ object Bess:
     Modell.arskostnad(capex.now(), h, wacc.now() / 100, livslangd.now().toInt, opex.now() / 100)
 
   private def arbitrageFor(z: String, hh: Int): Option[Double] =
+    if optimalDrift.now() then optimalFor(z, hh)
+    else heuristikFor(z, hh)
+
+  private def heuristikFor(z: String, hh: Int): Option[Double] =
     spread(z, ar.now(), hh).map { (hi, lo) =>
       Modell.arbitrage(
         hi,
@@ -503,7 +549,8 @@ object Bess:
       "dod" -> fmt0(dod.now()),
       "fcr" -> fmt0(tillgFcr.now()),
       "afrr" -> fmt0(tillgAfrr.now()),
-      "median" -> (if median.now() then "1" else "0")
+      "median" -> (if median.now() then "1" else "0"),
+      "opt" -> (if optimalDrift.now() then "1" else "0")
     ).map((a, b) => s"$a=$b").mkString("&")
     // Safari kastar SecurityError over 100 replaceState per 30 s, och ett drag i
     // ett reglage ger langt fler input-handelser an sa. Skriv darfor bara nar
@@ -536,6 +583,7 @@ object Bess:
     num("fcr", v => tillgFcr.set(v.max(0).min(100)))
     num("afrr", v => tillgAfrr.set(v.max(0).min(100)))
     Option(p.get("median")).foreach(v => median.set(v == "1"))
+    if harOptimal then Option(p.get("opt")).foreach(v => optimalDrift.set(v == "1"))
 
   // ------------------------------------------------------------------ kontroller
   private def seg[A](items: Vector[A], v: Var[A], etikett: A => String): HtmlElement =
@@ -597,6 +645,14 @@ object Bess:
           Vector(false, true),
           median,
           (b: Boolean) => if b then t(Texts.dayMedian) else t(Texts.dayMean)
+        )
+      ),
+      fieldSet(
+        legend(child.text <-- lang.signal.map(Texts.driftLegend.apply)),
+        seg(
+          Vector(false, true),
+          optimalDrift,
+          (b: Boolean) => if b then t(Texts.driftOptimal) else t(Texts.driftEnCykel)
         )
       ),
       fieldSet(
@@ -679,6 +735,17 @@ object Bess:
     statiskText()
     satt("bess-lead", Texts.lead(lang.now()))
     html("stats", statRad())
+    satt(
+      "drift-not",
+      if !optimalDrift.now() then ""
+      else
+        Texts.optimalNot(
+          cyklerFor(zon.now(), math.round(h).toInt).fold("\u2013")(v => fmt(v, 0)),
+          fmt(optEta, 0),
+          fmt(optDod, 0),
+          lang.now()
+        )
+    )
     satt("dur-cross", if harData then korsningsText() else "")
     diagram.get("rev").foreach(_.setOption(intaktOption(), true))
     diagram.get("dur").foreach(_.setOption(varaktighetOption(), true))
@@ -782,7 +849,8 @@ object Bess:
         eta.signal,
         dod.signal,
         tillgFcr.signal,
-        tillgAfrr.signal
+        tillgAfrr.signal,
+        optimalDrift.signal
       )
       alla.foreach(_.foreach(_ => if igang then rita())(unsafeWindowOwner))
       igang = true

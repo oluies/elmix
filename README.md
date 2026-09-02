@@ -149,6 +149,20 @@ så siffrorna där är andra – årtalet måste alltid följa med ett sådant t
 
 Payloaden täcker 2020 till innevarande år, ett år per knapp i årsväljaren.
 
+Reglaget **Driftprofil** byter mellan grundmodellens en cykel per dygn och en
+optimal profil räknad med dynamisk programmering över hela året
+(`viz/bess_optimal.py`), med effekt- och energigränser och utan dygnsgränser.
+Skillnaden är 7–26 % och störst vid korta varaktigheter, eftersom ett
+tvåtimmarsbatteri hinner flera cykler per dygn medan ett åttatimmars knappt
+hinner en. Priset är cykler: optimum landar på 400–830 per år mot
+grundmodellens 365, en takt vars cellslitage sidan inte prissätter. Läs de två
+som undre och övre gräns – grundmodellen är för pessimistisk om cykling, optimum
+för optimistiskt om framförhållning.
+
+DP:n räknas i uttaget, inte i webbläsaren, så den optimala serien är låst vid
+88 % verkningsgrad och 90 % urladdningsdjup. Sidan säger det, och säger också
+att cykelreglaget inte rör den linjen.
+
 DE-LU finns med som **referens** i varaktighets- och break-even-vyerna, men
 går inte att välja i zonväljaren. Skälet är att reservpriserna i underlaget är
 Svenska kraftnäts: en valbar DE-LU skulle rita svenska FCR-priser bredvid
