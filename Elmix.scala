@@ -167,14 +167,41 @@ enum Beslut:
  * Acknowledgement ar inte data och ska bedomas pa sin Reason precis som ett 400 - annars aterkommer
  * samma tysta bortfall som 2026-08-29, bara via status 200 i stallet.
  */
-def klassificera(status: Int, orsak: String, harData: Boolean = true): ApiSvar =
+def klassificera(
+    status: Int,
+    orsak: String,
+    harData: Boolean = true,
+    franEntsoe: Boolean = true
+): ApiSvar =
   if status == 200 && harData then ApiSvar.Ok
   else if orsak.toLowerCase.contains("no matching data") then ApiSvar.IngenData
   else if status == 429 || status >= 500 then ApiSvar.Transient
+  // Ett felsvar som INTE ar ett ENTSO-E-dokument kommer fran infrastrukturen
+  // framfor API:t, inte fran API:t sjalvt. Korningen 2026-09-02 fick
+  // "<html><head><title>404 Not Found</title></head>" mitt i en rad 503:or, pa
+  // samma endpoint och med samma parametrar som fungerat dagarna innan - en
+  // lastbalanserare som svarar medan backend ligger nere. Det ar inte ett
+  // avvisat anrop och ska forsokas om, inte hardfela direkt.
+  else if status != 200 && !franEntsoe then ApiSvar.Transient
   // Ett 200 helt utan dokument har inget Acknowledgement att lasa och har alltid
   // betytt tomhet - behall det, det ar bara okand Acknowledgement-text som ska bli hogljudd.
   else if status == 200 && orsak.isEmpty then ApiSvar.IngenData
   else ApiSvar.Permanent
+
+/**
+ * Ser kroppen ut som ett svar fran ENTSO-E, eller som nagot en proxy skickade?
+ *
+ * Skiljer ett avvisat anrop (Acknowledgement med Reason) fran ett infrastrukturfel (HTML-sida fran
+ * en lastbalanserare). describeFault gor redan samma atskillnad implicit nar den faller tillbaka pa
+ * trunkering; har blir den explicit och styr om felet ska forsokas om.
+ */
+def arEntsoeSvar(body: String): Boolean =
+  scala.util
+    .Try {
+      val xml = XML.loadString(body)
+      xml.label.contains("MarketDocument") || (xml \\ "Reason").nonEmpty
+    }
+    .getOrElse(false)
 
 /**
  * Forsoksbudget per felslag. Timeout far farst: ett 429 eller 503 svarar direkt, medan en timeout
@@ -270,10 +297,16 @@ def apiGet(params: Map[String, String]): Seq[scala.xml.Elem] =
             rader.map(XML.loadString)
           else Nil
         val (ack, data) = docs.partition(_.label.startsWith("Acknowledgement"))
+        val felKropp = if resp.statusCode == 200 then "" else resp.text()
         val orsak =
           if resp.statusCode == 200 then ack.map(a => describeFault(a.toString)).mkString("; ")
-          else describeFault(resp.text())
-        klassificera(resp.statusCode, orsak, harData = data.nonEmpty) match
+          else describeFault(felKropp)
+        klassificera(
+          resp.statusCode,
+          orsak,
+          harData = data.nonEmpty,
+          franEntsoe = resp.statusCode == 200 || arEntsoeSvar(felKropp)
+        ) match
           case ApiSvar.Ok => Right(data)
           case ApiSvar.IngenData =>
             if orsak.nonEmpty then println(s"  ingen data (ENTSO-E: $orsak)")
@@ -926,6 +959,26 @@ def runTests(): Unit =
   check(
     "klassificera: 200 utan dokument alls -> IngenData",
     klassificera(200, "", harData = false) == ApiSvar.IngenData
+  )
+
+  // Ett felsvar som inte ar ett ENTSO-E-dokument ar infrastruktur, inte ett
+  // avvisat anrop. Korningen 2026-09-02 fick en naken 404-sida fran en proxy
+  // mitt i en rad 503:or och hardfelade direkt i stallet for att forsoka om.
+  val proxy404 = "<html>\n<head><title>404 Not Found</title></head>\n</html>"
+  check("arEntsoeSvar: Acknowledgement -> true", arEntsoeSvar(ack))
+  check("arEntsoeSvar: proxy-HTML -> false", !arEntsoeSvar(proxy404))
+  check("arEntsoeSvar: skrap -> false", !arEntsoeSvar("plain text fel"))
+  check(
+    "klassificera: 404 fran proxy -> Transient",
+    klassificera(404, describeFault(proxy404), franEntsoe = false) == ApiSvar.Transient
+  )
+  check(
+    "klassificera: 400 fran ENTSO-E -> Permanent",
+    klassificera(400, "999 Please provide a valid period", franEntsoe = true) == ApiSvar.Permanent
+  )
+  check(
+    "klassificera: 200 utan dokument paverkas inte av franEntsoe",
+    klassificera(200, "", harData = false, franEntsoe = false) == ApiSvar.IngenData
   )
 
   // 9. Forsoksbudgeten ar per felslag. Med den tidigare delade raknaren racker
