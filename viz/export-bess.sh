@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hämtar day-ahead-priser för SE1-SE4 från Energy-Charts (ENTSO-E/SMARD-härledd,
+# Hämtar day-ahead-priser för SE1-SE4 plus DE-LU (referens) från Energy-Charts (ENTSO-E/SMARD-härledd,
 # CC BY 4.0, ingen API-nyckel) och räknar dygnsvisa prisspreadar per år och
 # varaktighet -> viz/data/bess-data.js.
 #
@@ -45,17 +45,17 @@ fetch_zone() {  # $1=zon -> $TMP/$1.json
 delad=0
 if [ -f "$SHARE/range" ] && [ "$(cat "$SHARE/range")" = "$START..$END" ]; then
   delad=1
-  for z in SE1 SE2 SE3 SE4; do
+  for z in SE1 SE2 SE3 SE4 DE-LU; do
     [ -f "$SHARE/$z.json" ] || delad=0
   done
 fi
 
 if [ "$delad" = 1 ]; then
-  echo "Återanvänder SE1-SE4 $START..$END från $SHARE (hämtade av export-euprices)" >&2
-  cp "$SHARE"/SE?.json "$TMP/"
+  echo "Återanvänder SE1-SE4 + DE-LU $START..$END från $SHARE (hämtade av export-euprices)" >&2
+  cp "$SHARE"/SE?.json "$SHARE"/DE-LU.json "$TMP/"
 else
-  echo "Hämtar SE1-SE4 $START..$END (Energy-Charts)..." >&2
-  for z in SE1 SE2 SE3 SE4; do
+  echo "Hämtar SE1-SE4 + DE-LU $START..$END (Energy-Charts)..." >&2
+  for z in SE1 SE2 SE3 SE4 DE-LU; do
     if fetch_zone "$z"; then echo "  $z ok" >&2; else echo "  $z: ingen data (hoppas)" >&2; fi
     perl -e "select(undef,undef,undef,$GAP)"
   done

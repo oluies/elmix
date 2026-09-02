@@ -149,6 +149,14 @@ så siffrorna där är andra – årtalet måste alltid följa med ett sådant t
 
 Payloaden täcker 2020 till innevarande år, ett år per knapp i årsväljaren.
 
+DE-LU finns med som **referens** i varaktighets- och break-even-vyerna, men
+går inte att välja i zonväljaren. Skälet är att reservpriserna i underlaget är
+Svenska kraftnäts: en valbar DE-LU skulle rita svenska FCR-priser bredvid
+tyskt arbitrage, vilket är precis det fel sidans egen not varnar för. För 2025
+ger samma modell 112 k€/MW/år mot SE4:s 93, och korsningen ligger vid 6,9 h
+mot SE3:s 1,0 – varaktighet fortsätter löna sig långt efter att den slutat
+göra det i Sverige.
+
 `viz/bess_agg.py` räknar dygnsvisa spreadar per zon, år och varaktighet –
 per dygn först och medelvärde över dygn sedan, inte tvärtom, eftersom ett
 medeldygn jämnar ut just den variation batteriet lever på. "H timmar" tas

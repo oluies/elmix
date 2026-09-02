@@ -80,11 +80,11 @@ echo "Hämtar EU+Norge-priser $START..$END (Energy-Charts)..." >&2
 while IFS='|' read -r bzn label land cc se; do
   [ -z "$bzn" ] && continue
   if fetch_zone "$bzn"; then
-    # Spara SE-zonernas rådata åt export-bess.sh, som annars hämtar exakt samma
+    # Spara SE-zonernas och DE-LU:s rådata åt export-bess.sh, som annars hämtar exakt samma
     # fyra zoner från samma rate-limitade endpoint i samma publiceringskörning.
     # Katalogen ligger under viz/data/ och är därmed gitignorerad.
     case "$bzn" in
-      SE1|SE2|SE3|SE4)
+      SE1|SE2|SE3|SE4|DE-LU)
         mkdir -p "$SHARE"
         cp "$TMP/$bzn.json" "$SHARE/$bzn.json" 2>/dev/null || true
         printf '%s..%s\n' "$START" "$END" > "$SHARE/range" ;;
