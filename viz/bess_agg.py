@@ -33,6 +33,13 @@ from zoneinfo import ZoneInfo
 
 STHLM = ZoneInfo("Europe/Stockholm")
 ZONER = ["SE1", "SE2", "SE3", "SE4"]
+# Referenszoner ritas som jämförelse men går INTE att välja på sidan. Skälet är
+# att reservpriserna i payloaden är Svenska kraftnäts: väljer man DE-LU som zon
+# skulle sidan rita svenska FCR-priser bredvid tyskt arbitrage, vilket är precis
+# det fel sidans egen not varnar för. Referensen hör hemma i varaktighets- och
+# break-even-vyerna, som bara handlar om spot.
+REFERENSZONER = ["DE-LU"]
+ALLA_ZONER = ZONER + REFERENSZONER
 VARAKTIGHETER = list(range(1, 9))
 # Ett dygn räknas bara om det är hyfsat helt. Tröskeln måste vara RELATIV:
 # efter kvartsbytet 2025-10-01 är ett helt dygn 96 punkter, så ett fast tal som
@@ -128,7 +135,7 @@ def main():
     katalog, utfil = sys.argv[1], sys.argv[2]
     spread = {}
     ar_sedda = set()
-    for z in ZONER:
+    for z in ALLA_ZONER:
         p = os.path.join(katalog, f"{z}.json")
         if not os.path.exists(p):
             print(f"  {z}: ingen fil - hoppas", file=sys.stderr)
@@ -166,6 +173,7 @@ def main():
         "unit": "EUR/MWh",
         "source": "Energy-Charts (ENTSO-E/SMARD, CC BY 4.0)",
         "zones": [z for z in ZONER if z in spread],
+        "reference": [z for z in REFERENSZONER if z in spread],
         "years": sorted(ar_sedda),
         "durations": VARAKTIGHETER,
         "spread": spread,

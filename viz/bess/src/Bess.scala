@@ -23,7 +23,13 @@ object Bess:
 
   private val Zoner = Vector("SE1", "SE2", "SE3", "SE4")
   private val ZonFarg =
-    Map("SE1" -> "#2e6fd6", "SE2" -> "#4dc4d4", "SE3" -> "#e08a3c", "SE4" -> "#c0392b")
+    Map(
+      "SE1" -> "#2e6fd6",
+      "SE2" -> "#4dc4d4",
+      "SE3" -> "#e08a3c",
+      "SE4" -> "#c0392b",
+      "DE-LU" -> "#7a4fb5"
+    )
   private val Varaktigheter = (1 to 8).toVector
 
   // BloombergNEF:s globala nyckelfardiga 4 h-niva omraknad till euro, och den uppgivna svenska.
@@ -58,6 +64,21 @@ object Bess:
       .flatMap(falt(_, "zones"))
       .map(_.asInstanceOf[js.Array[String]].toVector)
       .getOrElse(Vector.empty)
+
+  /**
+   * Referenszoner ritas men gar inte att valja. Reservpriserna i payloaden ar Svenska kraftnats -
+   * en valbar DE-LU skulle rita svenska FCR-priser bredvid tyskt arbitrage, vilket ar precis det
+   * fel sidans egen not varnar for. Referensen hor darfor hemma i varaktighets- och
+   * break-even-vyerna, som bara handlar om spot.
+   */
+  private lazy val referens: Vector[String] =
+    data
+      .flatMap(falt(_, "reference"))
+      .map(_.asInstanceOf[js.Array[String]].toVector)
+      .getOrElse(Vector.empty)
+
+  /** Zoner som ritas: valbara plus referens. */
+  private lazy val ritade: Vector[String] = zoner ++ referens
 
   private lazy val aren: Vector[Int] =
     data
@@ -299,13 +320,19 @@ object Bess:
         )
       )
     }
-    val serier = zoner.map { z =>
+    val serier = ritade.map { z =>
       obj(
         name = z,
         `type` = "line",
         symbol = "circle",
         symbolSize = 5,
-        lineStyle = obj(color = ZonFarg(z), width = 1.8),
+        // Referensen streckas: den ar med for jamforelsens skull, inte som en
+        // femte svensk zon, och ska inte lasa som en av dem.
+        lineStyle = obj(
+          color = ZonFarg(z),
+          width = 1.8,
+          `type` = if referens.contains(z) then "dashed" else "solid"
+        ),
         itemStyle = obj(color = ZonFarg(z)),
         data = js.Array(
           Varaktigheter.map(hh => arbitrageFor(z, hh).map(a => k(a): js.Any).getOrElse(null))*
@@ -348,7 +375,7 @@ object Bess:
 
   // ------------------------------------------------------------------ diagram 3
   private def breakEvenOption(): js.Any =
-    val rader = zoner.map { z =>
+    val rader = ritade.map { z =>
       (
         z,
         arbitrageNu(z).map(a =>
@@ -419,7 +446,7 @@ object Bess:
       }
 
   private def korsningsText(): String =
-    val delar = zoner.map { z =>
+    val delar = ritade.map { z =>
       // Tre skilda lagen som alla gav None forut: ingen data alls for zonen och
       // aret, arbitrage over kostnaden hela vagen, och arbitrage under redan vid
       // en timme. Utan atskillnaden pastod texten "redan under vid 1 h" om en zon
@@ -663,7 +690,7 @@ object Bess:
     val l = lang.now()
     val huvud =
       Vector(Texts.thZone, Texts.thArbitrage, Texts.thBreakEven, Texts.thAnnualCost).map(_(l))
-    val rader = zoner.map { z =>
+    val rader = ritade.map { z =>
       val a = arbitrageNu(z)
       Vector(
         z,

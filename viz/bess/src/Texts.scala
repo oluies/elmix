@@ -68,9 +68,13 @@ object Texts:
 
   val durH = T("Intäkt mot varaktighet", "Revenue against duration")
   val durSub = T(
-    "Sidans egentliga argument. Arbitragelinjen bågnar av eftersom spreaden krymper när fönstret " +
+    "DE-LU är streckad och med som referens, inte som en femte svensk zon: den går inte att " +
+      "välja ovan, eftersom reservpriserna i underlaget är Svenska kraftnäts och inte gäller " +
+      "Tyskland. Sidans egentliga argument. Arbitragelinjen bågnar av eftersom spreaden krymper när fönstret " +
       "vidgas; kostnadslinjen är rak. Där de korsas slutar en timme till att löna sig.",
-    "The page’s real argument. The arbitrage line bends over because the spread shrinks as the " +
+    "DE-LU is dashed and included as a reference, not as a fifth Swedish zone: it cannot be " +
+      "selected above, because the reserve prices in the payload are Svenska kraftnät’s and do " +
+      "not apply to Germany. The page’s real argument. The arbitrage line bends over because the spread shrinks as the " +
       "window widens; the cost line is straight. Where they cross, one more hour stops paying."
   )
 
@@ -184,6 +188,31 @@ object Texts:
           "reports are published as PDFs behind a JS-rendered link list. The reserve figures " +
           "shown are therefore hand-entered from those reports, and each carries its month and " +
           "source in the payload. They age until somebody updates them."
+      ),
+    T("Varför Tyskland är med", "Why Germany is here") ->
+      T(
+        "DE-LU har bredare dygnsspread än något svenskt elområde. För 2025 ger samma modell 112 " +
+          "k€/MW/år mot SE4:s 93 och SE3:s 72, och korsningen ligger vid 6,9 timmar mot SE3:s 1,0 " +
+          "– varaktighet fortsätter alltså löna sig långt efter att den slutat göra det i Sverige. " +
+          "Bakgrunden är en tätare marknad: kärnkraften avvecklades i april 2023, den billiga " +
+          "ryska rörgasen föll bort från 2022 efter Rysslands krig mot Ukraina, och en hög andel " +
+          "vind och sol ger stora dygnssvängningar i ett nät med nord-sydliga flaskhalsar.\n\n" +
+          "Två invändningar hör till. Den tyska flottan växer snabbare än den svenska, och hela " +
+          "den här sajten handlar om att spreaden konkurreras bort när flottan växer – dagens " +
+          "siffra är inte morgondagens. Och modellen antar perfekt förutsägelse av dygnets " +
+          "priser; ju rörligare marknad, desto större blir gapet mellan modellerad och realiserad " +
+          "spread, så försprånget är i praktiken mindre än talen antyder.",
+        "DE-LU has a wider daily spread than any Swedish bidding zone. For 2025 the same model " +
+          "gives 112 k€/MW/yr against SE4’s 93 and SE3’s 72, and the crossing sits at 6.9 hours " +
+          "against SE3’s 1.0 – duration keeps paying long after it has stopped paying in Sweden. " +
+          "The background is a tighter market: nuclear was shut down in April 2023, cheap Russian " +
+          "pipeline gas fell away from 2022 after Russia’s war against Ukraine, and a high share " +
+          "of wind and solar swings the day hard in a grid with north-south bottlenecks.\n\n" +
+          "Two caveats belong with it. The German fleet is growing faster than the Swedish one, " +
+          "and this whole site is about the spread being competed away as fleets grow – today’s " +
+          "figure is not tomorrow’s. And the model assumes perfect foresight of the day’s prices; " +
+          "the more volatile the market, the wider the gap between modelled and realised spread, " +
+          "so the lead is smaller in practice than the numbers suggest."
       ),
     T("Läs med förbehåll", "Read with care") ->
       T(
