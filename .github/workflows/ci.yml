@@ -48,6 +48,11 @@ jobs:
       # ofullständig rådata - och ska därför regressionstestas likadant.
       - name: Test av hämtningsvakten
         run: ./viz/fetch-year.test.sh
+      # Backfillen är enda vägen tillbaka från en kall cache och utlöses bara
+      # när cachen faktiskt tappats - den kan alltså inte provas skarpt utan
+      # att kosta timmar. Testas därför på samma sätt som vakterna ovan.
+      - name: Test av backfillen
+        run: ./viz/bootstrap-backfill.test.sh
 
   lint:
     name: Scalafmt

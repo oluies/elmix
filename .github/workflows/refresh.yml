@@ -53,29 +53,22 @@ jobs:
           key: elmix-rawdata-v1-${{ github.run_id }}
           restore-keys: elmix-rawdata-v1-
 
-      - name: Bootstrap vid kall cache (full hämtning)
+      # Fyller på historiken när cachen tappats, ett år i taget inom en
+      # tidsbudget. Ligger FÖRE hämtningen av innevarande år med flit: bygget
+      # ska ha flera år att stå på, inte bara de timmar som hunnit hämtas i
+      # dag. Budget 150 min + dygnets ~50 min ryms med marginal under GitHubs
+      # 6-timmarstak; det som inte hinns med tas av nästa körning. Se
+      # viz/bootstrap-backfill.sh för varför den inte längre görs i ett svep.
+      # continue-on-error: skriptet exitar redan alltid 0, men det löftet gäller
+      # bara så länge det kommer till sitt slut. Backfillen får inte hindra att
+      # dagens data publiceras ens om skalet självt dör - historik är det enda
+      # som står på spel här, och den tas av nästa körning.
+      - name: Backfill av historiken (tidsbudgeterad)
         if: inputs.steg != 'bygg'
+        continue-on-error: true
         env:
           ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
-        run: |
-          if ! ls data/raw/generation/SE_*.parquet >/dev/null 2>&1; then
-            echo "Kall cache – full hämtning 2016..$(date +%Y) (retry vid flaky DuckDB-krasch)"
-            for a in 1 2 3 4; do
-              ./mill Elmix.scala fetch --start 2016 --end "$(date +%Y)" --data all && break
-              echo "full fetch försök $a gav fel – återupptar inkrementellt..."
-              [ "$a" = 4 ] && { echo "full fetch misslyckades efter 4 försök"; exit 1; }
-              sleep 5
-            done
-          fi
-          if ! ls data/raw/eu/generation/*.parquet >/dev/null 2>&1; then
-            echo "Kall cache – full DE/FR-hämtning 2025..$(date +%Y)"
-            for a in 1 2 3 4; do
-              ./mill Elmix.scala fetcheu --start 2025 --end "$(date +%Y)" && break
-              echo "eu fetch försök $a gav fel – återupptar..."
-              [ "$a" = 4 ] && { echo "VARNING: eu fetch misslyckades (icke-fatal)"; break; }
-              sleep 5
-            done
-          fi
+        run: ./viz/bootstrap-backfill.sh
 
       # Faller på ENTSO-E:s uppetid (503/400 -> tyst tappade dataset). Rör bara
       # data/raw, så ett fel här lämnar marts och docs/ orörda och det räcker att
