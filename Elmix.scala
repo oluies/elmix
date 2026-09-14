@@ -655,6 +655,30 @@ def skipIfExists(p: Path): Boolean =
   if Files.exists(p) then { println(s"  finns: $p"); true }
   else false
 
+/** Manadsspann inom ett ar, klippt mot nutid (senaste ar ar partiellt). */
+def monthlySpans(year: Int): Seq[(OffsetDateTime, OffsetDateTime)] =
+  val now = OffsetDateTime.now(ZoneOffset.UTC)
+  (1 to 12).flatMap { m =>
+    val s = OffsetDateTime.of(year, m, 1, 0, 0, 0, 0, ZoneOffset.UTC)
+    if s.isAfter(now) then None
+    else Some((s, if s.plusMonths(1).isAfter(now) then now else s.plusMonths(1)))
+  }
+
+/**
+ * Hamtar ett arsspann manad for manad och slar ihop raderna. ENTSO-E tar sedan hosten 2026 bara P1M
+ * for A75 (AGGREGATED_GENERATION_PER_TYPE_R3) och A11 (NET_CROSS_BORDER_PHYSICAL_FLOWS_R3): ett
+ * arsanrop ger HTTP 400 "larger than maximum allowed period 'P1M'" i stallet for data, aven for
+ * gamla ar. A44 (pris) och A85 (obalans) tar fortfarande helar och rors inte. Spannen ar halvoppna
+ * [manad, nasta manad) sa de moter varandra utan vare sig lucka eller dubblett.
+ */
+def fetchMonthly(year: Int, f: (OffsetDateTime, OffsetDateTime) => Seq[Row]): Seq[Row] =
+  val spans = monthlySpans(year)
+  spans.zipWithIndex.flatMap { case ((from, to), i) =>
+    val rows = f(from, to)
+    if i < spans.size - 1 then Thread.sleep(SleepMs)
+    rows
+  }
+
 def doFetch(start: Int, end: Int, data: String): Unit =
   val kinds = data match
     case "all" => List("generation", "prices", "imbalance", "flows")
@@ -670,7 +694,8 @@ def doFetch(start: Int, end: Int, data: String): Unit =
       val p = Raw.resolve(kind).resolve(s"${zone}_$year.parquet")
       kind match
         case "generation" if !skipIfExists(p) =>
-          writeParquet(p, zone, "psr_type", "mw", fetchGeneration(eic, from, to))
+          // A75 tar bara en manad at gangen, se fetchMonthly.
+          writeParquet(p, zone, "psr_type", "mw", fetchMonthly(year, fetchGeneration(eic, _, _)))
           Thread.sleep(SleepMs)
         case "prices" if !skipIfExists(p) =>
           writeParquet(p, zone, "kontrakt", "eur_mwh", fetchPrices(eic, from, to))
@@ -679,10 +704,11 @@ def doFetch(start: Int, end: Int, data: String): Unit =
           writeParquet(p, zone, "category", "eur_mwh", fetchImbalance(eic, from, to))
           Thread.sleep(SleepMs)
         case "flows" if !skipIfExists(p) =>
+          // A11 tar, som A75, bara en manad at gangen - se fetchMonthly.
           val rows = Neighbours(zone).toSeq.flatMap { (nb, nbEic) =>
-            val imp = fetchFlows(eic, nbEic, s"$nb>$zone", from, to)
+            val imp = fetchMonthly(year, fetchFlows(eic, nbEic, s"$nb>$zone", _, _))
             Thread.sleep(SleepMs)
-            val exp = fetchFlows(nbEic, eic, s"$zone>$nb", from, to)
+            val exp = fetchMonthly(year, fetchFlows(nbEic, eic, s"$zone>$nb", _, _))
               .map(r => r.copy(value = -r.value)) // export negativt
             Thread.sleep(SleepMs)
             imp ++ exp
@@ -694,15 +720,6 @@ def doFetch(start: Int, end: Int, data: String): Unit =
  * Hamtar DE/FR: produktion (A75), pris (A44) och total last (A65) till data/raw/eu/. Inga floden -
  * nettoimport = last - produktion i exporten.
  */
-/** Manadsspann inom ett ar, klippt mot nutid (senaste ar ar partiellt). */
-def monthlySpans(year: Int): Seq[(OffsetDateTime, OffsetDateTime)] =
-  val now = OffsetDateTime.now(ZoneOffset.UTC)
-  (1 to 12).flatMap { m =>
-    val s = OffsetDateTime.of(year, m, 1, 0, 0, 0, 0, ZoneOffset.UTC)
-    if s.isAfter(now) then None
-    else Some((s, if s.plusMonths(1).isAfter(now) then now else s.plusMonths(1)))
-  }
-
 def doFetchEu(start: Int, end: Int): Unit =
   val base = Raw.resolve("eu")
   for
@@ -711,8 +728,9 @@ def doFetchEu(start: Int, end: Int): Unit =
   do
     val spans = monthlySpans(year)
     if spans.nonEmpty then
-      // DE:s A75 for ett helt ar timeoutar (enormt svar) -> hamta manadsvis och
-      // sla ihop; en Parquet-fil per zon/ar (skipIfExists pa arsniva).
+      // DE:s A75 for ett helt ar timeoutar (enormt svar) - och ENTSO-E tar
+      // numera anda bara P1M - sa hamta manadsvis och sla ihop; en Parquet-fil
+      // per zon/ar (skipIfExists pa arsniva).
       def w(
           kind: String,
           keyCol: String,
@@ -722,12 +740,7 @@ def doFetchEu(start: Int, end: Int): Unit =
         val p = base.resolve(kind).resolve(s"${zone}_$year.parquet")
         if !skipIfExists(p) then
           println(s"eu/$kind $zone $year (${spans.size} man)")
-          val rows = spans.flatMap { (from, to) =>
-            val r = f(from, to)
-            Thread.sleep(SleepMs)
-            r
-          }
-          writeParquet(p, zone, keyCol, valCol, rows)
+          writeParquet(p, zone, keyCol, valCol, fetchMonthly(year, f))
       w("generation", "psr_type", "mw", fetchGeneration(eic, _, _))
       w("prices", "kontrakt", "eur_mwh", fetchPrices(eic, _, _))
       w("load", "kategori", "mw", fetchLoad(eic, _, _))
