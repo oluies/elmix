@@ -234,13 +234,22 @@ värden 2025: DE ~300, FR ~32, SE1–3 ~20–26, SE4 ~58 gCO₂eq/kWh. Justera i
 prerendrerar SVG-rapporten och paketerar allt i `docs/`, som GitHub
 Pages serverar från `main`.
 
-Den dagliga refreshen (`.github/workflows/refresh.yml`) kör två steg som
+Den dagliga refreshen (`.github/workflows/refresh.yml`) kör tre steg som
 felar av helt olika skäl och därför går att köra om var för sig:
 
 | Steg | Skript | Faller på | Nyckel |
 |---|---|---|---|
+| Backfill | `./viz/bootstrap-backfill.sh` | inget – varnar bara | ja |
 | Hämtning | `./viz/fetch-year.sh [år]` | ENTSO-E:s uppetid (503/400 ger tyst tappade dataset) | ja |
 | Bygge | `./viz/build-reports.sh [år]` | DuckDB (transform/pca) | nej |
+
+Backfillen fyller på historiken när rådata-cachen tappats. Den kan inte göras
+i ett svep sedan ENTSO-E kapade A75 och A11 till en månad per anrop: ett spann
+2016–i fjol är ~5 200 API-anrop och skulle spränga GitHubs 6-timmarstak. I
+stället tas ett år i taget, nyast först, inom en tidsbudget (150 min), och
+resten av nästa körning – ett kallt spann fylls alltså på ett par dygn. Steget
+exitar alltid 0: ett trasigt 2019 får inte hindra att dagens data hämtas och
+publiceras. Raden `kvar:` i loggen säger vad som återstår.
 
 Faller hämtningen upprepat är det oftast ENTSO-E och inte pipelinen. Någon
 live-statustavla finns inte – ingen `status.entsoe.eu` – men driftnotiser och
@@ -277,7 +286,9 @@ oavsett vad som hänt tidigare i sekvensen.
 varken lokal installation eller CI behöver ha Mill förinstallerat.
 
 GitHub Actions (`.github/workflows/ci.yml`) kör vid varje push/PR:
-- **Bygg + test** – kompilerar rotscriptet och viz, kör PCA-självtestet.
+- **Bygg + test** – kompilerar rotscriptet och viz, kör PCA-självtestet och
+  regressionstesterna för de tre skripten som annars bara skulle finnas:
+  golvkontrollen, hämtningsvakten och backfillen.
 - **Scalafmt** – formatkontroll (`.scalafmt.conf`).
 - **Länkkontroll** – lychee mot README och rapporterna.
 
