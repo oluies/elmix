@@ -5,6 +5,7 @@
   <title>Elmix – runda vyer (mix & kannibalisering)</title>
   <script src="vendor/echarts.min.js"></script>
   <script src="data/round-data.js"></script>
+  <script src="data/diurnal-data.js"></script>
   <style>
     body { font-family: -apple-system, system-ui, sans-serif; margin: 0 auto;
            max-width: 1180px; padding: 0 16px 48px; color: #222; }
@@ -18,6 +19,12 @@
             border-radius: 10px; padding: 14px 18px 18px; }
     .desc { color: #555; font-size: 13.5px; line-height: 1.55; margin: 4px 0 8px; }
     .chart { width: 100%; height: 680px; }
+    /* Dygnsklockorna: riket brett överst, de fyra elområdena 2×2 under. */
+    .clocks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .clocks .chart { height: 420px; }
+    .clocks .chart.wide { grid-column: 1 / -1; height: 560px; }
+    @media (max-width: 760px) { .clocks { grid-template-columns: 1fr; }
+                                .clocks .chart.wide { height: 420px; } }
     .bar-row { display: flex; gap: 14px; align-items: stretch; }
     .bar-row #pane-bar { flex: 1; min-width: 0; }
     .pricetable { width: 300px; flex: none; max-height: 680px; overflow-y: auto;
@@ -149,13 +156,36 @@
     <div id="pane-heat" class="chart"></div>
   </section>
 
+  <section class="pane">
+    <h2><span lang="sv">Dygnsprofil – normaldygnet, riket och per elområde</span><span lang="en">Diurnal profile – the typical day, nationally and per zone</span></h2>
+    <p class="desc" lang="sv">Fem klockor över samma år: <strong>hela Sverige</strong> överst, SE1–SE4 under.
+    Helcirkeln är <strong>ett dygn</strong> (00 högst upp, medurs). Varje stapel är den
+    <strong>genomsnittliga effekten</strong> den timmen på dygnet, snittad över alla årets dygn, i
+    <strong>GW</strong> – alltså absoluta nivåer, inte andelar som i klockan längst upp på sidan.
+    Här syns kraftslagens dygnsrytm: solens middagspuckel, vattenkraftens lastföljning mot morgon-
+    och kvällstoppen, kärnkraftens platta bädd och vindens frånvaro av dygnsmönster.
+    Den svarta linjen är snittspotpriset samma timme (skalat till ringen).</p>
+    <p class="desc" lang="en">Five clocks over the same year: <strong>all of Sweden</strong> on top,
+    SE1–SE4 below. The full circle is <strong>one day</strong> (00 at the top, clockwise). Each bar is
+    the <strong>average power</strong> in that hour of the day, averaged over every day of the year, in
+    <strong>GW</strong> – absolute levels, not shares as in the clock at the top of the page.
+    This is where the sources' daily rhythm shows: solar's midday bulge, hydro load-following the
+    morning and evening peaks, nuclear's flat bed, and wind having no daily pattern at all.
+    The black line is the average spot price in the same hour (scaled to the ring).</p>
+    <div class="controls">
+      <fieldset id="diurnal-year-picker"><legend><span lang="sv">År</span><span lang="en">Year</span></legend></fieldset>
+    </div>
+    <p class="desc" id="diurnal-note" style="color:#888"></p>
+    <div id="diurnal-clocks" class="clocks"></div>
+  </section>
+
   <footer>© 2026 Örjan Lundberg ·
     <a href="https://github.com/oluies">GitHub</a> ·
     <a href="https://www.linkedin.com/in/orjanlundberg/">LinkedIn</a> ·
     <span lang="sv">Källkod:</span><span lang="en">Source:</span> <a href="https://github.com/oluies/elmix">github.com/oluies/elmix</a> ·
     <span lang="sv">Byggd med</span><span lang="en">Built with</span> <a href="https://duckdb.org">DuckDB</a> &amp; <a href="https://echarts.apache.org">ECharts</a> <span lang="sv">(ren JS, ej Laminar)</span><span lang="en">(plain JS, no Laminar)</span></footer>
 
-  <script src="round.js?v=20260702c"></script>
+  <script src="round.js?v=20261018a"></script>
   <script data-goatcounter="https://oluies.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
