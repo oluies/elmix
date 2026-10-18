@@ -105,6 +105,41 @@ Elmix.scala) kompileras till Scala.js och räknas om för vald tidsperiod.
 Ingen SQL/DuckDB i klienten. Den prerenderade vyn läser i stället de
 färdiga `pca_*.json` direkt (ECharts Node-SSR).
 
+### Årsvolym och dygnsprofil (`energi.html`, `round.html`)
+
+Två vyer på samma `fct_gen`, från var sin ände av tidsskalan.
+
+**Årsvolym per kraftslag** (nederst i `energi.html`): staplad TWh per år över
+hela historiken ENTSO-E räcker till, ett diagram per elområde plus ett för
+riket. De fyra elområdesdiagrammen delar y-skala – små multiplar med var sin
+skala läses som jämförbara när de inte är det. Staplarna är **inhemsk
+produktion**; nettoimport ingår inte, till skillnad från FBMC-vyn högst upp på
+samma sida. Innevarande år märks med `*` och dygnsräkning i fotnoten, eftersom
+hämtningen går fram till idag och den sista stapeln annars läses som ett
+produktionsras.
+
+**Dygnsprofil** (nederst i `round.html`): fem polära klockor – riket plus
+SE1–SE4 – där varje stapel är **medeleffekten den timmen på dygnet**, snittad
+över årets alla dygn, i GW. Alltså absoluta nivåer, till skillnad från
+mix-klockan högst upp som normaliserar varje dag till 100 %. Det är här
+kraftslagens dygnsrytm syns: solens middagspuckel, vattenkraftens lastföljning
+mot morgon- och kvällstopparna, kärnkraftens platta bädd, och vindens frånvaro
+av dygnsmönster.
+
+Medeleffekten räknas som `Σ mwh / Σ h_len` och är därför
+**upplösningsokänslig**: en kvart i 15-min-eran (från 2 dec 2025) väger lika
+mycket per klocktimme som en timme i tim-eran. Båda uttagen sätter
+`TimeZone = 'Europe/Stockholm'` explicit – CI kör UTC, och en dygnsprofil i UTC
+lägger solmaxet en till två timmar fel.
+
+```bash
+./viz/export-annual.sh            # -> viz/data/annual-data.js (gitignorerad)
+./viz/export-diurnal.sh           # -> viz/data/diurnal-data.js (gitignorerad)
+```
+
+Båda ingår i `publish-pages.sh` och läser bara `elmix.duckdb` – inget nät,
+ingen nyckel.
+
 ### Företagets elpris: SE1–SE4 mot Kina (`foretagspris.html`)
 
 Egen Scala.js-modul (`viz/foretagspris/`) som svarar på vad ett företag

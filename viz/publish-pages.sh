@@ -7,6 +7,11 @@ cd "$(dirname "$0")/.."
 ./viz/export-data.sh
 ./viz/export-round.sh
 ./viz/export-consumption.sh
+# Årsvolym (tioårsvyn i energi.html) och dygnsprofil (klockorna i round.html).
+# Båda läser bara elmix.duckdb, inget nät - alltså lika obligatoriska som
+# exporten ovan och utan fallback.
+./viz/export-annual.sh
+./viz/export-diurnal.sh
 # DE/FR-förbrukningsmix (fetcheu-data) – bygg bara om rådatan finns.
 if ls data/raw/eu/generation/*.parquet >/dev/null 2>&1; then ./viz/export-consumption-eu.sh; fi
 # Kina vs världen (statisk OWID-årsdata) – icke-fatal om OWID inte svarar.
@@ -56,6 +61,8 @@ sed 's|out/app/fastLinkJS.dest/main.js|main.js|' viz/index.html > docs/index.htm
 # Runda experimentsidor (fristående, delar round.js, läser *-data.js direkt).
 cp viz/round.html viz/consumption.html viz/round.js docs/
 cp viz/data/round-data.js viz/data/consumption-data.js docs/data/
+# Dygnsprofilen hör till round.html, årsvolymen till energi.html nedan.
+cp viz/data/diurnal-data.js viz/data/annual-data.js docs/data/
 # Multi-klock-sidor (delar multiclock.js + round.js). SE-alla-zoner alltid;
 # DE/FR bara om fetcheu-datan byggts.
 cp viz/multiclock.js viz/consumption-se.html viz/energi.html viz/energi.js docs/
