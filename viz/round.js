@@ -473,9 +473,26 @@
   // export-diurnal.sh (ren produktion, ingen import) oavsett sidans config.
   const DI = window.elmixDiurnal
   const diEl = document.getElementById('diurnal-clocks')
-  if (DI && diEl) {
+  if (DI && diEl) (function () {
     const diCharts = {}
-    let diYear = DI.years[DI.years.length - 1]
+    // Samma täckningsgrind som tioårsvyn i energi.js, av samma skäl: en årgång
+    // kan ha fulla 365 dygn och ändå sakna HELA kraftslag, för backfillen fyller
+    // historiken ett år i taget. 2016-2020 hade bara vind när panelen byggdes,
+    // och en dygnsprofil på den datan är inte gles utan falsk - den visar ett
+    // Sverige utan vattenkraft. Mäts som rikets medeleffekt mot den bäst täckta
+    // årgången; mellan hel och halvfylld årgång är det en storleksordning.
+    const diKeys = DEFAULT_FUELS.map(f => f.key)
+    const diMw = y => {
+      const r = DI.data.find(x => x.z === 'SE' && x.y === y)
+      return r ? diKeys.reduce((a, k) => a + (r[k] || []).reduce((b, v) => b + v, 0), 0) / 24 : 0
+    }
+    const diBest = Math.max(0, ...DI.years.map(diMw))
+    const diYears = DI.years.filter(y => diBest > 0 && diMw(y) >= 0.6 * diBest)
+    const diLeft = DI.years.filter(y => diYears.indexOf(y) < 0)
+    // Inget användbart år alls -> dölj hela panelen i stället för att lämna
+    // fem tomma ringar efter sig.
+    if (!diYears.length) { const p = diEl.closest('.pane'); if (p) p.style.display = 'none'; return }
+    let diYear = diYears[diYears.length - 1]
     const diLabel = z => z === 'SE' ? t('Sverige', 'Sweden', 'Suède', 'Schweden') : z.replace('_', '')
     const diRec = z => DI.data.find(x => x.z === z && x.y === diYear)
     DI.zones.forEach(z => {
@@ -497,11 +514,13 @@
       if (diNote) {
         const d = diRec('SE')
         const n = d ? d.dagar : 0
-        diNote.textContent = n
-          ? t(`Snittat över ${n} dygn ${diYear}.`, `Averaged over ${n} days in ${diYear}.`) +
-            (n < 360 ? t(' Året är ofullständigt – profilen är alltså säsongsskev.',
-                         ' The year is incomplete – the profile is therefore seasonally skewed.') : '')
-          : ''
+        let txt = n ? t(`Snittat över ${n} dygn ${diYear}.`, `Averaged over ${n} days in ${diYear}.`) : ''
+        if (n && n < 360) txt += t(' Året är ofullständigt – profilen är alltså säsongsskev.',
+                                   ' The year is incomplete – the profile is therefore seasonally skewed.')
+        if (diLeft.length) txt += t(
+          ` Utelämnade år (rådatan saknar hela kraftslag där): ${diLeft.join(', ')}.`,
+          ` Omitted years (the raw data is missing whole sources there): ${diLeft.join(', ')}.`)
+        diNote.textContent = txt
       }
     }
     extraRenders.push(diRender)
@@ -513,9 +532,9 @@
       DI.zones.forEach(z => diCharts[z].resize())
       clearTimeout(diT); diT = setTimeout(diRender, 160)
     })
-    radios('diurnal-year-picker', DI.years.map(y => ({ val: y, txt: String(y) })), diYear,
+    radios('diurnal-year-picker', diYears.map(y => ({ val: y, txt: String(y) })), diYear,
       y => { diYear = +y; diRender() })
-  }
+  })()
 
   // Språkväljare (SV/EN): byter LANG, sätter html[data-lang] (statisk text via
   // CSS) och ritar om diagrammen.
