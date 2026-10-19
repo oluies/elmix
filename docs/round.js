@@ -285,7 +285,16 @@
     const gw = (i, k) => (d[k] ? d[k][i] || 0 : 0) / 1000
     const tot = d.h.map((_, i) => keys.reduce((a, k) => a + gw(i, k), 0))
     // Taket ger prislinjen samma radie som stackarna -> dygnsformen jämförbar.
-    const rmax = +(Math.max(...tot, 0.001) * 1.08).toFixed(3)
+    // Avrundat UPPÅT till ett jämnt tal: max(tot) × 1,08 gav etiketter som
+    // "3.612" och "9.012" rakt i titeln, eftersom ett explicit radiusAxis.max
+    // alltid skrivs ut som egen etikett.
+    const niceCeil = v => {
+      if (!(v > 0)) return 1
+      const e = Math.pow(10, Math.floor(Math.log10(v))), m = v / e
+      const step = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find(x => m <= x + 1e-9)
+      return +(step * e).toPrecision(3)
+    }
+    const rmax = niceCeil(Math.max(...tot, 0.001) * 1.04)
     const ps = d.p ? d.p.filter(v => v != null) : []
     const pmin = ps.length ? Math.min(...ps) : 0
     const pmax = ps.length ? Math.max(...ps) : 1
@@ -315,9 +324,12 @@
           return `${t('kl', 'h', 'h', 'Uhr')} ${hhmm(i)}<br/>${rows}<br/><b>Σ ${tot[i].toFixed(2)} GW</b>`
         }
       },
-      // Kortare radie på smal skärm: 'HH:00'-etiketterna sitter utanför ringen
-      // och klipps mot kanten vid 3 och 9 med den delade 77 %-radien.
-      polar: narrow ? { ...polar(), radius: ['15%', '66%'] } : polar(),
+      // Egen polär geometri i stället för den delade polar(): klockan har BÅDE
+      // en titel och 'HH:00'-etiketter hela varvet runt. Med center 47 % och
+      // radie 77 % nådde ringens topp upp i titeln, så 23:00/00:00 och
+      // radieetiketten skrevs rakt över den i de 420 px höga zonklockorna.
+      // Centrum nedflyttat och radien nedskuren ger plats åt båda.
+      polar: { center: ['50%', '54%'], radius: ['15%', narrow ? '62%' : '68%'] },
       angleAxis: {
         type: 'category', data: d.h.map((_, i) => hhmm(i)), startAngle: 90, clockwise: true,
         axisTick: { show: false }, splitLine: { show: false },
