@@ -3,19 +3,22 @@ package elmix.lang
 import org.scalajs.dom
 import scala.scalajs.js
 
-/** SV/EN-vaxlare for de statiska sidorna. Sidan bar bada spraken i parade
-  * lang-element och CSS doljer det som inte galler; det enda som behover kod ar
-  * att satta html[data-lang], rita tva knappar och komma ihag valet.
-  *
-  * Medvetet utan Laminar: modulen ror tva knappar och ett attribut.
-  */
+/**
+ * SV/EN-vaxlare for de statiska sidorna. Sidan bar bada spraken i parade lang-element och CSS
+ * doljer det som inte galler; det enda som behover kod ar att satta html[data-lang], rita tva
+ * knappar och komma ihag valet.
+ *
+ * Medvetet utan Laminar: modulen ror tva knappar och ett attribut.
+ */
 object Lang:
 
   private val Key = "elmix-lang"
   private val Langs = List("sv", "en")
 
-  /** Lagringen kan kasta i privat lage och nar webblasaren blockerar site data,
-    * sa bade lasning och skrivning far falla tyst tillbaka pa sidans eget varde. */
+  /**
+   * Lagringen kan kasta i privat lage och nar webblasaren blockerar site data, sa bade lasning och
+   * skrivning far falla tyst tillbaka pa sidans eget varde.
+   */
   private def stored: Option[String] =
     try Option(dom.window.localStorage.getItem(Key)).filter(Langs.contains)
     catch case _: Throwable => None
@@ -38,7 +41,8 @@ object Lang:
 
   private def build(): Unit =
     val host = dom.document.getElementById("lang-switch")
-    if host == null then () else
+    if host == null then ()
+    else
       host.innerHTML = ""
       var buttons = List.empty[dom.html.Button]
       buttons = Langs.map { l =>
@@ -51,7 +55,7 @@ object Lang:
         b
       }
       buttons.foreach(b => b.onclick = _ => apply(b.dataset("lang"), buttons))
-      apply(current, buttons)   // sparat val vinner over sidans standard
+      apply(current, buttons) // sparat val vinner over sidans standard
 
   def main(args: Array[String]): Unit =
     if dom.document.readyState == "loading" then

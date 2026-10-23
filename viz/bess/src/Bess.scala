@@ -488,7 +488,7 @@ object Bess:
       val i = (1 until d.length).find(j => d(j - 1) > 0 && d(j) <= 0)
       i.map { j =>
         val (a, b) = (d(j - 1), d(j))
-      Varaktigheter(j - 1) + a / (a - b)
+        Varaktigheter(j - 1) + a / (a - b)
       }
 
   private def korsningsText(): String =
