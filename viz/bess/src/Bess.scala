@@ -486,9 +486,8 @@ object Bess:
       // Forsta bytet fran plus till minus. Ett arbitrage som aldrig ar positivt
       // korsar inte - det ligger under hela vagen och har ingen brytpunkt.
       val i = (1 until d.length).find(j => d(j - 1) > 0 && d(j) <= 0)
-      i.map {
-        j =>
-          val (a, b) = (d(j - 1), d(j))
+      i.map { j =>
+        val (a, b) = (d(j - 1), d(j))
         Varaktigheter(j - 1) + a / (a - b)
       }
 
