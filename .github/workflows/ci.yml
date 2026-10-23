@@ -39,9 +39,25 @@ jobs:
       # Golvkontrollen är sista spärren mot att publicera ofullständig data,
       # så den regressionstestas i stället för att bara finnas.
       - name: Installera DuckDB CLI
+        # Pinnad till samma version som org.duckdb:duckdb_jdbc i Elmix.scala
+        # (1.5.6.0). Vakterna nedan laser samma filer som drivrutinen skriver,
+        # sa CLI och drivrutin maste ligga pa samma lagringsformat.
+        #
+        # Tidigare pekade detta pa releases/latest. Det gick sonder nar DuckDB
+        # slappte v2.0.0: assetet bytte namn fran duckdb_cli-linux-amd64.zip
+        # till duckdb-cli-linux-amd64.tar.gz. curl -sL hamtade da 404-sidan
+        # utan att klaga och unzip foll med exit 9, vilket las ut som ett
+        # trasigt teststeg snarare an en flyttad nedladdning. En pinning gor
+        # att ett DuckDB-major inte kan valta CI utan ett beslut.
+        #
+        # -f far curl att falla pa 404 direkt, dar felet faktiskt finns.
+        env:
+          DUCKDB_VERSION: v1.5.6
         run: |
-          curl -sL https://github.com/duckdb/duckdb/releases/latest/download/duckdb_cli-linux-amd64.zip -o duckdb.zip
+          set -euo pipefail
+          curl -fsSL "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb_cli-linux-amd64.zip" -o duckdb.zip
           unzip -q duckdb.zip && sudo mv duckdb /usr/local/bin/
+          duckdb --version
       - name: Test av golvkontrollen
         run: ./viz/check-raw-floor.test.sh
       # Hämtningsvakten är av samma slag - sista spärren mot att bygga på
