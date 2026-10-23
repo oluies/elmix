@@ -77,7 +77,10 @@
   // innerWidth är bred men själva grafen ~halva bredden).
   const legendRight = data => ({ type: 'plain', orient: 'horizontal', bottom: 4, left: 'center', itemGap: 12, textStyle: { fontSize: 11 }, data })
   const polar = () => ({ center: ['50%', '47%'], radius: ['15%', '77%'] })
-  const titleTop = text => ({ text, left: 'center', top: 6, textAlign: 'center', textStyle: { fontSize: 14 } })
+  // Inget textAlign här: med left:'center' centrerar ECharts redan titelblocket,
+  // och textAlign:'center' ovanpå det flyttar texten ytterligare en halv
+  // textbredd åt vänster. Syns knappt på bred skärm men klipper titeln på mobil.
+  const titleTop = text => ({ text, left: 'center', top: 6, textStyle: { fontSize: 14 } })
   const vmapPos = () => ({ orient: 'horizontal', left: 'center', bottom: 6, itemWidth: 14, itemHeight: 80 })
   const monthLabel = { interval: 0, fontSize: 11, color: '#555', formatter: v => { const mi = MSTART.indexOf(+v); return mi >= 0 ? mName(mi) : '' } }
 
@@ -269,6 +272,79 @@
     }
   }
 
+  // ---- 4. Dygnsprofil-klocka (medeleffekt per timme på dygnet) --------------
+  // Egen byggare i stället för shareSeries: här är POÄNGEN de absoluta nivåerna
+  // (GW), inte andelarna. Datat är redan aggregerat till 24 timmar av
+  // export-diurnal.sh (medeleffekt = Σ mwh / Σ h_len över årets alla dygn), så
+  // byggaren bara skalar MW -> GW och lägger prislinjen på samma radie.
+  // narrow: DOM-lagret mäter grafens bredd och flaggar smala klockor. 24
+  // timetiketter runt en 350 px-ring går i varandra, och den långa titeln
+  // klipps - på smal skärm glesas etiketterna och titeln kortas.
+  function diurnalOption(d, zone, year, fuels, narrow) {
+    const keys = fuels.map(f => f.key)
+    const gw = (i, k) => (d[k] ? d[k][i] || 0 : 0) / 1000
+    const tot = d.h.map((_, i) => keys.reduce((a, k) => a + gw(i, k), 0))
+    // Taket ger prislinjen samma radie som stackarna -> dygnsformen jämförbar.
+    // Avrundat UPPÅT till ett jämnt tal: max(tot) × 1,08 gav etiketter som
+    // "3.612" och "9.012" rakt i titeln, eftersom ett explicit radiusAxis.max
+    // alltid skrivs ut som egen etikett.
+    const niceCeil = v => {
+      if (!(v > 0)) return 1
+      const e = Math.pow(10, Math.floor(Math.log10(v))), m = v / e
+      const step = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find(x => m <= x + 1e-9)
+      return +(step * e).toPrecision(3)
+    }
+    const rmax = niceCeil(Math.max(...tot, 0.001) * 1.04)
+    const ps = d.p ? d.p.filter(v => v != null) : []
+    const pmin = ps.length ? Math.min(...ps) : 0
+    const pmax = ps.length ? Math.max(...ps) : 1
+    const pspan = (pmax - pmin) || 1
+    const pname = t('Pris', 'Price', 'Prix', 'Preis')
+    const hhmm = i => String(d.h[i]).padStart(2, '0') + ':00'
+    const series = fuels.map(f => ({
+      name: fname(f), type: 'bar', coordinateSystem: 'polar', stack: 'mix', itemStyle: { color: f.c },
+      data: d.h.map((_, i) => +gw(i, f.key).toFixed(3))
+    }))
+    if (ps.length) series.push({
+      name: pname, type: 'line', coordinateSystem: 'polar',
+      smooth: true, showSymbol: false, z: 10, lineStyle: { color: '#111', width: 1.5 },
+      data: d.p.map(v => v == null ? null : +((v - pmin) / pspan * rmax).toFixed(3))
+    })
+    return {
+      title: titleTop(narrow
+        ? `${zone} ${year} · GW`
+        : `${zone} ${year} – ${t('normaldygn, GW', 'typical day, GW', 'journée type, GW', 'Normaltag, GW')}`),
+      legend: legendRight(fuels.map(fname).concat(ps.length ? [pname] : [])),
+      tooltip: {
+        trigger: 'axis',
+        formatter: p => {
+          const i = p[0] ? p[0].dataIndex : 0
+          const rows = p.map(x => `${x.marker}${x.seriesName}: ` +
+            (x.seriesName === pname ? `${d.p[i]} €/MWh` : `${(+x.value).toFixed(2)} GW`)).join('<br/>')
+          return `${t('kl', 'h', 'h', 'Uhr')} ${hhmm(i)}<br/>${rows}<br/><b>Σ ${tot[i].toFixed(2)} GW</b>`
+        }
+      },
+      // Egen polär geometri i stället för den delade polar(): klockan har BÅDE
+      // en titel och 'HH:00'-etiketter hela varvet runt. Med center 47 % och
+      // radie 77 % nådde ringens topp upp i titeln, så 23:00/00:00 och
+      // radieetiketten skrevs rakt över den i de 420 px höga zonklockorna.
+      // Centrum nedflyttat och radien nedskuren ger plats åt båda.
+      polar: { center: ['50%', '54%'], radius: ['15%', narrow ? '62%' : '68%'] },
+      angleAxis: {
+        type: 'category', data: d.h.map((_, i) => hhmm(i)), startAngle: 90, clockwise: true,
+        axisTick: { show: false }, splitLine: { show: false },
+        axisLabel: { interval: narrow ? 2 : 0, fontSize: narrow ? 9 : 10, color: '#555' }
+      },
+      // Ingen axis-`name` har: den hamnar vid ytterkanten på 12-spåret och
+      // krockar med titeln. Enheten står i titeln i stället.
+      radiusAxis: {
+        min: 0, max: rmax,
+        axisLabel: { fontSize: 10, color: '#999' }, splitLine: { lineStyle: { color: '#eee' } }
+      },
+      series
+    }
+  }
+
   // ---- CO2-intensitet för ETT dygn: polär stapel (g/kWh per intervall) ------
   // Zoomar in CO2 när man drillar en dag (mirror av mix-klockans dygnsvy).
   function co2DayOption(d, zone, year, day, fuels) {
@@ -308,14 +384,14 @@
     }
   }
 
-  const API = { DEFAULT_FUELS, priceHeat, importHeat, co2Heat, daily, dayHours, heatData, barYearOption, barDayOption, sunburstOption, heatOption, co2DayOption, priceTableHtml }
+  const API = { DEFAULT_FUELS, priceHeat, importHeat, co2Heat, daily, dayHours, heatData, barYearOption, barDayOption, sunburstOption, heatOption, co2DayOption, diurnalOption, priceTableHtml }
   if (typeof module !== 'undefined' && module.exports) module.exports = API
 
   // ---- DOM-wiring (endast webbläsare) ---------------------------------------
   if (typeof document === 'undefined') return
   // Exponera rena byggare + språk-setter för fristående sidor (eu.js).
   window.RoundViz = {
-    barYearOption, barDayOption, heatOption, co2DayOption, daily, dayHours, isoDate, t, co2Heat,
+    barYearOption, barDayOption, heatOption, co2DayOption, diurnalOption, daily, dayHours, isoDate, t, co2Heat,
     setLang: l => { LANG = l }, getLang: () => LANG
   }
   // Standardsidans wiring (round/consumption) körs bara om dess layout finns.
@@ -328,6 +404,10 @@
   let year = R.years.includes(2025) ? 2025 : R.years[R.years.length - 1]
   let drillDay = null
   const rec = () => R.data.find(d => d.z === zone && d.y === year)
+  // Sektioner utanför de tre huvudpanelerna registrerar sin renderare här så
+  // att språkbytet (setLang -> renderAll) når dem utan att de behöver känna
+  // till varandra.
+  const extraRenders = []
 
   const barChart = echarts.init(document.getElementById('pane-bar'))
   const sunChart = echarts.init(document.getElementById('pane-sun'))
@@ -362,6 +442,7 @@
     renderBar()
     sunChart.setOption(sunburstOption(rec(), zone, year, FUELS), true)
     heatChart.setOption(heatOption(rec(), zone, year, HEAT), true)
+    extraRenders.forEach(f => f())
   }
 
   barChart.on('click', p => {
@@ -395,6 +476,77 @@
   }
   radios('zone-picker', R.zones.map(z => ({ val: z, txt: z.replace('_', '') })), zone, z => { zone = z; drillDay = null; renderAll() })
   radios('year-picker', R.years.map(y => ({ val: y, txt: String(y) })), year, y => { year = +y; drillDay = null; renderAll() })
+
+  // ---- Dygnsprofil-klockor: riket + SE1–SE4 sida vid sida -------------------
+  // EGEN årsväljare, inte #year-picker ovan: dygnsprofilen finns för hela
+  // historiken (export-diurnal.sh filtrerar inga år) medan panelerna ovan bara
+  // bär de fyra åren i round-data.js. Delad väljare hade gjort de flesta åren
+  // ovalbara. Kraftslagen är DEFAULT_FUELS och inte cfg.fuels: schemat sätts av
+  // export-diurnal.sh (ren produktion, ingen import) oavsett sidans config.
+  const DI = window.elmixDiurnal
+  const diEl = document.getElementById('diurnal-clocks')
+  if (DI && diEl) (function () {
+    const diCharts = {}
+    // Samma täckningsgrind som tioårsvyn i energi.js, av samma skäl: en årgång
+    // kan ha fulla 365 dygn och ändå sakna HELA kraftslag, för backfillen fyller
+    // historiken ett år i taget. 2016-2020 hade bara vind när panelen byggdes,
+    // och en dygnsprofil på den datan är inte gles utan falsk - den visar ett
+    // Sverige utan vattenkraft. Mäts som rikets medeleffekt mot den bäst täckta
+    // årgången; mellan hel och halvfylld årgång är det en storleksordning.
+    const diKeys = DEFAULT_FUELS.map(f => f.key)
+    const diMw = y => {
+      const r = DI.data.find(x => x.z === 'SE' && x.y === y)
+      return r ? diKeys.reduce((a, k) => a + (r[k] || []).reduce((b, v) => b + v, 0), 0) / 24 : 0
+    }
+    const diBest = Math.max(0, ...DI.years.map(diMw))
+    const diYears = DI.years.filter(y => diBest > 0 && diMw(y) >= 0.6 * diBest)
+    const diLeft = DI.years.filter(y => diYears.indexOf(y) < 0)
+    // Inget användbart år alls -> dölj hela panelen i stället för att lämna
+    // fem tomma ringar efter sig.
+    if (!diYears.length) { const p = diEl.closest('.pane'); if (p) p.style.display = 'none'; return }
+    let diYear = diYears[diYears.length - 1]
+    const diLabel = z => z === 'SE' ? t('Sverige', 'Sweden', 'Suède', 'Schweden') : z.replace('_', '')
+    const diRec = z => DI.data.find(x => x.z === z && x.y === diYear)
+    DI.zones.forEach(z => {
+      const div = document.createElement('div')
+      div.className = 'chart'; div.id = 'di-' + z
+      // Riket får hela bredden; de fyra elområdena ligger 2×2 under den.
+      if (z === 'SE') div.classList.add('wide')
+      diEl.appendChild(div)
+      diCharts[z] = echarts.init(div)
+    })
+    const diNote = document.getElementById('diurnal-note')
+    function diRender() {
+      DI.zones.forEach(z => {
+        const d = diRec(z)
+        if (!d) return
+        diCharts[z].setOption(diurnalOption(d, diLabel(z), diYear, DEFAULT_FUELS, diCharts[z].getWidth() < 460), true)
+        diCharts[z].resize()
+      })
+      if (diNote) {
+        const d = diRec('SE')
+        const n = d ? d.dagar : 0
+        let txt = n ? t(`Snittat över ${n} dygn ${diYear}.`, `Averaged over ${n} days in ${diYear}.`) : ''
+        if (n && n < 360) txt += t(' Året är ofullständigt – profilen är alltså säsongsskev.',
+                                   ' The year is incomplete – the profile is therefore seasonally skewed.')
+        if (diLeft.length) txt += t(
+          ` Utelämnade år (rådatan saknar hela kraftslag där): ${diLeft.join(', ')}.`,
+          ` Omitted years (the raw data is missing whole sources there): ${diLeft.join(', ')}.`)
+        diNote.textContent = txt
+      }
+    }
+    extraRenders.push(diRender)
+    // Rita om (debouncat) vid resize: narrow-flaggan ovan beror på grafens
+    // bredd, så en ren .resize() skulle behålla 24 etiketter på en klocka som
+    // just blivit smal.
+    let diT
+    window.addEventListener('resize', () => {
+      DI.zones.forEach(z => diCharts[z].resize())
+      clearTimeout(diT); diT = setTimeout(diRender, 160)
+    })
+    radios('diurnal-year-picker', diYears.map(y => ({ val: y, txt: String(y) })), diYear,
+      y => { diYear = +y; diRender() })
+  })()
 
   // Språkväljare (SV/EN): byter LANG, sätter html[data-lang] (statisk text via
   // CSS) och ritar om diagrammen.

@@ -5,6 +5,9 @@
   'use strict'
   const E = window.elmixConsumption
   const EU = window.elmixEu
+  // Tioårsvyn (årsvolym per kraftslag, hela historiken). Eget dataset, egen
+  // sektion; saknas den renderas resten av sidan som förut.
+  const AN = window.elmixAnnual
   if (!E) return
   // SE saknar kol/gas (0); EU levererar termiskt som kol+gas+ov -> ov mappas till kv.
   const FUELS = [
@@ -30,7 +33,16 @@
     yr: ['År (FBMC)', 'Year (FBMC)'],
     showing: ['Visar år', 'Showing year'],
     volDesc: ['Stapeldiagram: energivolym i TWh per kraftslag och elområde', 'Bar chart: energy volume in TWh per source and bidding zone'],
-    costDesc: ['Diagram: aggregerad spotkostnad (mdr SEK) och snittpris (€/MWh) per elområde', 'Chart: aggregate spot cost (bn SEK) and average price (€/MWh) per bidding zone']
+    costDesc: ['Diagram: aggregerad spotkostnad (mdr SEK) och snittpris (€/MWh) per elområde', 'Chart: aggregate spot cost (bn SEK) and average price (€/MWh) per bidding zone'],
+    tyTitle: ['Årsvolym per kraftslag – hela historiken', 'Annual volume per source – full history'],
+    tyLead: ['Samma kraftslag, men över alla år ENTSO-E-historiken räcker till. Staplarna är INHEMSK PRODUKTION i TWh – nettoimport ingår inte, till skillnad från FBMC-vyn ovan. De fyra elområdesdiagrammen delar y-skala så att de är jämförbara med varandra; rikesdiagrammet har sin egen.',
+      'The same sources, but across every year the ENTSO-E history covers. The bars are DOMESTIC GENERATION in TWh – net imports are not included, unlike the FBMC view above. The four bidding-zone charts share a y-scale so they are comparable with each other; the national chart has its own.'],
+    tyWhole: ['Sverige totalt', 'Sweden total'],
+    tyFoot: ['Markerade år (*) är ofullständiga – hämtningen går fram till idag, så den sista stapeln är kortare av kalenderskäl, inte av produktionsskäl.',
+      'Years marked (*) are incomplete – the fetch runs up to today, so the last bar is shorter for calendar reasons, not production reasons.'],
+    tyGap: ['Utelämnade år – rådatan saknar hela kraftslag där (backfillen fyller historiken ett år i taget, så de dyker upp när den nått dem):',
+      'Omitted years – the raw data is missing whole sources there (the backfill fills the history one year at a time, so they appear once it reaches them):'],
+    tyDesc: ['Stapeldiagram: årsvolym i TWh per kraftslag', 'Bar chart: annual volume in TWh per source']
   }
   let lang = 'sv', year = E.years[E.years.length - 1]
   const li = () => LANGS.indexOf(lang)
@@ -76,6 +88,7 @@
   let rt
   window.addEventListener('resize', () => {
     volChart.resize(); costChart.resize()
+    if (AN) AN.zones.forEach(z => tyCharts[z].resize())
     clearTimeout(rt); rt = setTimeout(renderAll, 160)
   })
 
@@ -122,6 +135,101 @@
     }
   }
 
+  // ---- Tioårsvy: årsvolym per kraftslag -------------------------------------
+  // Produktion ur fct_gen (v/s/va/k/kv) – ingen import, inget kol/gas i SE.
+  const TY_FUELS = FUELS.filter(f => ['v', 's', 'va', 'k', 'kv'].indexOf(f.key) >= 0)
+  const tyRec = (z, y) => AN.data.find(x => x.z === z && x.y === y)
+  const tyTotal = (z, y) => { const r = tyRec(z, y); return r ? TY_FUELS.reduce((s, f) => s + (r[f.key] || 0), 0) : 0 }
+  // TVÅ sorters ofullständighet, och bara den ena går att plotta.
+  //
+  // 1. Delår: innevarande år har färre dygn för att hämtningen går till idag.
+  //    Stapeln är sann, bara kortare -> plottas med *.
+  //
+  // 2. Saknade dataset: en årgång kan ha fulla 365 dygn och ändå sakna HELA
+  //    kraftslag. Backfillen fyller historiken ett år i taget
+  //    (viz/bootstrap-backfill.sh), och tills den nått ett år ligger där bara
+  //    det som råkat hämtas. 2016-2020 såg precis så ut när vyn byggdes:
+  //    ~16-27 TWh ren vind, noll vattenkraft, noll kärnkraft. En stapel på den
+  //    datan är inte ofullständig utan FALSK - den läses som att Sverige körde
+  //    på enbart vind. Sådana år plottas inte alls.
+  //
+  // Dygnsräkning skiljer inte fallen åt (2016 hade 366 dygn), så täckningen
+  // mäts som TWh per dygn mot den bäst täckta årgången. Mellan hela och
+  // halvfyllda år är det en storleksordning (0,44 mot 0,09 TWh/dygn), så
+  // gränsen är trubbig med flit - årsproduktionen varierar bara nagra procent.
+  const tyPerDay = y => { const r = tyRec('SE', y); return r && r.dagar ? tyTotal('SE', y) / r.dagar : 0 }
+  const tyBest = AN ? Math.max(0, ...AN.years.map(tyPerDay)) : 0
+  const tyUsable = y => tyBest > 0 && tyPerDay(y) >= 0.6 * tyBest
+  const tyYears = () => AN.years.filter(tyUsable)
+  const tyPartial = y => { const r = tyRec('SE', y); return !!r && r.dagar < 360 }
+  const tyYearLabel = y => tyPartial(y) ? y + '*' : String(y)
+  const tyZoneName = z => z === 'SE' ? TXT.tyWhole[li()] : zl(z)
+  // Gemensamt y-tak för SE1–SE4 (riket skalas för sig) – annars läses fyra
+  // olika skalor som fyra jämförbara zoner.
+  function tyZoneMax() {
+    let m = 0
+    AN.zones.filter(z => z !== 'SE').forEach(z => tyYears().forEach(y => { m = Math.max(m, tyTotal(z, y)) }))
+    return m ? Math.ceil(m * 1.05) : null
+  }
+  function tyOption(chart, z, max) {
+    const nar = chart.getWidth() < 520
+    return {
+      title: { text: `${tyZoneName(z)} · TWh/${lang === 'en' ? 'year' : 'år'}`, left: 'center', top: 6, textStyle: { fontSize: nar ? 12 : 13 } },
+      legend: nar ? { bottom: 4, left: 'center', itemGap: 8, textStyle: { fontSize: 10 } } : { top: 26, itemGap: 12, textStyle: { fontSize: 11 } },
+      grid: nar ? { top: 30, bottom: 74, left: 44, right: 12 } : { top: 56, bottom: 28, left: 56, right: 18 },
+      tooltip: {
+        trigger: 'axis', axisPointer: { type: 'shadow' },
+        valueFormatter: v => v == null ? '–' : (+v).toFixed(1) + ' TWh'
+      },
+      xAxis: { type: 'category', data: tyYears().map(tyYearLabel), axisLabel: { fontSize: 10, interval: 0, rotate: tyYears().length > 8 ? 45 : 0 } },
+      yAxis: { type: 'value', name: 'TWh', max: z === 'SE' ? null : max },
+      series: TY_FUELS.map(f => ({
+        // barMaxWidth: med bara ett par år i datat blir staplarna annars
+        // löjligt breda (en halv graf per år).
+        name: fname(f), type: 'bar', stack: 'e', barMaxWidth: 46, itemStyle: { color: f.c },
+        data: tyYears().map(y => { const r = tyRec(z, y); return r ? r[f.key] : null })
+      }))
+    }
+  }
+  // En chart per zon: riket i #ty-SE, elområdena i #ty-zones (2×2-grid).
+  const tyCharts = {}
+  if (AN) AN.zones.forEach(z => {
+    let el = $('ty-' + z)
+    if (!el) {
+      el = document.createElement('div'); el.className = 'chart'; el.id = 'ty-' + z
+      el.setAttribute('role', 'img')
+      $('ty-zones').appendChild(el)
+    }
+    tyCharts[z] = echarts.init(el)
+  })
+  function renderTenYear() {
+    if (!AN) return
+    $('ty-title').textContent = TXT.tyTitle[li()]
+    $('ty-lead').textContent = TXT.tyLead[li()]
+    const part = tyYears().filter(tyPartial)
+    const left = AN.years.filter(y => !tyUsable(y))
+    const notes = []
+    if (part.length) notes.push(TXT.tyFoot[li()] +
+      ' (' + part.map(y => y + ': ' + tyRec('SE', y).dagar + (lang === 'en' ? ' days' : ' dygn')).join(', ') + ')')
+    if (left.length) notes.push(TXT.tyGap[li()] + ' ' + left.join(', ') + '.')
+    $('ty-foot').textContent = notes.join(' ')
+    const max = tyZoneMax()
+    AN.zones.forEach(z => {
+      tyCharts[z].setOption(tyOption(tyCharts[z], z, max), true)
+      tyCharts[z].resize()
+      $('ty-' + z).setAttribute('aria-label', TXT.tyDesc[li()] + ' – ' + tyZoneName(z))
+    })
+    const head = '<tr><th>' + (lang === 'en' ? 'Zone' : 'Elområde') + '</th><th>' +
+      (lang === 'en' ? 'Year' : 'År') + '</th>' +
+      TY_FUELS.map(f => '<th>' + fname(f) + ' (TWh)</th>').join('') + '<th>Σ (TWh)</th></tr>'
+    const rows = AN.zones.flatMap(z => tyYears().filter(y => tyRec(z, y)).map(y =>
+      '<tr><th>' + tyZoneName(z) + '</th><td>' + tyYearLabel(y) + '</td>' +
+      TY_FUELS.map(f => '<td>' + (tyRec(z, y)[f.key] || 0).toFixed(1) + '</td>').join('') +
+      '<td>' + tyTotal(z, y).toFixed(1) + '</td></tr>')).join('')
+    $('ty-data').innerHTML = '<table><caption>' + TXT.tyTitle[li()] + '</caption><thead>' +
+      head + '</thead><tbody>' + rows + '</tbody></table>'
+  }
+
   // Skärmläsartillgänglig datatabell + uppdaterade aria-etiketter (canvas är osynlig för AT).
   function renderTable(a) {
     const twh = (z, k) => (a[z].sum[k] / 1e6).toFixed(1)
@@ -148,6 +256,7 @@
     volChart.setOption(volOption(a), true); volChart.resize()
     costChart.setOption(costOption(a), true); costChart.resize()
     renderTable(a)
+    renderTenYear()
   }
 
   const yp = $('year-picker')
