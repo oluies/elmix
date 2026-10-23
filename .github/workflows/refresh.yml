@@ -34,8 +34,19 @@ jobs:
           java-version: '21'
 
       - name: Installera DuckDB CLI
+        # Samma pinning som ci.yml, av samma skal: releases/latest korsade
+        # DuckDB v2.0.0, som bytte assetnamn fran duckdb_cli-linux-amd64.zip
+        # till duckdb-cli-linux-amd64.tar.gz. curl -sL hamtade 404-sidan utan
+        # att felkoda och unzip foll med exit 9 ("cannot find zipfile
+        # directory"), vilket fallde dagens korning 2026-10-22 och 2026-10-23.
+        #
+        # v1.5.6 ar samma version som org.duckdb:duckdb_jdbc i Elmix.scala och
+        # publicerar fortfarande .zip. -f far curl att falla pa 404 direkt.
+        env:
+          DUCKDB_VERSION: v1.5.6
         run: |
-          curl -sL https://github.com/duckdb/duckdb/releases/latest/download/duckdb_cli-linux-amd64.zip -o duckdb.zip
+          set -euo pipefail
+          curl -fsSL "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb_cli-linux-amd64.zip" -o duckdb.zip
           unzip -q duckdb.zip && sudo mv duckdb /usr/local/bin/ && duckdb --version
 
       - name: npm (SSR-prerendering)
