@@ -1,5 +1,5 @@
 //| mvnDeps:
-//| - org.duckdb:duckdb_jdbc:1.5.6.0
+//| - org.duckdb:duckdb_jdbc:2.0.0.0
 //| - org.scala-lang.modules::scala-xml:2.5.0
 
 // Elmix.scala - Mill single-file script (Mill 1.1+).

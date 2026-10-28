@@ -34,20 +34,25 @@ jobs:
           java-version: '25'
 
       - name: Installera DuckDB CLI
-        # Samma pinning som ci.yml, av samma skal: releases/latest korsade
-        # DuckDB v2.0.0, som bytte assetnamn fran duckdb_cli-linux-amd64.zip
-        # till duckdb-cli-linux-amd64.tar.gz. curl -sL hamtade 404-sidan utan
-        # att felkoda och unzip foll med exit 9 ("cannot find zipfile
-        # directory"), vilket fallde dagens korning 2026-10-22 och 2026-10-23.
+        # Pinnad till samma version som org.duckdb:duckdb_jdbc i Elmix.scala
+        # (2.0.0.0). Vakterna laser samma filer som drivrutinen skriver, sa CLI
+        # och drivrutin maste ligga pa samma lagringsformat - darfor flyttas de
+        # alltid tillsammans, aldrig en i taget.
         #
-        # v1.5.6 ar samma version som org.duckdb:duckdb_jdbc i Elmix.scala och
-        # publicerar fortfarande .zip. -f far curl att falla pa 404 direkt.
+        # Assetnamnet beror pa versionen: 1.x publicerade
+        # duckdb_cli-linux-amd64.zip, 2.x publicerar
+        # duckdb-cli-linux-amd64.tar.gz (bindestreck, tar). Det var just den
+        # namnandringen som fallde korningarna 2026-10-22 och 2026-10-23, nar
+        # URL:en pekade pa releases/latest. Byter man DUCKDB_VERSION over
+        # 1.x/2.x-gransen maste raderna nedan byta form med den.
+        #
+        # -f far curl att falla pa 404 direkt, dar felet faktiskt finns.
         env:
-          DUCKDB_VERSION: v1.5.6
+          DUCKDB_VERSION: v2.0.0
         run: |
           set -euo pipefail
-          curl -fsSL "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb_cli-linux-amd64.zip" -o duckdb.zip
-          unzip -q duckdb.zip && sudo mv duckdb /usr/local/bin/ && duckdb --version
+          curl -fsSL "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb-cli-linux-amd64.tar.gz" -o duckdb.tar.gz
+          tar -xzf duckdb.tar.gz && sudo mv duckdb /usr/local/bin/ && duckdb --version
 
       - name: npm (SSR-prerendering)
         run: cd viz/ssr && npm install
@@ -61,8 +66,8 @@ jobs:
           path: |
             data/raw
             elmix.duckdb
-          key: elmix-rawdata-v1-${{ github.run_id }}
-          restore-keys: elmix-rawdata-v1-
+          key: elmix-rawdata-v2-${{ github.run_id }}
+          restore-keys: elmix-rawdata-v2-
 
       # Fyller på historiken när cachen tappats, ett år i taget inom en
       # tidsbudget. Ligger FÖRE hämtningen av innevarande år med flit: bygget
@@ -135,4 +140,4 @@ jobs:
           path: |
             data/raw
             elmix.duckdb
-          key: elmix-rawdata-v1-${{ github.run_id }}
+          key: elmix-rawdata-v2-${{ github.run_id }}
