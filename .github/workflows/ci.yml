@@ -40,23 +40,24 @@ jobs:
       # så den regressionstestas i stället för att bara finnas.
       - name: Installera DuckDB CLI
         # Pinnad till samma version som org.duckdb:duckdb_jdbc i Elmix.scala
-        # (1.5.6.0). Vakterna nedan laser samma filer som drivrutinen skriver,
-        # sa CLI och drivrutin maste ligga pa samma lagringsformat.
+        # (2.0.0.0). Vakterna laser samma filer som drivrutinen skriver, sa CLI
+        # och drivrutin maste ligga pa samma lagringsformat - darfor flyttas de
+        # alltid tillsammans, aldrig en i taget.
         #
-        # Tidigare pekade detta pa releases/latest. Det gick sonder nar DuckDB
-        # slappte v2.0.0: assetet bytte namn fran duckdb_cli-linux-amd64.zip
-        # till duckdb-cli-linux-amd64.tar.gz. curl -sL hamtade da 404-sidan
-        # utan att klaga och unzip foll med exit 9, vilket las ut som ett
-        # trasigt teststeg snarare an en flyttad nedladdning. En pinning gor
-        # att ett DuckDB-major inte kan valta CI utan ett beslut.
+        # Assetnamnet beror pa versionen: 1.x publicerade
+        # duckdb_cli-linux-amd64.zip, 2.x publicerar
+        # duckdb-cli-linux-amd64.tar.gz (bindestreck, tar). Det var just den
+        # namnandringen som fallde korningarna 2026-10-22 och 2026-10-23, nar
+        # URL:en pekade pa releases/latest. Byter man DUCKDB_VERSION over
+        # 1.x/2.x-gransen maste raderna nedan byta form med den.
         #
         # -f far curl att falla pa 404 direkt, dar felet faktiskt finns.
         env:
-          DUCKDB_VERSION: v1.5.6
+          DUCKDB_VERSION: v2.0.0
         run: |
           set -euo pipefail
-          curl -fsSL "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb_cli-linux-amd64.zip" -o duckdb.zip
-          unzip -q duckdb.zip && sudo mv duckdb /usr/local/bin/
+          curl -fsSL "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb-cli-linux-amd64.tar.gz" -o duckdb.tar.gz
+          tar -xzf duckdb.tar.gz && sudo mv duckdb /usr/local/bin/
           duckdb --version
       - name: Test av golvkontrollen
         run: ./viz/check-raw-floor.test.sh
